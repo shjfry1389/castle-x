@@ -147,16 +147,17 @@ setLoading(false);
 return (
 <> 
 
-  <div
-    style={{
-      maxWidth: "700px",
-      margin: "0 auto",
-      minHeight: "100vh",
-      background: "#fff",
-      borderLeft: "1px solid #eff3f4",
-      borderRight: "1px solid #eff3f4",
-    }}
-  >
+<div
+  style={{
+    maxWidth: "700px",
+    margin: "0 auto",
+    minHeight: "100vh",
+    background: "#fff",
+    borderLeft: "1px solid #eff3f4",
+    borderRight: "1px solid #eff3f4",
+    paddingBottom: "90px",
+  }}
+>
     <div
       style={{
         position: "sticky",

@@ -108,14 +108,15 @@ if (!content.trim()) return;
 
 return (
 <div
-style={{
-maxWidth: "800px",
-margin: "0 auto",
-height: "100vh",
-display: "flex",
-flexDirection: "column",
-background: "#fff",
-}}
+  style={{
+    maxWidth: "800px",
+    margin: "0 auto",
+    minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    background: "#fff",
+    paddingBottom: "80px",
+  }}
 >
 <div
   style={{
@@ -153,14 +154,15 @@ background: "#fff",
 </div>
 
 
-  <div
-    style={{
-      flex: 1,
-      overflowY: "auto",
-      padding: "20px",
-      background: "#f8fafc",
-    }}
-  >
+<div
+  style={{
+    flex: 1,
+    overflowY: "auto",
+    padding: "20px",
+    paddingBottom: "120px",
+    background: "#f8fafc",
+  }}
+>
     {messages.map((msg) => (
       <div
         key={msg.id}
@@ -224,6 +226,9 @@ background: "#fff",
       display: "flex",
       gap: "10px",
       background: "#fff",
+      position: "sticky",
+bottom: "65px",
+zIndex: 20,
     }}
   >
     <input

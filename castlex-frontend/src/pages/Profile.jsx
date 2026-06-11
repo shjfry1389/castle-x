@@ -204,6 +204,7 @@ export default function Profile() {
         minHeight: "100vh",
         borderLeft: "1px solid #eff3f4",
         borderRight: "1px solid #eff3f4",
+        paddingBottom: "90px",
       }}
     >
       <div
