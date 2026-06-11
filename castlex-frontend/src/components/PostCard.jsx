@@ -258,17 +258,36 @@ aria-label="Verified"
           </button>
         )}
       </div>
+<div
+  style={{
+    marginTop: "6px",
+    fontSize: "15px",
+    lineHeight: "1.6",
+    whiteSpace: "pre-wrap",
+  }}
+>
+  {post.content.split(" ").map((word, i) => {
+    if (word.startsWith("@")) {
+      const username = word.slice(1);
 
-      <div
-        style={{
-          marginTop: "6px",
-          fontSize: "15px",
-          lineHeight: "1.6",
-          whiteSpace: "pre-wrap",
-        }}
-      >
-        {post.content}
-      </div>
+      return (
+        <Link
+          key={i}
+          to={`/profile/${username}`}
+          style={{
+            color: "#1d9bf0",
+            fontWeight: "bold",
+            textDecoration: "none",
+          }}
+        >
+          {word}{" "}
+        </Link>
+      );
+    }
+
+    return word + " ";
+  })}
+</div>
 
 {post.image_url &&
  post.image_url !== "undefined" &&
