@@ -266,9 +266,11 @@ aria-label="Verified"
         {post.content}
       </div>
 
-      {post.image_url && (
-        <img
-          src={post.image_url}
+{post.image_url &&
+ post.image_url !== "undefined" &&
+ post.image_url !== "null" && (
+  <img
+    src={post.image_url}
           alt=""
           style={{
             width: "100%",
