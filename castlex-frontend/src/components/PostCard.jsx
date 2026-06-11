@@ -153,8 +153,8 @@ gap: "12px",
 >
 <img
 src={
-post.author?.avatar_url ||
-"https://picsum.photos/100"
+  post.author?.avatar_url ||
+   "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
 }
 alt=""
 style={{
@@ -268,10 +268,7 @@ aria-label="Verified"
 
       {post.image_url && (
         <img
-          src={
-  post.avatar_url ||
-  "https://cdn-icons-png.flaticon.com/512/149/149071.png"
-}
+          src={post.image_url}
           alt=""
           style={{
             width: "100%",
