@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { supabase } from "../supabase";
 import PostCard from "../components/PostCard";
-import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
 import api from "../services/api";
 const role = localStorage.getItem("role");
