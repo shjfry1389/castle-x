@@ -392,7 +392,7 @@ app.get("/api/comments/:postId", async (req, res) => {
   if (error) {
     return res.status(500).json(error);
   }
-
+  console.log(JSON.stringify(data, null, 2));
   res.json(data);
 });
 // فالو کردن کاربر
