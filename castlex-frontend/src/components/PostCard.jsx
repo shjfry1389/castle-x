@@ -268,7 +268,10 @@ aria-label="Verified"
 
       {post.image_url && (
         <img
-          src={post.image_url}
+          src={
+  post.avatar_url ||
+  "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+}
           alt=""
           style={{
             width: "100%",
