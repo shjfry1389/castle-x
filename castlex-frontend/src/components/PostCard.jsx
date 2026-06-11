@@ -429,7 +429,8 @@ aria-label="Verified"
           marginBottom: "4px",
         }}
       >
-        @{comment.author?.username || "Unknown User"}
+        @ {comment.author?.display_name ||
+ comment.author?.username}||
       </div>
 
       <div>{comment.content}</div>
