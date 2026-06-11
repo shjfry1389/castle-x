@@ -73,8 +73,18 @@ let videoUrl = "";
 
 try {
   if (media) {
+    if (media.size > 20 * 1024 * 1024) {
+  alert("حجم فایل بیشتر از 20MB است");
+  setLoading(false);
+  return;
+}
+
+console.log("NAME:", media.name);
+console.log("TYPE:", media.type);
+console.log("SIZE:", media.size);
     const extension =
-  media.type?.split("/")[1] || "jpg";
+  media.name.split(".").pop().toLowerCase();
+  
 
 const fileName =
   `${Date.now()}-${Math.random()
@@ -87,10 +97,13 @@ const fileName =
     const bucket =
       isVideo ? "videos" : "posts";
 
-    const { error } =
-      await supabase.storage
-        .from(bucket)
-        .upload(fileName, media);
+const { error } =
+  await supabase.storage
+    .from(bucket)
+    .upload(fileName, media, {
+      cacheControl: "3600",
+      upsert: false,
+    });
 
     if (error) {
       throw error;
