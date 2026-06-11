@@ -11,7 +11,18 @@ const supabase = require("./supabase");
 
 const app = express();
 
-app.use(cors());
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: [
+      "https://castle-x.vercel.app",
+      "https://castle-x-frontend.vercel.app"
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
