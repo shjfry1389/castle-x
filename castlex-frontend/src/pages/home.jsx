@@ -146,7 +146,7 @@ setLoading(false);
 };
 
 return (
-<> <Navbar />
+<> 
 
   <div
     style={{

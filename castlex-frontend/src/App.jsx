@@ -1,3 +1,4 @@
+import Navbar from "./components/Navbar";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Admin from "./pages/Admin";
 import Home from "./pages/home";
@@ -12,24 +13,22 @@ import Notifications from "./pages/Notifications";
 function App() {
   return (
     <BrowserRouter>
-      {" "}
-      <Routes>
-        <Route path="/" element={<Home />} />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/search" element={<Search />} />
+  <Navbar />
 
-        <Route path="/profile/:username" element={<Profile />} />
+  <Routes>
+    <Route path="/" element={<Home />} />
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
+    <Route path="/admin" element={<Admin />} />
+    <Route path="/search" element={<Search />} />
+    <Route path="/profile/:username" element={<Profile />} />
+    <Route path="/messages" element={<Messages />} />
+    <Route path="/notifications" element={<Notifications />} />
+    <Route path="/chat/:conversationId" element={<Chat />} />
+  </Routes>
 
-        <Route path="/messages" element={<Messages />} />
-
-        <Route path="/notifications" element={<Notifications />} />
-
-        <Route path="/chat/:conversationId" element={<Chat />} />
-      </Routes>
-    </BrowserRouter>
+</BrowserRouter>
   );
 }
 
