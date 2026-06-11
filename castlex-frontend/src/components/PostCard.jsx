@@ -425,7 +425,9 @@ aria-label="Verified"
           marginBottom: "4px",
         }}
       >
-        @{comment.author?.username || "Unknown User"}
+       <pre>
+  {JSON.stringify(comment, null, 2)}
+</pre>
       </div>
 
       <div>{comment.content}</div>
