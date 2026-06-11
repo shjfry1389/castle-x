@@ -1,5 +1,7 @@
 import axios from "axios";
 
-export default axios.create({
-  baseURL: "http://localhost:5000"
+const api = axios.create({
+  baseURL: "https://castle-x-backend.onrender.com",
 });
+
+export default api;
