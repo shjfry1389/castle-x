@@ -86,19 +86,23 @@ try {
 };
 
 const loadComments = async () => {
-try {
-const res = await api.get(
-`/api/comments/${post.id}`
-);
+  try {
+    const res = await api.get(
+      `/api/comments/${post.id}`
+    );
 
+    console.log(res.data);
 
-  setComments(res.data);
-  setShowComments(!showComments);
-} catch (err) {
-  console.error(err);
-}
+    setComments(
+      Array.isArray(res.data)
+        ? res.data
+        : []
+    );
 
-
+    setShowComments(!showComments);
+  } catch (err) {
+    console.error(err);
+  }
 };
 
 const sendComment = async () => {
