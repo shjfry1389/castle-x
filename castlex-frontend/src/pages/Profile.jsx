@@ -68,7 +68,13 @@ export default function Profile() {
         return;
       }
 
-      const fileName = Date.now() + "-" + avatarFile.name;
+      const extension =
+  avatarFile.type?.split("/")[1] || "jpg";
+
+const fileName =
+  `${Date.now()}-${Math.random()
+    .toString(36)
+    .substring(2)}.${extension}`;
 
       const { error } = await supabase.storage
         .from("avatars")

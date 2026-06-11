@@ -73,8 +73,13 @@ let videoUrl = "";
 
 try {
   if (media) {
-    const fileName =
-      Date.now() + "-" + media.name;
+    const extension =
+  media.type?.split("/")[1] || "jpg";
+
+const fileName =
+  `${Date.now()}-${Math.random()
+    .toString(36)
+    .substring(2)}.${extension}`;
 
     const isVideo =
       media.type.startsWith("video");
