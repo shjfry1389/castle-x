@@ -121,6 +121,17 @@ export default function Navbar() {
               }}
             >
               👤
+              <button
+  onClick={logout}
+  style={{
+    border: "none",
+    background: "none",
+    fontSize: "24px",
+    cursor: "pointer",
+  }}
+>
+  🚪
+</button>
             </Link>
           </>
         ) : (
