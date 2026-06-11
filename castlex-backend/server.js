@@ -375,7 +375,15 @@ app.post("/api/comments/create", auth, async (req, res) => {
 app.get("/api/comments/:postId", async (req, res) => {
   const { data, error } = await supabase
     .from("comments")
-    .select("*")
+    .select(`
+      *,
+      author:users (
+        id,
+        username,
+        display_name,
+        avatar_url
+      )
+    `)
     .eq("post_id", req.params.postId)
     .order("created_at", {
       ascending: false,
