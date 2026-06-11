@@ -373,17 +373,9 @@ app.post("/api/comments/create", auth, async (req, res) => {
   });
 });
 app.get("/api/comments/:postId", async (req, res) => {
-  const { data, error } = await supabase
+  const { data: comments, error } = await supabase
     .from("comments")
-    .select(`
-      *,
-      author:users (
-        id,
-        username,
-        display_name,
-        avatar_url
-      )
-    `)
+    .select("*")
     .eq("post_id", req.params.postId)
     .order("created_at", {
       ascending: false,
@@ -392,7 +384,25 @@ app.get("/api/comments/:postId", async (req, res) => {
   if (error) {
     return res.status(500).json(error);
   }
-  res.json(data);
+
+  const commentsWithUsers = await Promise.all(
+    comments.map(async (comment) => {
+      const { data: user } = await supabase
+        .from("users")
+        .select(
+          "username, display_name, avatar_url"
+        )
+        .eq("id", comment.user_id)
+        .single();
+
+      return {
+        ...comment,
+        author: user,
+      };
+    })
+  );
+
+  res.json(commentsWithUsers);
 });
 // فالو کردن کاربر
 app.post("/api/users/:id/follow", auth, async (req, res) => {
