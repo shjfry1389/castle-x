@@ -9,6 +9,7 @@ import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
 import Notifications from "./pages/Notifications";
 import Chat from "./pages/Chat";
+import Post from "./pages/Post";
 
 function Layout() {
   const location = useLocation();
@@ -31,6 +32,8 @@ function Layout() {
         <Route path="/messages" element={<Messages />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/chat/:conversationId" element={<Chat />} />
+
+        <Route path="/post/:postId" element={<Post />} />
       </Routes>
     </>
   );
