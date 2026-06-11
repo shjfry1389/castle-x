@@ -373,6 +373,9 @@ app.post("/api/comments/create", auth, async (req, res) => {
   });
 });
 app.get("/api/comments/:postId", async (req, res) => {
+    return res.json({
+    test: "NEW_BACKEND_WORKING"
+  });
   const { data: comments, error } = await supabase
     .from("comments")
     .select("*")
