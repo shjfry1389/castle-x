@@ -409,21 +409,29 @@ aria-label="Verified"
             </button>
           </div>
 
-          {comments.map(
-            (comment) => (
-              <div
-                key={comment.id}
-                style={{
-                  padding:
-                    "10px 0",
-                  borderBottom:
-                    "1px solid #f1f5f9",
-                }}
-              >
-                {comment.content}
-              </div>
-            )
-          )}
+{comments.map(
+  (comment) => (
+    <div
+      key={comment.id}
+      style={{
+        padding: "10px 0",
+        borderBottom:
+          "1px solid #f1f5f9",
+      }}
+    >
+      <div
+        style={{
+          fontWeight: "bold",
+          marginBottom: "4px",
+        }}
+      >
+        @{comment.author?.username || "Unknown User"}
+      </div>
+
+      <div>{comment.content}</div>
+    </div>
+  )
+)}
         </div>
       )}
     </div>
