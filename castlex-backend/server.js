@@ -273,13 +273,16 @@ const result = await Promise.all(
       .eq("user_id", req.user.id)
       .maybeSingle();
 
-    return {
-      ...post,
-      author,
-      likes_count: likesCount || 0,
-      comments_count: commentsCount || 0,
-      is_liked: !!likeRow,
-    };
+return {
+  ...post,
+  author,
+  likes_count:
+    author?.role === "admin"
+      ? (likesCount || 0) + 100
+      : likesCount || 0,
+  comments_count: commentsCount || 0,
+  is_liked: !!likeRow,
+};
   })
 );
 
@@ -513,12 +516,15 @@ app.get("/api/users/:username", async (req, res) => {
         head: true,
       })
       .eq("follower_id", user.id);
+res.json({
+  ...user,
+  followers_count:
+  user.role === "admin"
+    ? (followersCount || 0) + 300
+    : followersCount || 0,
 
-    res.json({
-      ...user,
-      followers_count: followersCount || 0,
-      following_count: followingCount || 0,
-    });
+  following_count: followingCount || 0,
+});
   } catch (err) {
     console.error(err);
 
