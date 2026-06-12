@@ -5,8 +5,29 @@ import api from "../services/api";
 
 export default function Navbar() {
   const token = localStorage.getItem("token");
-  const username =
-    localStorage.getItem("username");
+
+  let username = localStorage.getItem("username");
+
+  if (!username && token) {
+    try {
+      const payload = JSON.parse(
+        atob(token.split(".")[1])
+      );
+
+      username =
+        payload.username ||
+        payload.user?.username;
+
+      if (username) {
+        localStorage.setItem(
+          "username",
+          username
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   const [isMobile, setIsMobile] =
     useState(window.innerWidth <= 768);
@@ -113,7 +134,11 @@ export default function Navbar() {
             </Link>
 
             <Link
-              to={`/profile/${username}`}
+              to={
+                username
+                  ? `/profile/${username}`
+                  : "/login"
+              }
               style={{
                 textDecoration:
                   "none",
@@ -121,18 +146,20 @@ export default function Navbar() {
               }}
             >
               👤
-              <button
-  onClick={logout}
-  style={{
-    border: "none",
-    background: "none",
-    fontSize: "24px",
-    cursor: "pointer",
-  }}
->
-  🚪
-</button>
             </Link>
+
+            <button
+              onClick={logout}
+              style={{
+                border: "none",
+                background: "none",
+                fontSize: "22px",
+                cursor: "pointer",
+                marginLeft: "8px",
+              }}
+            >
+              🚪
+            </button>
           </>
         ) : (
           <>
@@ -222,7 +249,11 @@ export default function Navbar() {
               </Link>
 
               <Link
-                to={`/profile/${username}`}
+                to={
+                  username
+                    ? `/profile/${username}`
+                    : "/login"
+                }
               >
                 👤
               </Link>
