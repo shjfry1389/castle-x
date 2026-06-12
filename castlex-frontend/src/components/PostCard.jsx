@@ -183,41 +183,15 @@ objectFit: "cover",
           gap: "6px",
         }}
       >
-<Link
-  to={`/profile/${post.author?.username}`}
-  style={{
-    textDecoration: "none",
-    color: "inherit",
-  }}
->
-  <span
-    style={{
-      fontWeight: "700",
-      fontSize: "15px",
-      cursor: "pointer",
-    }}
-  >
-    {post.author?.display_name ||
-      post.author?.username}
-  </span>
-</Link>
-
-<Link
-  to={`/profile/${post.author?.username}`}
-  style={{
-    textDecoration: "none",
-  }}
->
-  <span
-    style={{
-      color: "#536471",
-      fontSize: "14px",
-      cursor: "pointer",
-    }}
-  >
-    @{post.author?.username}
-  </span>
-</Link>
+        <span
+          style={{
+            fontWeight: "700",
+            fontSize: "15px",
+          }}
+        >
+          {post.author?.display_name ||
+            post.author?.username}
+        </span>
         {post.author?.is_verified && (
 <svg
 viewBox="0 0 30 24"
@@ -264,41 +238,14 @@ aria-label="Verified"
   </svg>
 )}
 
-<Link
-  to={`/profile/${post.author?.username}`}
-  style={{
-    textDecoration: "none",
-    color: "inherit",
-  }}
->
-  <span
-    style={{
-      fontWeight: "700",
-      fontSize: "15px",
-      cursor: "pointer",
-    }}
-  >
-    {post.author?.display_name ||
-      post.author?.username}
-  </span>
-</Link>
-
-<Link
-  to={`/profile/${post.author?.username}`}
-  style={{
-    textDecoration: "none",
-  }}
->
-  <span
-    style={{
-      color: "#536471",
-      fontSize: "14px",
-      cursor: "pointer",
-    }}
-  >
-    @{post.author?.username}
-  </span>
-</Link>
+        <span
+          style={{
+            color: "#536471",
+            fontSize: "14px",
+          }}
+        >
+          @{post.author?.username}
+        </span>
 
         {username ===
           post.author?.username && (
@@ -512,8 +459,8 @@ aria-label="Verified"
           marginBottom: "4px",
         }}
       >
-        @{comment.author?.display_name ||
-  comment.author?.username}
+        @ {comment.author?.display_name||
+           comment.author?.username}
       </div>
 
       <div>{comment.content}</div>
