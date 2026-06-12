@@ -311,6 +311,7 @@ objectFit: "cover",
  post.image_url !== "undefined" &&
  post.image_url !== "null" && (
   <img
+   loading="lazy"
     src={post.image_url}
           alt=""
           style={{
@@ -324,6 +325,7 @@ objectFit: "cover",
       )}
       {post.video_url && (
   <video
+  preload="metadata"
     controls
     style={{
       width: "100%",

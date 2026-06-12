@@ -229,11 +229,12 @@ app.post("/api/posts/create", auth, async (req, res) => {
 app.get("/api/posts", auth, async (req, res) => {
 try {
 const { data: posts, error } = await supabase
-.from("posts")
-.select("*")
-.order("created_at", {
-ascending: false,
-});
+  .from("posts")
+  .select("*")
+  .order("created_at", {
+    ascending: false,
+  })
+  .limit(20);
 
 
 if (error) {
