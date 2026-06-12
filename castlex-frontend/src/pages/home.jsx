@@ -72,61 +72,78 @@ let imageUrl = "";
 let videoUrl = "";
 
 try {
-  if (media) {
-    console.log("FILE:", media);
-console.log("NAME:", media?.name);
-console.log("TYPE:", media?.type);
-console.log("SIZE:", media?.size);
-    if (media.size > 20 * 1024 * 1024) {
-  alert("حجم فایل بیشتر از 20MB است");
-  setLoading(false);
-  return;
-}
+ if (media) {
+  console.log("FILE:", media);
+  console.log("NAME:", media?.name);
+  console.log("TYPE:", media?.type);
+  console.log("SIZE:", media?.size);
 
-console.log("NAME:", media.name);
-console.log("TYPE:", media.type);
-console.log("SIZE:", media.size);
-  const extension =
-  media?.type?.split("/")[1] || "jpg";
-  
-
-const fileName =
-  `${Date.now()}-${Math.random()
-    .toString(36)
-    .substring(2)}.${extension}`;
-
-    const isVideo =
-      media.type.startsWith("video");
-
-    const bucket =
-      isVideo ? "videos" : "posts";
-
-const { error } =
-  await supabase.storage
-    .from(bucket)
-    .upload(fileName, media, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-    console.log("UPLOAD ERROR:", error);
-
-    if (error) {
-      throw error;
-    }
-
-    const { data } =
-      supabase.storage
-        .from(bucket)
-        .getPublicUrl(fileName);
-        console.log("PUBLIC URL:", data?.publicUrl);
-
-    if (isVideo) {
-      videoUrl = data.publicUrl;
-    } else {
-      imageUrl = data.publicUrl;
-    }
+  if (!media) {
+    throw new Error("No file selected");
   }
 
+  if (media.size > 20 * 1024 * 1024) {
+    alert("حجم فایل بیشتر از 20MB است");
+    setLoading(false);
+    return;
+  }
+
+  const mimeType =
+    media?.type || "";
+
+  const extension =
+    media?.name?.includes(".")
+      ? media.name
+          .split(".")
+          .pop()
+          .toLowerCase()
+      : mimeType.split("/")[1] ||
+        "jpg";
+
+  const fileName =
+    `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+  const isVideo =
+    mimeType.startsWith("video");
+
+  const bucket =
+    isVideo ? "videos" : "posts";
+
+  console.log("UPLOADING:", {
+    fileName,
+    bucket,
+    mimeType,
+  });
+
+  const { error } =
+    await supabase.storage
+      .from(bucket)
+      .upload(fileName, media);
+
+  if (error) {
+    console.error(
+      "SUPABASE ERROR:",
+      error
+    );
+    throw error;
+  }
+
+  const { data } =
+    supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
+
+  console.log(
+    "PUBLIC URL:",
+    data?.publicUrl
+  );
+
+  if (isVideo) {
+    videoUrl = data.publicUrl;
+  } else {
+    imageUrl = data.publicUrl;
+  }
+}
   const res = await api.post(
     "/api/posts/create",
     {
