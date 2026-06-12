@@ -16,6 +16,19 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
+  useEffect(() => {
+  if (!username) return;
+
+  api
+    .get(`/api/users/${username}`)
+    .then((res) => setUser(res.data))
+    .catch(console.error);
+
+  api
+    .get(`/api/users/${username}/posts`)
+    .then((res) => setPosts(res.data))
+    .catch(console.error);
+}, [username]);
 
   useEffect(() => {
     api
