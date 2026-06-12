@@ -233,8 +233,7 @@ const { data: posts, error } = await supabase
   .select("*")
   .order("created_at", {
     ascending: false,
-  })
-  .limit(20);
+  });
 
 
 if (error) {
