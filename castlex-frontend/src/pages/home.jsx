@@ -73,6 +73,10 @@ let videoUrl = "";
 
 try {
   if (media) {
+    console.log("FILE:", media);
+console.log("NAME:", media?.name);
+console.log("TYPE:", media?.type);
+console.log("SIZE:", media?.size);
     if (media.size > 20 * 1024 * 1024) {
   alert("حجم فایل بیشتر از 20MB است");
   setLoading(false);
@@ -82,8 +86,8 @@ try {
 console.log("NAME:", media.name);
 console.log("TYPE:", media.type);
 console.log("SIZE:", media.size);
-    const extension =
-  media.name.split(".").pop().toLowerCase();
+  const extension =
+  media?.type?.split("/")[1] || "jpg";
   
 
 const fileName =
@@ -104,6 +108,7 @@ const { error } =
       cacheControl: "3600",
       upsert: false,
     });
+    console.log("UPLOAD ERROR:", error);
 
     if (error) {
       throw error;
@@ -113,6 +118,7 @@ const { error } =
       supabase.storage
         .from(bucket)
         .getPublicUrl(fileName);
+        console.log("PUBLIC URL:", data?.publicUrl);
 
     if (isVideo) {
       videoUrl = data.publicUrl;
