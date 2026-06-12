@@ -14,7 +14,11 @@ useState("");
 
 const [showComments, setShowComments] =
 useState(false);
+const isPersian = (text) => {
 
+  return /[\u0600-\u06FF]/.test(text);
+
+}; 
 const [likesCount, setLikesCount] =
 useState(post.likes_count || 0);
 
@@ -265,6 +269,12 @@ aria-label="Verified"
     fontSize: "15px",
     lineHeight: "1.6",
     whiteSpace: "pre-wrap",
+    direction: isPersian(post.content)
+      ? "rtl"
+      : "ltr",
+    textAlign: isPersian(post.content)
+      ? "right"
+      : "left",
   }}
 >
   {post.content.split(" ").map((word, i) => {
@@ -449,8 +459,8 @@ aria-label="Verified"
           marginBottom: "4px",
         }}
       >
-        @ {comment.author?.display_name ||
- comment.author?.username}||
+        @{comment.author?.display_name ||
+  comment.author?.username}
       </div>
 
       <div>{comment.content}</div>

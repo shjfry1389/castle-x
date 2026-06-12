@@ -160,11 +160,12 @@ app.get("/api/admin/dashboard", auth, admin, async (req, res) => {
 app.post("/api/posts/create", auth, async (req, res) => {
   try {
     const { content, image_url, video_url } = req.body;
+
     if (!content && !image_url && !video_url) {
-  return res.status(400).json({
-    error: "پست خالی است"
-  });
-}
+      return res.status(400).json({
+        error: "پست خالی است",
+      });
+    }
 
     const { data, error } = await supabase
       .from("posts")
@@ -174,17 +175,48 @@ app.post("/api/posts/create", auth, async (req, res) => {
           content,
           image_url,
           video_url,
-        }
+        },
       ])
-      .select();
+      .select()
+      .single();
 
     if (error) {
       return res.status(500).json(error);
     }
 
+    // پیدا کردن منشن ها
+    const mentions =
+      content?.match(/@([a-zA-Z0-9_]+)/g) || [];
+
+    for (const mention of mentions) {
+      const username = mention.replace("@", "");
+
+      const { data: user } = await supabase
+        .from("users")
+        .select("id")
+        .eq("username", username)
+        .single();
+
+      if (
+        user &&
+        user.id !== req.user.id
+      ) {
+        await supabase
+          .from("notifications")
+          .insert([
+            {
+              user_id: user.id,
+              sender_id: req.user.id,
+              type: "mention",
+              post_id: data.id,
+            },
+          ]);
+      }
+    }
+
     res.json({
       success: true,
-      post: data[0],
+      post: data,
     });
   } catch (err) {
     console.error(err);
@@ -1334,6 +1366,29 @@ app.delete("/api/admin/report/:id", auth, admin, async (req, res) => {
       error: "Server Error",
     });
   }
+});
+app.get("/api/posts/:id", async (req, res) => {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(`
+      *,
+      author:users (
+        id,
+        username,
+        display_name,
+        avatar_url,
+        role,
+        is_verified
+      )
+    `)
+    .eq("id", req.params.id)
+    .single();
+
+  if (error) {
+    return res.status(404).json(error);
+  }
+
+  res.json(data);
 });
 app.listen(PORT, () => {
   console.log(`Castle X running on port ${PORT}`);
