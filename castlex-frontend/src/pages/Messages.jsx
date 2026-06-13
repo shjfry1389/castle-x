@@ -182,7 +182,7 @@ borderRight: "1px solid #eff3f4",
               src={
                 c.user
                   ?.avatar_url ||
-                "https://picsum.photos/55"
+                "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
               }
               alt=""
               style={{
