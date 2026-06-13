@@ -110,7 +110,7 @@ Notifications </h1>
           <img
             src={
               n.sender?.avatar_url ||
-              "https://via.placeholder.com/55"
+             "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
             }
             alt=""
             style={{
