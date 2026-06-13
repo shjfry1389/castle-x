@@ -135,10 +135,10 @@ marginBottom: "15px",
           }}
         >
           <img
-            src={
-              user.avatar_url ||
-              "https://picsum.photos/100"
-            }
+          src={
+  user.avatar_url ||
+  "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+}
             alt=""
             style={{
               width: "55px",
