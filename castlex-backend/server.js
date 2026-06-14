@@ -573,11 +573,33 @@ app.get("/api/users/:username/posts", async (req, res) => {
         )
         .eq("id", post.user_id)
         .single();
+        const { count: likesCount } = await supabase
+  .from("likes")
+  .select("*", {
+    count: "exact",
+    head: true,
+  })
+  .eq("post_id", post.id);
 
-      result.push({
-        ...post,
-        author,
-      });
+const { count: commentsCount } = await supabase
+  .from("comments")
+  .select("*", {
+    count: "exact",
+    head: true,
+  })
+  .eq("post_id", post.id);
+result.push({
+  ...post,
+  author,
+
+  likes_count:
+    author?.role === "admin"
+      ? (likesCount || 0) + 100
+      : likesCount || 0,
+
+  comments_count:
+    commentsCount || 0,
+});
     }
 
     res.json(result);
