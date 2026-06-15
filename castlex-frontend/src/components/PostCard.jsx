@@ -243,31 +243,6 @@ objectFit: "cover",
     </svg>
   )}
 
-<div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    lineHeight: "1.3",
-  }}
->
-  <span
-    style={{
-      color: "#536471",
-      fontSize: "12px",
-    }}
-  >
-    {new Date(post.created_at).toLocaleString(
-      "fa-IR",
-      {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-      }
-    )}
-  </span>
-
   <span
     style={{
       color: "#536471",
@@ -277,7 +252,6 @@ objectFit: "cover",
   >
     @{post.author?.username}
   </span>
-</div>
 </Link>
 
         {username ===
