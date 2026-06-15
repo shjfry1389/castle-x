@@ -349,9 +349,19 @@ objectFit: "cover",
     paddingTop: "8px",
   }}
 >
+<div
+  style={{
+    marginTop: "10px",
+    fontSize: "12px",
+    color: "#536471",
+    textAlign: "left",
+  }}
+>
+  🕒{" "}
   {new Date(post.created_at).toLocaleString(
     "fa-IR",
     {
+      timeZone: "Asia/Tehran",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -359,6 +369,7 @@ objectFit: "cover",
       minute: "2-digit",
     }
   )}
+</div>
 </div>
       <div
         style={{
