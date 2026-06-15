@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../services/api";
 
 export default function PostCard({ post }) {
+  console.log("POST TIME:", post.created_at);
 const username =
 localStorage.getItem("username");
 
