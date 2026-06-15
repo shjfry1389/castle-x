@@ -340,7 +340,26 @@ objectFit: "cover",
     />
   </video>
 )}
-
+<div
+  style={{
+    marginTop: "10px",
+    fontSize: "12px",
+    color: "#536471",
+    borderTop: "1px solid #eff3f4",
+    paddingTop: "8px",
+  }}
+>
+  {new Date(post.created_at).toLocaleString(
+    "fa-IR",
+    {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  )}
+</div>
       <div
         style={{
           display: "flex",
