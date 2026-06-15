@@ -253,16 +253,6 @@ objectFit: "cover",
   <span
     style={{
       color: "#536471",
-      fontSize: "14px",
-      cursor: "pointer",
-    }}
-  >
-    @{post.author?.username}
-  </span>
-
-  <span
-    style={{
-      color: "#536471",
       fontSize: "12px",
     }}
   >
@@ -276,6 +266,16 @@ objectFit: "cover",
         minute: "2-digit",
       }
     )}
+  </span>
+
+  <span
+    style={{
+      color: "#536471",
+      fontSize: "14px",
+      cursor: "pointer",
+    }}
+  >
+    @{post.author?.username}
   </span>
 </div>
 </Link>
