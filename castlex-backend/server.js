@@ -1507,6 +1507,7 @@ app.delete("/api/messages/:id", auth, async (req, res) => {
     });
   }
 });
+
 app.listen(PORT, () => {
   console.log(`Castle X running on port ${PORT}`);
 });
