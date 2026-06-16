@@ -24,32 +24,6 @@ useState(post.likes_count || 0);
 
 const [liked, setLiked] =
 useState(post.is_liked || false);
-const deleteComment = async (commentId) => {
-  const token = localStorage.getItem("token");
-
-  if (!window.confirm("کامنت حذف شود؟"))
-    return;
-
-  try {
-    await api.delete(
-      `/api/comments/:id${commentId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    setComments((prev) =>
-      prev.filter(
-        (comment) => comment.id !== commentId
-      )
-    );
-  } catch (err) {
-    console.error(err);
-    alert("خطا در حذف کامنت");
-  }
-};
 const deletePost = async () => {
 const token =
 localStorage.getItem("token");
