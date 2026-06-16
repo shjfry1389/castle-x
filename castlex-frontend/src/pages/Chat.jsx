@@ -71,21 +71,6 @@ const channel = supabase
       }
     }
   )
-  .on(
-  "postgres_changes",
-  {
-    event: "DELETE",
-    schema: "public",
-    table: "messages",
-  },
-  (payload) => {
-    setMessages((prev) =>
-      prev.filter(
-        (msg) => msg.id !== payload.old.id
-      )
-    );
-  }
-)
   .subscribe();
 
 return () => {
@@ -96,27 +81,6 @@ return () => {
 }, [conversationId]);
 
 const sendMessage = async () => {
-  const deleteMessage = async (messageId) => {
-  try {
-    await api.delete(
-      `/api/messages/${messageId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    setMessages((prev) =>
-      prev.filter(
-        (msg) => msg.id !== messageId
-      )
-    );
-  } catch (err) {
-    console.error(err);
-    alert("خطا در حذف پیام");
-  }
-};
 try {
 if (!content.trim()) return;
 
@@ -229,32 +193,7 @@ return (
               "0 2px 8px rgba(0,0,0,0.08)",
           }}
         >
-          <div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "10px",
-    alignItems: "center",
-  }}
->
-  <span>{msg.content}</span>
-
-  {msg.sender_id === currentUserId && (
-    <button
-      onClick={() =>
-        deleteMessage(msg.id)
-      }
-      style={{
-        border: "none",
-        background: "none",
-        cursor: "pointer",
-        color: "inherit",
-      }}
-    >
-      🗑️
-    </button>
-  )}
-</div>
+          <div>{msg.content}</div>
 
           <div
             style={{
