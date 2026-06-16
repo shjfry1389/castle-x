@@ -1465,6 +1465,48 @@ app.delete("/api/comments/:id", auth, async (req, res) => {
     });
   }
 });
+app.delete("/api/messages/:id", auth, async (req, res) => {
+  try {
+    const messageId = req.params.id;
+
+    const { data: message } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("id", messageId)
+      .single();
+
+    if (!message) {
+      return res.status(404).json({
+        error: "پیام پیدا نشد",
+      });
+    }
+
+    if (String(message.sender_id) !== String(req.user.id)) {
+      return res.status(403).json({
+        error: "اجازه حذف پیام را ندارید",
+      });
+    }
+
+    const { error } = await supabase
+      .from("messages")
+      .delete()
+      .eq("id", messageId);
+
+    if (error) {
+      return res.status(500).json(error);
+    }
+
+    res.json({
+      success: true,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: "Server Error",
+    });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Castle X running on port ${PORT}`);
 });

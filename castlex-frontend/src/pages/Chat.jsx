@@ -71,6 +71,21 @@ const channel = supabase
       }
     }
   )
+  .on(
+    "postgres_changes",
+    {
+      event: "DELETE",
+      schema: "public",
+      table: "messages",
+    },
+    (payload) => {
+      setMessages((prev) =>
+        prev.filter((msg) =>
+          String(msg.id) !== String(payload.old.id)
+        )
+      );
+    }
+  )
   .subscribe();
 
 return () => {
@@ -101,6 +116,39 @@ if (!content.trim()) return;
   setContent("");
 } catch (err) {
   console.error(err);
+}
+
+
+};
+
+const deleteMessage = async (messageId) => {
+if (!token) {
+  alert("اول وارد شوید");
+  return;
+}
+
+if (!window.confirm("پیام برای هر دو طرف حذف شود؟"))
+  return;
+
+try {
+  await api.delete(
+    `/api/messages/${messageId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  setMessages((prev) =>
+    prev.filter((msg) =>
+      String(msg.id) !== String(messageId)
+    )
+  );
+} catch (err) {
+  console.error(err);
+
+  alert("خطا در حذف پیام");
 }
 
 
@@ -163,13 +211,18 @@ return (
     background: "#f8fafc",
   }}
 >
-    {messages.map((msg) => (
+    {messages.map((msg) => {
+      const isMine =
+        String(msg.sender_id) ===
+        String(currentUserId);
+
+      return (
       <div
         key={msg.id}
         style={{
           display: "flex",
           justifyContent:
-            msg.sender_id === currentUserId
+            isMine
               ? "flex-end"
               : "flex-start",
           marginBottom: "12px",
@@ -178,11 +231,11 @@ return (
         <div
           style={{
             background:
-              msg.sender_id === currentUserId
+              isMine
                 ? "#1d9bf0"
                 : "#fff",
             color:
-              msg.sender_id === currentUserId
+              isMine
                 ? "#fff"
                 : "#111",
             padding: "12px 16px",
@@ -191,8 +244,29 @@ return (
             wordBreak: "break-word",
             boxShadow:
               "0 2px 8px rgba(0,0,0,0.08)",
+            position: "relative",
           }}
         >
+          {isMine && (
+            <button
+              onClick={() =>
+                deleteMessage(msg.id)
+              }
+              style={{
+                border: "none",
+                background: "none",
+                color: "#fff",
+                cursor: "pointer",
+                float: "left",
+                fontSize: "14px",
+                marginRight: "8px",
+                padding: 0,
+              }}
+            >
+              🗑️
+            </button>
+          )}
+
           <div>{msg.content}</div>
 
           <div
@@ -206,18 +280,19 @@ return (
             {msg.created_at
               ? new Date(
                   msg.created_at
-                      ).toLocaleString("fa-IR", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
+                ).toLocaleString("fa-IR", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
                 })
               : ""}
           </div>
         </div>
       </div>
-    ))}
+      );
+    })}
 
     <div ref={messagesEndRef} />
   </div>
@@ -230,8 +305,8 @@ return (
       gap: "10px",
       background: "#fff",
       position: "sticky",
-bottom: "65px",
-zIndex: 20,
+      bottom: "65px",
+      zIndex: 20,
     }}
   >
     <input
