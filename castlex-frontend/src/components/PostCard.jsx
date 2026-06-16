@@ -32,7 +32,7 @@ const deleteComment = async (commentId) => {
 
   try {
     await api.delete(
-      `/api/comments/${commentId}`,
+      `/api/comments/:id${commentId}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
