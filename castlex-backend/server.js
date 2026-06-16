@@ -1418,35 +1418,52 @@ app.get("/api/posts/:id", async (req, res) => {
 
   res.json(data);
 });
-app.delete("/api/messages/:id", auth, async (req, res) => {
-  const { id } = req.params;
+app.delete("/api/comments/:id", auth, async (req, res) => {
+  try {
+    const commentId = req.params.id;
 
-  const { data: message } = await supabase
-    .from("messages")
-    .select("*")
-    .eq("id", id)
-    .single();
+    const { data: comment } = await supabase
+      .from("comments")
+      .select("*")
+      .eq("id", commentId)
+      .single();
 
-  if (!message) {
-    return res.status(404).json({
-      error: "پیام پیدا نشد",
+    if (!comment) {
+      return res.status(404).json({
+        error: "کامنت پیدا نشد",
+      });
+    }
+
+    const { data: post } = await supabase
+      .from("posts")
+      .select("user_id")
+      .eq("id", comment.post_id)
+      .single();
+
+    const isCommentOwner = String(comment.user_id) === String(req.user.id);
+    const isPostOwner = String(post?.user_id) === String(req.user.id);
+
+    if (!isCommentOwner && !isPostOwner) {
+      return res.status(403).json({
+        error: "اجازه حذف کامنت را ندارید",
+      });
+    }
+
+    await supabase
+      .from("comments")
+      .delete()
+      .eq("id", commentId);
+
+    res.json({
+      success: true,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: "Server Error",
     });
   }
-
-  if (message.sender_id !== req.user.id) {
-    return res.status(403).json({
-      error: "دسترسی ندارید",
-    });
-  }
-
-  await supabase
-    .from("messages")
-    .delete()
-    .eq("id", id);
-
-  res.json({
-    success: true,
-  });
 });
 app.listen(PORT, () => {
   console.log(`Castle X running on port ${PORT}`);
