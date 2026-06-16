@@ -21,86 +21,20 @@ body.light {
 }
 
 body.dark {
-  background: #0f172a;
-  color: #f8fafc;
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+body.dark #root {
+  background: #000000 !important;
+  color: #ffffff !important;
+  min-height: 100vh;
 }
 
 body.dark a {
   color: inherit;
 }
 
-body.dark input,
-body.dark textarea,
-body.dark select {
-  background: #111827 !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-body.dark input::placeholder,
-body.dark textarea::placeholder {
-  color: #94a3b8 !important;
-}
-
-body.dark [style*="background: #fff"],
-body.dark [style*="background:#fff"],
-body.dark [style*="background: white"],
-body.dark [style*="background:white"] {
-  background: #0f172a !important;
-  color: #f8fafc !important;
-}
-
-body.dark [style*="background: #f8fafc"],
-body.dark [style*="background:#f8fafc"],
-body.dark [style*="background: #f9fafb"],
-body.dark [style*="background:#f9fafb"],
-body.dark [style*="background: #f1f5f9"],
-body.dark [style*="background:#f1f5f9"] {
-  background: #111827 !important;
-  color: #f8fafc !important;
-}
-
-body.dark [style*="color: #111"],
-body.dark [style*="color:#111"],
-body.dark [style*="color: #000"],
-body.dark [style*="color:#000"] {
-  color: #f8fafc !important;
-}
-
-body.dark [style*="color: #536471"],
-body.dark [style*="color:#536471"],
-body.dark [style*="color: #64748b"],
-body.dark [style*="color:#64748b"] {
-  color: #cbd5e1 !important;
-}
-
-body.dark [style*="borderBottom"],
-body.dark [style*="borderTop"],
-body.dark [style*="border: 1px solid"] {
-  border-color: #334155 !important;
-}
-
-body.dark button {
-  color: inherit;
-}
-
-body.dark button[style*="background: #1d9bf0"],
-body.dark button[style*="background:#1d9bf0"] {
-  background: #1d9bf0 !important;
-  color: #ffffff !important;
-}
-body.dark {
-  background: #000 !important;
-  color: #fff !important;
-}
-
-body.dark #root {
-  background: #000 !important;
-  color: #fff !important;
-  min-height: 100vh;
-}
-
-/* پس‌زمینه صفحه‌ها */
 body.dark main,
 body.dark section,
 body.dark article,
@@ -108,38 +42,55 @@ body.dark div {
   border-color: #2f3336 !important;
 }
 
-/* پست‌ها و کارت‌ها */
+body.dark input,
+body.dark textarea,
+body.dark select {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #2f3336 !important;
+}
+
+body.dark input::placeholder,
+body.dark textarea::placeholder {
+  color: #71767b !important;
+}
+
+body.dark button {
+  color: inherit;
+}
+
+/* سفیدها و کارت‌های روشن */
 body.dark [style*="background: #fff"],
 body.dark [style*="background:#fff"],
 body.dark [style*="background: white"],
 body.dark [style*="background:white"],
 body.dark [style*="background: rgb(255, 255, 255)"] {
-  background: #000 !important;
-  color: #fff !important;
+  background: #000000 !important;
+  color: #ffffff !important;
 }
 
-/* پس‌زمینه‌های خاکستری روشن مثل پروفایل، چت، لیست‌ها */
+/* بک‌گراندهای خاکستری روشن */
 body.dark [style*="background: #f8fafc"],
 body.dark [style*="background:#f8fafc"],
 body.dark [style*="background: #f9fafb"],
 body.dark [style*="background:#f9fafb"],
 body.dark [style*="background: #f1f5f9"],
 body.dark [style*="background:#f1f5f9"] {
-  background: #000 !important;
-  color: #fff !important;
+  background: #000000 !important;
+  color: #ffffff !important;
 }
 
-/* اسم‌ها و متن‌های مشکی */
+/* متن‌های تیره */
 body.dark [style*="color: #000"],
 body.dark [style*="color:#000"],
 body.dark [style*="color: #111"],
 body.dark [style*="color:#111"],
 body.dark [style*="color: black"],
 body.dark [style*="color:black"] {
-  color: #fff !important;
+  color: #ffffff !important;
 }
 
-/* متن‌های خاکستری مثل یوزرنیم، تاریخ، توضیحات */
+/* متن‌های خاکستری */
 body.dark [style*="color: #536471"],
 body.dark [style*="color:#536471"],
 body.dark [style*="color: #64748b"],
@@ -149,35 +100,196 @@ body.dark [style*="color:#6b7280"] {
   color: #a1a1aa !important;
 }
 
-/* خط‌های جداکننده */
+/* خط‌ها */
 body.dark [style*="borderBottom"],
 body.dark [style*="borderTop"],
 body.dark [style*="border: 1px solid"] {
   border-color: #2f3336 !important;
 }
 
-/* ورودی‌ها */
-body.dark input,
-body.dark textarea,
-body.dark select {
-  background: #000 !important;
-  color: #fff !important;
+/* رنگ آبی اصلی خراب نشود */
+body.dark [style*="background: #1d9bf0"],
+body.dark [style*="background:#1d9bf0"],
+body.dark button[style*="background: #1d9bf0"],
+body.dark button[style*="background:#1d9bf0"] {
+  background: #1d9bf0 !important;
+  color: #ffffff !important;
+}
+
+/* نوار For You */
+body.dark .for-you-bar {
+  background: #e5e7eb !important;
+  color: #000000 !important;
+}
+
+body.dark .for-you-bar * {
+  color: #000000 !important;
+}
+
+/* Chat */
+body.dark .chat-page {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+body.dark .chat-header {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-bottom-color: #2f3336 !important;
+}
+
+body.dark .chat-header a,
+body.dark .chat-header span {
+  color: #ffffff !important;
+}
+
+body.dark .chat-messages {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+body.dark .chat-bubble-other {
+  background: #16181c !important;
+  color: #ffffff !important;
+  border: 1px solid #2f3336 !important;
+  box-shadow: none !important;
+}
+
+body.dark .chat-bubble-mine {
+  background: #1d9bf0 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+body.dark .chat-input-bar {
+  background: #000000 !important;
+  border-top-color: #2f3336 !important;
+}
+
+body.dark .chat-input-bar input {
+  background: #16181c !important;
+  color: #ffffff !important;
   border-color: #2f3336 !important;
 }
 
-body.dark input::placeholder,
-body.dark textarea::placeholder {
+body.dark .chat-input-bar input::placeholder {
   color: #71767b !important;
 }
 
-/* لینک‌ها */
-body.dark a {
+body.dark .chat-input-bar button {
+  background: #1d9bf0 !important;
+  color: #ffffff !important;
+}
+
+/* Messages + Notifications */
+body.dark .messages-page,
+body.dark .notifications-page {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+body.dark .messages-header,
+body.dark .notifications-header {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #2f3336 !important;
+}
+
+body.dark .message-row,
+body.dark .notification-row {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #2f3336 !important;
+}
+
+body.dark .message-row:hover,
+body.dark .notification-row:hover {
+  background: #080808 !important;
+}
+
+body.dark .message-row *,
+body.dark .notification-row * {
   color: inherit;
 }
 
-/* دکمه آبی خراب نشه */
-body.dark [style*="background: #1d9bf0"],
-body.dark [style*="background:#1d9bf0"] {
-  background: #1d9bf0 !important;
-  color: #fff !important;
+/* Navbar links/icons */
+body.dark a[href="/"],
+body.dark a[href="/search"],
+body.dark a[href="/messages"],
+body.dark a[href="/notifications"],
+body.dark a[href^="/profile"] {
+  color: #ffffff !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .chat-page {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100vh !important;
+    padding-bottom: 130px !important;
+  }
+
+  .chat-header {
+    width: 100% !important;
+    padding: 14px 16px !important;
+  }
+
+  .chat-messages {
+    padding: 14px 12px 145px !important;
+  }
+
+  .chat-row {
+    width: 100% !important;
+  }
+
+  .chat-bubble {
+    max-width: 82% !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+
+  .chat-input-bar {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 65px !important;
+    width: 100% !important;
+    padding: 10px 12px !important;
+    gap: 8px !important;
+  }
+
+  .chat-input-bar input {
+    min-width: 0 !important;
+    padding: 12px !important;
+    font-size: 14px !important;
+  }
+
+  .chat-input-bar button {
+    padding: 0 16px !important;
+    min-width: 64px !important;
+    height: 44px !important;
+  }
+
+  body.dark .chat-page,
+  body.dark .chat-messages {
+    background: #000000 !important;
+    color: #ffffff !important;
+  }
+
+  body.dark .chat-header,
+  body.dark .chat-input-bar {
+    background: #000000 !important;
+    border-color: #2f3336 !important;
+  }
+
+  body.dark .chat-bubble-other {
+    background: #16181c !important;
+    color: #ffffff !important;
+  }
+
+  body.dark .chat-bubble-mine {
+    background: #1d9bf0 !important;
+    color: #ffffff !important;
+  }
 }
