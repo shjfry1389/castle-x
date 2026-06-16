@@ -128,14 +128,14 @@ body.dark .for-you-bar * {
 
 /* Chat */
 body.dark .chat-page {
-  background: #000000 !important;
+  background: #2b3038 !important;
   color: #ffffff !important;
 }
 
 body.dark .chat-header {
-  background: #000000 !important;
+  background: #343a46 !important;
   color: #ffffff !important;
-  border-bottom-color: #2f3336 !important;
+  border-bottom-color: #4b5563 !important;
 }
 
 body.dark .chat-header a,
@@ -144,15 +144,19 @@ body.dark .chat-header span {
 }
 
 body.dark .chat-messages {
-  background: #000000 !important;
+  background: #2b3038 !important;
   color: #ffffff !important;
 }
 
 body.dark .chat-bubble-other {
-  background: #16181c !important;
-  color: #ffffff !important;
-  border: 1px solid #2f3336 !important;
+  background: #f1f5f9 !important;
+  color: #111827 !important;
+  border: 1px solid #cbd5e1 !important;
   box-shadow: none !important;
+}
+
+body.dark .chat-bubble-other * {
+  color: #111827 !important;
 }
 
 body.dark .chat-bubble-mine {
@@ -161,26 +165,29 @@ body.dark .chat-bubble-mine {
   box-shadow: none !important;
 }
 
+body.dark .chat-bubble-mine * {
+  color: #ffffff !important;
+}
+
 body.dark .chat-input-bar {
-  background: #000000 !important;
-  border-top-color: #2f3336 !important;
+  background: #343a46 !important;
+  border-top-color: #4b5563 !important;
 }
 
 body.dark .chat-input-bar input {
-  background: #16181c !important;
-  color: #ffffff !important;
-  border-color: #2f3336 !important;
+  background: #f1f5f9 !important;
+  color: #111827 !important;
+  border-color: #cbd5e1 !important;
 }
 
 body.dark .chat-input-bar input::placeholder {
-  color: #71767b !important;
+  color: #64748b !important;
 }
 
 body.dark .chat-input-bar button {
   background: #1d9bf0 !important;
   color: #ffffff !important;
 }
-
 /* Messages + Notifications */
 body.dark .messages-page,
 body.dark .notifications-page {
@@ -273,14 +280,14 @@ body.dark a[href^="/profile"] {
 
   body.dark .chat-page,
   body.dark .chat-messages {
-    background: #000000 !important;
+    background: #2b3038 !important;
     color: #ffffff !important;
   }
 
   body.dark .chat-header,
   body.dark .chat-input-bar {
-    background: #000000 !important;
-    border-color: #2f3336 !important;
+    background: #343a46 !important;
+    border-color: #4b5563 !important;
   }
 
   body.dark .chat-bubble-other {
