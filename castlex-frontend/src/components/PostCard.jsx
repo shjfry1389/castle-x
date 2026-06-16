@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import api from "../services/api";
 
 export default function PostCard({ post }) {
-  console.log("POST TIME:", post.created_at);
 const username =
 localStorage.getItem("username");
 
@@ -359,7 +358,7 @@ objectFit: "cover",
   }}
 >
   🕒{" "}
-  {new Date(post.created_at).toLocaleString(
+  {new Date(post.created_at + "Z").toLocaleString(
     "fa-IR",
     {
       timeZone: "Asia/Tehran",
