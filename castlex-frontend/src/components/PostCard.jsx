@@ -24,7 +24,32 @@ useState(post.likes_count || 0);
 
 const [liked, setLiked] =
 useState(post.is_liked || false);
+const deleteComment = async (commentId) => {
+  const token = localStorage.getItem("token");
 
+  if (!window.confirm("کامنت حذف شود؟"))
+    return;
+
+  try {
+    await api.delete(
+      `/api/comments/${commentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setComments((prev) =>
+      prev.filter(
+        (comment) => comment.id !== commentId
+      )
+    );
+  } catch (err) {
+    console.error(err);
+    alert("خطا در حذف کامنت");
+  }
+};
 const deletePost = async () => {
 const token =
 localStorage.getItem("token");
@@ -482,14 +507,19 @@ objectFit: "cover",
             </button>
           </div>
 
-{comments.map(
-  (comment) => (
+{comments.map((comment) => (
+  <div
+    key={comment.id}
+    style={{
+      padding: "10px 0",
+      borderBottom: "1px solid #f1f5f9",
+    }}
+  >
     <div
-      key={comment.id}
       style={{
-        padding: "10px 0",
-        borderBottom:
-          "1px solid #f1f5f9",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
       }}
     >
       <div
@@ -498,14 +528,28 @@ objectFit: "cover",
           marginBottom: "4px",
         }}
       >
-        @ {comment.author?.display_name||
-           comment.author?.username}
+        @{comment.author?.display_name ||
+          comment.author?.username}
       </div>
 
-      <div>{comment.content}</div>
+      {comment.author?.username === username && (
+        <button
+          onClick={() => deleteComment(comment.id)}
+          style={{
+            border: "none",
+            background: "none",
+            cursor: "pointer",
+            color: "#f4212e",
+          }}
+        >
+          🗑️
+        </button>
+      )}
     </div>
-  )
-)}
+
+    <div>{comment.content}</div>
+  </div>
+))}
         </div>
       )}
     </div>
