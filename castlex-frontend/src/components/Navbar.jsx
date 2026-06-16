@@ -1,54 +1,36 @@
-
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../services/api";
 
-export default function Navbar() {
+export default function Navbar({ darkMode, setDarkMode }) {
   const token = localStorage.getItem("token");
 
   let username = localStorage.getItem("username");
 
   if (!username && token) {
     try {
-      const payload = JSON.parse(
-        atob(token.split(".")[1])
-      );
+      const payload = JSON.parse(atob(token.split(".")[1]));
 
-      username =
-        payload.username ||
-        payload.user?.username;
+      username = payload.username || payload.user?.username;
 
       if (username) {
-        localStorage.setItem(
-          "username",
-          username
-        );
+        localStorage.setItem("username", username);
       }
     } catch (err) {
       console.error(err);
     }
   }
 
-  const [isMobile, setIsMobile] =
-    useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(
-        window.innerWidth <= 768
-      );
+      setIsMobile(window.innerWidth <= 768);
     };
 
-    window.addEventListener(
-      "resize",
-      handleResize
-    );
+    window.addEventListener("resize", handleResize);
 
-    return () =>
-      window.removeEventListener(
-        "resize",
-        handleResize
-      );
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const logout = async () => {
@@ -70,6 +52,27 @@ export default function Navbar() {
     window.location.href = "/login";
   };
 
+  const toggleTheme = () => {
+    setDarkMode((prev) => !prev);
+  };
+
+  const themeButton = (
+    <button
+      onClick={toggleTheme}
+      title={darkMode ? "Light mode" : "Dark mode"}
+      style={{
+        border: "none",
+        background: "none",
+        fontSize: "22px",
+        cursor: "pointer",
+        padding: 0,
+        lineHeight: 1,
+      }}
+    >
+      {darkMode ? "☀️" : "🌙"}
+    </button>
+  );
+
   if (isMobile) {
     return (
       <div
@@ -79,12 +82,10 @@ export default function Navbar() {
           left: 0,
           right: 0,
           height: "65px",
-          background: "#fff",
-          borderTop:
-            "1px solid #eff3f4",
+          background: darkMode ? "#0f172a" : "#fff",
+          borderTop: darkMode ? "1px solid #334155" : "1px solid #eff3f4",
           display: "flex",
-          justifyContent:
-            "space-around",
+          justifyContent: "space-around",
           alignItems: "center",
           zIndex: 9999,
         }}
@@ -114,8 +115,7 @@ export default function Navbar() {
             <Link
               to="/messages"
               style={{
-                textDecoration:
-                  "none",
+                textDecoration: "none",
                 fontSize: "24px",
               }}
             >
@@ -125,8 +125,7 @@ export default function Navbar() {
             <Link
               to="/notifications"
               style={{
-                textDecoration:
-                  "none",
+                textDecoration: "none",
                 fontSize: "24px",
               }}
             >
@@ -134,19 +133,16 @@ export default function Navbar() {
             </Link>
 
             <Link
-              to={
-                username
-                  ? `/profile/${username}`
-                  : "/login"
-              }
+              to={username ? `/profile/${username}` : "/login"}
               style={{
-                textDecoration:
-                  "none",
+                textDecoration: "none",
                 fontSize: "24px",
               }}
             >
               👤
             </Link>
+
+            {themeButton}
 
             <button
               onClick={logout}
@@ -166,8 +162,7 @@ export default function Navbar() {
             <Link
               to="/login"
               style={{
-                textDecoration:
-                  "none",
+                textDecoration: "none",
                 fontSize: "24px",
               }}
             >
@@ -177,13 +172,14 @@ export default function Navbar() {
             <Link
               to="/register"
               style={{
-                textDecoration:
-                  "none",
+                textDecoration: "none",
                 fontSize: "24px",
               }}
             >
               📝
             </Link>
+
+            {themeButton}
           </>
         )}
       </div>
@@ -196,12 +192,9 @@ export default function Navbar() {
         position: "sticky",
         top: 0,
         zIndex: 999,
-        background:
-          "rgba(255,255,255,0.85)",
-        backdropFilter:
-          "blur(12px)",
-        borderBottom:
-          "1px solid #eff3f4",
+        background: darkMode ? "rgba(15,23,42,0.88)" : "rgba(255,255,255,0.85)",
+        backdropFilter: "blur(12px)",
+        borderBottom: darkMode ? "1px solid #334155" : "1px solid #eff3f4",
       }}
     >
       <div
@@ -210,17 +203,15 @@ export default function Navbar() {
           margin: "0 auto",
           padding: "15px 20px",
           display: "flex",
-          justifyContent:
-            "space-between",
+          justifyContent: "space-between",
           alignItems: "center",
         }}
       >
         <Link
           to="/"
           style={{
-            textDecoration:
-              "none",
-            color: "#000",
+            textDecoration: "none",
+            color: darkMode ? "#f8fafc" : "#000",
             fontWeight: "800",
             fontSize: "24px",
           }}
@@ -240,35 +231,22 @@ export default function Navbar() {
 
           {token ? (
             <>
-              <Link to="/messages">
-                ✉️
-              </Link>
+              <Link to="/messages">✉️</Link>
 
-              <Link to="/notifications">
-                🔔
-              </Link>
+              <Link to="/notifications">🔔</Link>
 
-              <Link
-                to={
-                  username
-                    ? `/profile/${username}`
-                    : "/login"
-                }
-              >
-                👤
-              </Link>
+              <Link to={username ? `/profile/${username}` : "/login"}>👤</Link>
+
+              {themeButton}
 
               <button
                 onClick={logout}
                 style={{
                   border: "none",
-                  background:
-                    "#1d9bf0",
+                  background: "#1d9bf0",
                   color: "#fff",
-                  padding:
-                    "8px 18px",
-                  borderRadius:
-                    "9999px",
+                  padding: "8px 18px",
+                  borderRadius: "9999px",
                   cursor: "pointer",
                 }}
               >
@@ -280,8 +258,7 @@ export default function Navbar() {
               <Link
                 to="/login"
                 style={{
-                  textDecoration:
-                    "none",
+                  textDecoration: "none",
                   fontWeight: "700",
                   color: "#1d9bf0",
                 }}
@@ -292,14 +269,15 @@ export default function Navbar() {
               <Link
                 to="/register"
                 style={{
-                  textDecoration:
-                    "none",
+                  textDecoration: "none",
                   fontWeight: "700",
                   color: "#1d9bf0",
                 }}
               >
                 Register
               </Link>
+
+              {themeButton}
             </>
           )}
         </div>
@@ -307,4 +285,3 @@ export default function Navbar() {
     </div>
   );
 }
-
