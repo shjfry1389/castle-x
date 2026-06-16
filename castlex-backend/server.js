@@ -1418,6 +1418,36 @@ app.get("/api/posts/:id", async (req, res) => {
 
   res.json(data);
 });
+app.delete("/api/messages/:id", auth, async (req, res) => {
+  const { id } = req.params;
+
+  const { data: message } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (!message) {
+    return res.status(404).json({
+      error: "پیام پیدا نشد",
+    });
+  }
+
+  if (message.sender_id !== req.user.id) {
+    return res.status(403).json({
+      error: "دسترسی ندارید",
+    });
+  }
+
+  await supabase
+    .from("messages")
+    .delete()
+    .eq("id", id);
+
+  res.json({
+    success: true,
+  });
+});
 app.listen(PORT, () => {
   console.log(`Castle X running on port ${PORT}`);
 });
