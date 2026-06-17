@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import "./theme.css";
 import { useState, useEffect } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import Navbar from "./components/Navbar";
 import Home from "./pages/home";
@@ -66,6 +67,7 @@ function App() {
   return (
     <BrowserRouter>
       <Layout darkMode={darkMode} setDarkMode={setDarkMode} />
+      <SpeedInsights />
     </BrowserRouter>
   );
 }
