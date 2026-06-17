@@ -1509,69 +1509,101 @@ app.delete("/api/messages/:id", auth, async (req, res) => {
 });
 app.get("/api/users/:username/followers", async (req, res) => {
   try {
-    const { data: user } = await supabase
+    const { data: user, error: userError } = await supabase
       .from("users")
       .select("id")
       .eq("username", req.params.username)
       .single();
 
-    if (!user) {
-      return res.status(404).json({ error: "کاربر پیدا نشد" });
+    if (userError || !user) {
+      return res.status(404).json({
+        error: "User not found",
+      });
     }
 
-    const { data, error } = await supabase
+    const { data: follows, error: followsError } = await supabase
       .from("followers")
-      .select(`
-        follower:users!followers_follower_id_fkey(
-          id,
-          username,
-          display_name,
-          avatar_url,
-          is_verified
-        )
-      `)
+      .select("follower_id")
       .eq("following_id", user.id);
 
-    if (error) return res.status(500).json(error);
+    if (followsError) {
+      console.error(followsError);
+      return res.status(500).json(followsError);
+    }
 
-    res.json(data.map((item) => item.follower).filter(Boolean));
+    const ids = (follows || []).map((item) => item.follower_id);
+
+    if (ids.length === 0) {
+      return res.json([]);
+    }
+
+    const { data: users, error: usersError } = await supabase
+      .from("users")
+      .select("id, username, display_name, avatar_url, is_verified, role")
+      .in("id", ids);
+
+    if (usersError) {
+      console.error(usersError);
+      return res.status(500).json(usersError);
+    }
+
+    res.json(users || []);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server Error" });
+
+    res.status(500).json({
+      error: "Server Error",
+    });
   }
 });
 
 app.get("/api/users/:username/following", async (req, res) => {
   try {
-    const { data: user } = await supabase
+    const { data: user, error: userError } = await supabase
       .from("users")
       .select("id")
       .eq("username", req.params.username)
       .single();
 
-    if (!user) {
-      return res.status(404).json({ error: "کاربر پیدا نشد" });
+    if (userError || !user) {
+      return res.status(404).json({
+        error: "User not found",
+      });
     }
 
-    const { data, error } = await supabase
+    const { data: follows, error: followsError } = await supabase
       .from("followers")
-      .select(`
-        following:users!followers_following_id_fkey(
-          id,
-          username,
-          display_name,
-          avatar_url,
-          is_verified
-        )
-      `)
+      .select("following_id")
       .eq("follower_id", user.id);
 
-    if (error) return res.status(500).json(error);
+    if (followsError) {
+      console.error(followsError);
+      return res.status(500).json(followsError);
+    }
 
-    res.json(data.map((item) => item.following).filter(Boolean));
+    const ids = (follows || []).map((item) => item.following_id);
+
+    if (ids.length === 0) {
+      return res.json([]);
+    }
+
+    const { data: users, error: usersError } = await supabase
+      .from("users")
+      .select("id, username, display_name, avatar_url, is_verified, role")
+      .in("id", ids);
+
+    if (usersError) {
+      console.error(usersError);
+      return res.status(500).json(usersError);
+    }
+
+    res.json(users || []);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server Error" });
+
+    res.status(500).json({
+      error: "Server Error",
+    });
   }
 });
 
