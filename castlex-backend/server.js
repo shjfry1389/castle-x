@@ -1507,6 +1507,73 @@ app.delete("/api/messages/:id", auth, async (req, res) => {
     });
   }
 });
+app.get("/api/users/:username/followers", async (req, res) => {
+  try {
+    const { data: user } = await supabase
+      .from("users")
+      .select("id")
+      .eq("username", req.params.username)
+      .single();
+
+    if (!user) {
+      return res.status(404).json({ error: "کاربر پیدا نشد" });
+    }
+
+    const { data, error } = await supabase
+      .from("followers")
+      .select(`
+        follower:users!followers_follower_id_fkey(
+          id,
+          username,
+          display_name,
+          avatar_url,
+          is_verified
+        )
+      `)
+      .eq("following_id", user.id);
+
+    if (error) return res.status(500).json(error);
+
+    res.json(data.map((item) => item.follower).filter(Boolean));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
+app.get("/api/users/:username/following", async (req, res) => {
+  try {
+    const { data: user } = await supabase
+      .from("users")
+      .select("id")
+      .eq("username", req.params.username)
+      .single();
+
+    if (!user) {
+      return res.status(404).json({ error: "کاربر پیدا نشد" });
+    }
+
+    const { data, error } = await supabase
+      .from("followers")
+      .select(`
+        following:users!followers_following_id_fkey(
+          id,
+          username,
+          display_name,
+          avatar_url,
+          is_verified
+        )
+      `)
+      .eq("follower_id", user.id);
+
+    if (error) return res.status(500).json(error);
+
+    res.json(data.map((item) => item.following).filter(Boolean));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Castle X running on port ${PORT}`);

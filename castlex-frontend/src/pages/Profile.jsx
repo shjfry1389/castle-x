@@ -16,6 +16,10 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
+  const [followListOpen, setFollowListOpen] = useState(false);
+const [followListTitle, setFollowListTitle] = useState("");
+const [followUsers, setFollowUsers] = useState([]);
+const [followListLoading, setFollowListLoading] = useState(false);
   useEffect(() => {
   if (!username) return;
 
@@ -199,6 +203,23 @@ const fileName =
       console.error(err);
     }
   };
+  const openFollowList = async (type) => {
+  try {
+    setFollowListLoading(true);
+    setFollowUsers([]);
+    setFollowListTitle(type === "followers" ? "Followers" : "Following");
+    setFollowListOpen(true);
+
+    const res = await api.get(`/api/users/${username}/${type}`);
+
+    setFollowUsers(Array.isArray(res.data) ? res.data : []);
+  } catch (err) {
+    console.error(err);
+    alert("خطا در دریافت لیست");
+  } finally {
+    setFollowListLoading(false);
+  }
+};
 
   if (!user) {
     return (
@@ -482,13 +503,33 @@ filter:
               color: "#536471",
             }}
           >
-            <span>
-              <b>{user.following_count}</b> Following
-            </span>
+            <button
+  onClick={() => openFollowList("following")}
+  style={{
+    border: "none",
+    background: "none",
+    color: "inherit",
+    cursor: "pointer",
+    padding: 0,
+    fontSize: "15px",
+  }}
+>
+  <b>{user.following_count}</b> Following
+</button>
 
-            <span>
-              <b>{user.followers_count}</b> Followers
-            </span>
+<button
+  onClick={() => openFollowList("followers")}
+  style={{
+    border: "none",
+    background: "none",
+    color: "inherit",
+    cursor: "pointer",
+    padding: 0,
+    fontSize: "15px",
+  }}
+>
+  <b>{user.followers_count}</b> Followers
+</button>
           </div>
           {currentUser?.username === user.username && (
   <div
@@ -616,6 +657,107 @@ filter:
           posts.map((post) => <PostCard key={post.id} post={post} />)
         )}
       </div>
+      {followListOpen && (
+  <div
+    onClick={() => setFollowListOpen(false)}
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.45)",
+      zIndex: 99999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "20px",
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        maxWidth: "420px",
+        maxHeight: "80vh",
+        overflowY: "auto",
+        background: "#fff",
+        borderRadius: "18px",
+        padding: "18px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "15px",
+        }}
+      >
+        <h3 style={{ margin: 0 }}>{followListTitle}</h3>
+
+        <button
+          onClick={() => setFollowListOpen(false)}
+          style={{
+            border: "none",
+            background: "none",
+            fontSize: "22px",
+            cursor: "pointer",
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {followListLoading ? (
+        <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
+      ) : followUsers.length === 0 ? (
+        <div style={{ padding: "20px", textAlign: "center", color: "#536471" }}>
+          لیست خالی است
+        </div>
+      ) : (
+        followUsers.map((item) => (
+          <div
+            key={item.id}
+            onClick={() => {
+              setFollowListOpen(false);
+              navigate(`/profile/${item.username}`);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "12px 0",
+              borderBottom: "1px solid #eff3f4",
+              cursor: "pointer",
+            }}
+          >
+            <img
+              src={
+                item.avatar_url ||
+                "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+              }
+              alt=""
+              style={{
+                width: "46px",
+                height: "46px",
+                borderRadius: "50%",
+                objectFit: "cover",
+              }}
+            />
+
+            <div>
+              <div style={{ fontWeight: "700" }}>
+                {item.display_name || item.username}
+              </div>
+
+              <div style={{ color: "#536471", fontSize: "14px" }}>
+                @{item.username}
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+)}
     </div>
   );
 }
