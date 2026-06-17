@@ -208,7 +208,9 @@ return (
     overflowY: "auto",
     padding: "20px",
     paddingBottom: "120px",
-    background: "#f8fafc",
+    background: document.body.classList.contains("dark")
+  ? "#2b3038"
+  : "#f8fafc",
   }}
 >
     {messages.map((msg) => {
