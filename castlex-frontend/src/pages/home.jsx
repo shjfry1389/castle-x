@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { supabase } from "../supabase";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+
 import PostCard from "../components/PostCard";
 import { useEffect, useState } from "react";
 import api from "../services/api";

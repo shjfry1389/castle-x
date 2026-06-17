@@ -1,5 +1,5 @@
 import { supabase } from "../supabase";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+
 import { useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import api from "../services/api";

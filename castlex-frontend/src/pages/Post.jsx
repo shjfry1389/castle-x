@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+
 import PostCard from "../components/PostCard";
 
 export default function Post() {

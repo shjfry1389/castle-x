@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import "./theme.css";
 import { useState, useEffect } from "react";
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import Navbar from "./components/Navbar";
 import Home from "./pages/home";
 import Login from "./pages/Login";
