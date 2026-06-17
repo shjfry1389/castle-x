@@ -149,7 +149,6 @@ app.post("/api/auth/login", async (req, res) => {
     });
   }
 });
-const PORT = process.env.PORT || 5000;
 app.get("/api/admin/dashboard", auth, admin, async (req, res) => {
   res.json({
     success: true,
@@ -1606,7 +1605,8 @@ app.get("/api/users/:username/following", async (req, res) => {
     });
   }
 });
+const PORT = process.env.PORT;
 
-app.listen(PORT, () => {
-  console.log(`Castle X running on port ${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("Castle X running on port", PORT);
 });
