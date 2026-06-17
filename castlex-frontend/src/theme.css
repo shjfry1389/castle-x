@@ -211,7 +211,13 @@ body.dark .notification-row {
 
 body.dark .message-row:hover,
 body.dark .notification-row:hover {
-  background: #080808 !important;
+  background: #2b3038 !important;
+  color: #ffffff !important;
+}
+
+body.dark .message-row:hover *,
+body.dark .notification-row:hover * {
+  color: #ffffff !important;
 }
 
 body.dark .message-row *,
