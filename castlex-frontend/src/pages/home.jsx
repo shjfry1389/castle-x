@@ -199,28 +199,28 @@ return (
     paddingBottom: "90px",
   }}
 >
-    <div
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-        background:
-          "rgba(255,255,255,0.92)",
-        backdropFilter: "blur(12px)",
-        borderBottom:
-          "1px solid #eff3f4",
-        padding: "18px 20px",
-      }}
-    >
-      <h2
-        style={{
-          margin: 0,
-          fontWeight: "800",
-        }}
-      >
-        For You
-      </h2>
-    </div>
+<div
+  className="for-you-bar"
+  style={{
+    position: "sticky",
+    top: 0,
+    zIndex: 100,
+    background: "rgba(255,255,255,0.92)",
+    backdropFilter: "blur(12px)",
+    borderBottom: "1px solid #eff3f4",
+    padding: "18px 20px",
+  }}
+>
+  <h2
+    className="for-you-title"
+    style={{
+      margin: 0,
+      fontWeight: "800",
+    }}
+  >
+    For You
+  </h2>
+</div>
 
     <div
       style={{

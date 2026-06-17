@@ -300,3 +300,10 @@ body.dark a[href^="/profile"] {
     color: #ffffff !important;
   }
 }
+body.dark .for-you-bar {
+  background: #e5e7eb !important;
+}
+
+body.dark .for-you-title {
+  color: #000000 !important;
+}
