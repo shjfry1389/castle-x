@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Link } from "react-router-dom";
 import api from "../services/api";
 

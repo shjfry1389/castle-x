@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import api from "../services/api";
 
 export default function Search() {
