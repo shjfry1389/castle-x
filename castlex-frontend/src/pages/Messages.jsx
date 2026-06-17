@@ -164,14 +164,19 @@ borderRight: "1px solid #eff3f4",
             transition: "0.2s",
             cursor: "pointer",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background =
-              "#f7f9f9";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background =
-              "#fff";
-          }}
+onMouseEnter={(e) => {
+  e.currentTarget.style.background =
+    document.body.classList.contains("dark")
+      ? "#202327"
+      : "#f7f9f9";
+}}
+
+onMouseLeave={(e) => {
+  e.currentTarget.style.background =
+    document.body.classList.contains("dark")
+      ? "#000000"
+      : "#fff";
+}}
         >
           <div
             style={{
