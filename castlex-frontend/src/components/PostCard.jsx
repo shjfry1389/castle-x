@@ -177,7 +177,7 @@ export default function PostCard({ post }) {
             }}
           >
             <Link
-              to={`/profile/${post.author?.username}`}
+              to={`/profile/${encodeURIComponent(post.author?.username || "")}`}
               style={{
                 textDecoration: "none",
                 color: "inherit",

@@ -110,7 +110,7 @@ marginBottom: "15px",
     users.map((user) => (
       <Link
         key={user.id}
-        to={`/profile/${user.username}`}
+        to={`/profile/${encodeURIComponent(user.username || "")}`}
         style={{
           textDecoration: "none",
           color: "inherit",
