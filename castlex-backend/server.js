@@ -82,6 +82,10 @@ app.post("/api/auth/register", async (req, res) => {
     });
   }
 });
+app.use((req, res, next) => {
+  console.log(req.method, req.url);
+  next();
+});
 
 app.post("/api/auth/login", async (req, res) => {
   try {
@@ -228,6 +232,8 @@ app.post("/api/posts/create", auth, async (req, res) => {
 });
 app.get("/api/posts", auth, async (req, res) => {
 try {
+
+    console.log("GET POSTS START");
 const { data: posts, error } = await supabase
   .from("posts")
   .select("*")
@@ -285,7 +291,7 @@ return {
 };
   })
 );
-
+ console.log("GET POSTS END");
 res.json(result);
 
 
