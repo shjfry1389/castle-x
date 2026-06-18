@@ -495,42 +495,72 @@ app.get("/api/users/:username/followers", async (req, res) => {
       .ilike("username", username)
       .limit(1);
 
-    if (userError) return res.status(500).json(userError);
+    if (userError) {
+      console.error("followers userError:", userError);
+      return res.status(500).json(userError);
+    }
 
-    const user = usersFound?.[0];
-    if (!user) return res.status(404).json({ error: "User not found" });
+    const profileUser = usersFound?.[0];
 
-    if (user.role === "admin" || user.role === "founder") {
-      return res.status(403).json({ error: "Admin follow list is private" });
+    if (!profileUser) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    if (profileUser.role === "admin" || profileUser.role === "founder") {
+      return res.status(403).json({
+        error: "Admin follow list is private",
+      });
     }
 
     const { data: follows, error: followsError } = await supabase
       .from("followers")
       .select("follower_id")
-      .eq("following_id", user.id);
+      .eq("following_id", profileUser.id);
 
-    if (followsError) return res.status(500).json(followsError);
+    if (followsError) {
+      console.error("followers followsError:", followsError);
+      return res.status(500).json(followsError);
+    }
 
-    const ids = [...new Set((follows || []).map((x) => x.follower_id).filter(Boolean))];
+    const ids = [
+      ...new Set(
+        (follows || [])
+          .map((item) => item.follower_id)
+          .filter(Boolean)
+      ),
+    ];
 
-    if (ids.length === 0) return res.json([]);
+    if (ids.length === 0) {
+      return res.json([]);
+    }
 
     const result = [];
 
     for (const id of ids) {
-      const { data: foundUser } = await supabase
+      const { data: foundUser, error: foundUserError } = await supabase
         .from("users")
         .select("id, username, display_name, avatar_url, is_verified, role")
         .eq("id", id)
         .maybeSingle();
 
-      if (foundUser) result.push(foundUser);
+      if (foundUserError) {
+        console.error("followers foundUserError:", foundUserError);
+      }
+
+      if (foundUser) {
+        result.push(foundUser);
+      }
     }
 
-    res.json(result);
+    return res.json(result);
   } catch (err) {
     console.error("followers error:", err);
-    res.status(500).json({ error: String(err.message || err) });
+
+    return res.status(500).json({
+      error: String(err.message || err),
+    });
   }
 });
 
@@ -544,93 +574,74 @@ app.get("/api/users/:username/following", async (req, res) => {
       .ilike("username", username)
       .limit(1);
 
-    if (userError) return res.status(500).json(userError);
+    if (userError) {
+      console.error("following userError:", userError);
+      return res.status(500).json(userError);
+    }
 
-    const user = usersFound?.[0];
-    if (!user) return res.status(404).json({ error: "User not found" });
+    const profileUser = usersFound?.[0];
 
-    if (user.role === "admin" || user.role === "founder") {
-      return res.status(403).json({ error: "Admin follow list is private" });
+    if (!profileUser) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    if (profileUser.role === "admin" || profileUser.role === "founder") {
+      return res.status(403).json({
+        error: "Admin follow list is private",
+      });
     }
 
     const { data: follows, error: followsError } = await supabase
       .from("followers")
       .select("following_id")
-      .eq("follower_id", user.id);
+      .eq("follower_id", profileUser.id);
 
-    if (followsError) return res.status(500).json(followsError);
+    if (followsError) {
+      console.error("following followsError:", followsError);
+      return res.status(500).json(followsError);
+    }
 
-    const ids = [...new Set((follows || []).map((x) => x.following_id).filter(Boolean))];
+    const ids = [
+      ...new Set(
+        (follows || [])
+          .map((item) => item.following_id)
+          .filter(Boolean)
+      ),
+    ];
 
-    if (ids.length === 0) return res.json([]);
+    if (ids.length === 0) {
+      return res.json([]);
+    }
 
     const result = [];
 
     for (const id of ids) {
-      const { data: foundUser } = await supabase
+      const { data: foundUser, error: foundUserError } = await supabase
         .from("users")
         .select("id, username, display_name, avatar_url, is_verified, role")
         .eq("id", id)
         .maybeSingle();
 
-      if (foundUser) result.push(foundUser);
+      if (foundUserError) {
+        console.error("following foundUserError:", foundUserError);
+      }
+
+      if (foundUser) {
+        result.push(foundUser);
+      }
     }
 
-    res.json(result);
+    return res.json(result);
   } catch (err) {
     console.error("following error:", err);
-    res.status(500).json({ error: String(err.message || err) });
-  }
-});
 
-// دریافت پروفایل
-app.get("/api/users/:username", async (req, res) => {
-  try {
-    const { data: user } = await supabase
-      .from("users")
-      .select("*")
-      .ilike("username", req.params.username)
-      .single();
-
-    if (!user) {
-      return res.status(404).json({
-        error: "کاربر پیدا نشد",
-      });
-    }
-
-    const { count: followersCount } = await supabase
-      .from("followers")
-      .select("*", {
-        count: "exact",
-        head: true,
-      })
-      .eq("following_id", user.id);
-
-    const { count: followingCount } = await supabase
-      .from("followers")
-      .select("*", {
-        count: "exact",
-        head: true,
-      })
-      .eq("follower_id", user.id);
-res.json({
-  ...user,
-  followers_count:
-  user.role === "admin"
-    ? (followersCount || 0) + 300
-    : followersCount || 0,
-
-  following_count: followingCount || 0,
-});
-  } catch (err) {
-    console.error(err);
-
-    res.status(500).json({
-      error: "خطای سرور",
+    return res.status(500).json({
+      error: String(err.message || err),
     });
   }
 });
-
 app.get("/api/users/:username/posts", async (req, res) => {
   try {
     const { data: user } = await supabase
@@ -708,6 +719,24 @@ result.push({
     });
   }
 });
+app.get("/api/users/:id/is-following", auth, async (req, res) => {
+  try {
+    const { data } = await supabase
+      .from("followers")
+      .select("*")
+      .eq("follower_id", req.user.id)
+      .eq("following_id", req.params.id)
+      .single();
+
+    res.json({
+      following: !!data,
+    });
+  } catch {
+    res.json({
+      following: false,
+    });
+  }
+});
 // آنفالو
 app.delete("/api/users/:id/follow", auth, async (req, res) => {
   try {
@@ -728,24 +757,54 @@ app.delete("/api/users/:id/follow", auth, async (req, res) => {
     });
   }
 });
-app.get("/api/users/:id/is-following", auth, async (req, res) => {
+// دریافت پروفایل
+app.get("/api/users/:username", async (req, res) => {
   try {
-    const { data } = await supabase
-      .from("followers")
+    const { data: user } = await supabase
+      .from("users")
       .select("*")
-      .eq("follower_id", req.user.id)
-      .eq("following_id", req.params.id)
+      .ilike("username", req.params.username)
       .single();
 
-    res.json({
-      following: !!data,
-    });
-  } catch {
-    res.json({
-      following: false,
+    if (!user) {
+      return res.status(404).json({
+        error: "کاربر پیدا نشد",
+      });
+    }
+
+    const { count: followersCount } = await supabase
+      .from("followers")
+      .select("*", {
+        count: "exact",
+        head: true,
+      })
+      .eq("following_id", user.id);
+
+    const { count: followingCount } = await supabase
+      .from("followers")
+      .select("*", {
+        count: "exact",
+        head: true,
+      })
+      .eq("follower_id", user.id);
+res.json({
+  ...user,
+  followers_count:
+  user.role === "admin"
+    ? (followersCount || 0) + 300
+    : followersCount || 0,
+
+  following_count: followingCount || 0,
+});
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: "خطای سرور",
     });
   }
 });
+
 app.put("/api/users/me", auth, async (req, res) => {
   try {
     const { display_name, bio, avatar_url } = req.body;
