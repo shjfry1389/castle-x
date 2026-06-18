@@ -45,7 +45,7 @@ app.post("/api/auth/register", async (req, res) => {
     const { data: existingUser } = await supabase
       .from("users")
       .select("*")
-      .eq("username", username)
+      .ilike("username", username)
       .single();
 
     if (existingUser) {
@@ -90,7 +90,7 @@ app.post("/api/auth/login", async (req, res) => {
     const { data: user, error } = await supabase
       .from("users")
       .select("*")
-      .eq("username", username)
+      .ilike("username", username)
       .single();
 
     if (error || !user) {
@@ -194,7 +194,7 @@ app.post("/api/posts/create", auth, async (req, res) => {
       const { data: user } = await supabase
         .from("users")
         .select("id")
-        .eq("username", username)
+        .ilike("username", username)
         .single();
 
       if (
@@ -492,7 +492,7 @@ app.get("/api/users/:username", async (req, res) => {
     const { data: user } = await supabase
       .from("users")
       .select("*")
-      .eq("username", req.params.username)
+      .ilike("username", req.params.username)
       .single();
 
     if (!user) {
@@ -539,7 +539,7 @@ app.get("/api/users/:username/posts", async (req, res) => {
     const { data: user } = await supabase
       .from("users")
       .select("id")
-      .eq("username", req.params.username)
+      .ilike("username", req.params.username)
       .single();
 
     if (!user) {
@@ -1511,13 +1511,17 @@ app.get("/api/users/:username/followers", async (req, res) => {
   try {
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("id")
-      .eq("username", req.params.username)
+      .select("id, role")
+      .ilike("username", req.params.username)
       .single();
 
     if (userError || !user) {
-      return res.status(404).json({
-        error: "User not found",
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.role === "admin" || user.role === "founder") {
+      return res.status(403).json({
+        error: "Admin follow list is private",
       });
     }
 
@@ -1526,34 +1530,23 @@ app.get("/api/users/:username/followers", async (req, res) => {
       .select("follower_id")
       .eq("following_id", user.id);
 
-    if (followsError) {
-      console.error(followsError);
-      return res.status(500).json(followsError);
-    }
+    if (followsError) return res.status(500).json(followsError);
 
     const ids = (follows || []).map((item) => item.follower_id);
 
-    if (ids.length === 0) {
-      return res.json([]);
-    }
+    if (ids.length === 0) return res.json([]);
 
     const { data: users, error: usersError } = await supabase
       .from("users")
       .select("id, username, display_name, avatar_url, is_verified, role")
       .in("id", ids);
 
-    if (usersError) {
-      console.error(usersError);
-      return res.status(500).json(usersError);
-    }
+    if (usersError) return res.status(500).json(usersError);
 
     res.json(users || []);
   } catch (err) {
     console.error(err);
-
-    res.status(500).json({
-      error: "Server Error",
-    });
+    res.status(500).json({ error: "Server Error" });
   }
 });
 
@@ -1561,13 +1554,17 @@ app.get("/api/users/:username/following", async (req, res) => {
   try {
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("id")
-      .eq("username", req.params.username)
+      .select("id, role")
+      .ilike("username", req.params.username)
       .single();
 
     if (userError || !user) {
-      return res.status(404).json({
-        error: "User not found",
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.role === "admin" || user.role === "founder") {
+      return res.status(403).json({
+        error: "Admin follow list is private",
       });
     }
 
@@ -1576,34 +1573,23 @@ app.get("/api/users/:username/following", async (req, res) => {
       .select("following_id")
       .eq("follower_id", user.id);
 
-    if (followsError) {
-      console.error(followsError);
-      return res.status(500).json(followsError);
-    }
+    if (followsError) return res.status(500).json(followsError);
 
     const ids = (follows || []).map((item) => item.following_id);
 
-    if (ids.length === 0) {
-      return res.json([]);
-    }
+    if (ids.length === 0) return res.json([]);
 
     const { data: users, error: usersError } = await supabase
       .from("users")
       .select("id, username, display_name, avatar_url, is_verified, role")
       .in("id", ids);
 
-    if (usersError) {
-      console.error(usersError);
-      return res.status(500).json(usersError);
-    }
+    if (usersError) return res.status(500).json(usersError);
 
     res.json(users || []);
   } catch (err) {
     console.error(err);
-
-    res.status(500).json({
-      error: "Server Error",
-    });
+    res.status(500).json({ error: "Server Error" });
   }
 });
 
