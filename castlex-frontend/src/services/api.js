@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://castle-x-api.sharminjafari1389.workers.dev",
+  baseURL: "https://castle-x-backend.onrender.com",
 });
 
 export default api;
