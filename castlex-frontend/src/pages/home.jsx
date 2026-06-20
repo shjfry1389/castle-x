@@ -101,8 +101,10 @@ try {
       : mimeType.split("/")[1] ||
         "jpg";
 
-  const fileName =
-    `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+        const fileName =
+`${Date.now()}-${Math.random()
+  .toString(36)
+  .substring(2)}.${extension}`;
 
   const isVideo =
     mimeType.startsWith("video");
