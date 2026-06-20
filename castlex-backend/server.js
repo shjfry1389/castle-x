@@ -1718,6 +1718,71 @@ app.post("/api/upload/post-media", auth, upload.single("media"), async (req, res
     });
   }
 });
+app.post("/api/upload/avatar", auth, upload.single("avatar"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        error: "No file uploaded",
+      });
+    }
+
+    const mimeType = req.file.mimetype || "";
+
+    if (!mimeType.startsWith("image")) {
+      return res.status(400).json({
+        error: "Only image files are allowed",
+      });
+    }
+
+    const originalName = req.file.originalname || "";
+    const extension = originalName.includes(".")
+      ? originalName.split(".").pop().toLowerCase()
+      : mimeType.split("/")[1] || "jpg";
+
+    const fileName = `${req.user.id}-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2)}.${extension}`;
+
+    const { error } = await supabase.storage
+      .from("avatars")
+      .upload(fileName, req.file.buffer, {
+        contentType: mimeType,
+        upsert: false,
+      });
+
+    if (error) {
+      console.error("Avatar upload error:", error);
+      return res.status(500).json(error);
+    }
+
+    const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
+
+    const { data: updatedUser, error: updateError } = await supabase
+      .from("users")
+      .update({
+        avatar_url: data.publicUrl,
+      })
+      .eq("id", req.user.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      return res.status(500).json(updateError);
+    }
+
+    res.json({
+      success: true,
+      avatar_url: data.publicUrl,
+      user: updatedUser,
+    });
+  } catch (err) {
+    console.error("Avatar upload server error:", err);
+
+    res.status(500).json({
+      error: "Avatar upload failed",
+    });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Castle X running on port ${PORT}`);
 });

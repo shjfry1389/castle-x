@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
 import PostCard from "../components/PostCard";
-import { supabase } from "../supabase";
 
 export default function Profile() {
   const { username } = useParams();
@@ -75,41 +74,33 @@ export default function Profile() {
         return;
       }
 
-      const extension = avatarFile.type?.split("/")[1] || "jpg";
-
-      const fileName = `${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2)}.${extension}`;
-
-      const { error } = await supabase.storage
-        .from("avatars")
-        .upload(fileName, avatarFile);
-
-      if (error) throw error;
-
-      const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
+      if (avatarFile.size > 5 * 1024 * 1024) {
+        alert("حجم عکس بیشتر از 5MB است");
+        return;
+      }
 
       const token = localStorage.getItem("token");
 
-      await api.put(
-        "/api/users/me",
-        {
-          avatar_url: data.publicUrl,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const formData = new FormData();
+      formData.append("avatar", avatarFile);
 
-      const res = await api.get(`/api/users/${profileUsername}`);
-      setUser(res.data);
+      const res = await api.post("/api/upload/avatar", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setUser(res.data.user);
+      setAvatarFile(null);
 
       alert("آواتار آپدیت شد");
     } catch (err) {
       console.error(err);
-      alert("خطا در آپلود");
+      alert(
+        err.response?.data?.error ||
+          err.response?.data?.message ||
+          "خطا در آپلود"
+      );
     }
   };
 
@@ -204,7 +195,12 @@ export default function Profile() {
       setFollowUsers(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
-      alert("خطا در دریافت لیست");
+
+      if (err.response?.status === 403) {
+        alert("لیست فالوور و فالووینگ ادمین قابل مشاهده نیست");
+      } else {
+        alert("خطا در دریافت لیست");
+      }
     } finally {
       setFollowListLoading(false);
     }
@@ -269,11 +265,7 @@ export default function Profile() {
         }}
       />
 
-      <div
-        style={{
-          padding: "0 20px",
-        }}
-      >
+      <div style={{ padding: "0 20px" }}>
         <div
           style={{
             display: "flex",
@@ -341,7 +333,6 @@ export default function Profile() {
                 <button
                   onClick={async () => {
                     const reason = prompt("دلیل گزارش را وارد کنید:");
-
                     if (!reason) return;
 
                     try {
@@ -382,11 +373,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div
-          style={{
-            marginTop: "15px",
-          }}
-        >
+        <div style={{ marginTop: "15px" }}>
           <div
             style={{
               display: "flex",
@@ -437,22 +424,12 @@ export default function Profile() {
             ) : null}
           </div>
 
-          <div
-            style={{
-              color: "#536471",
-              marginTop: "4px",
-            }}
-          >
+          <div style={{ color: "#536471", marginTop: "4px" }}>
             @{user.username}
           </div>
 
           {user.bio && (
-            <div
-              style={{
-                marginTop: "14px",
-                fontSize: "15px",
-              }}
-            >
+            <div style={{ marginTop: "14px", fontSize: "15px" }}>
               {user.bio}
             </div>
           )}
