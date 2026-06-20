@@ -1,3 +1,10 @@
+const multer = require("multer");
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 20 * 1024 * 1024,
+  },
+});
 const auth = require("./middleware/auth");
 const admin = require("./middleware/admin");
 const jwt = require("jsonwebtoken");
@@ -1663,7 +1670,54 @@ app.delete("/api/messages/:id", auth, async (req, res) => {
     });
   }
 });
+app.post("/api/upload/post-media", auth, upload.single("media"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        error: "No file uploaded",
+      });
+    }
 
+    const mimeType = req.file.mimetype || "";
+    const isVideo = mimeType.startsWith("video");
+    const bucket = isVideo ? "videos" : "posts";
+
+    const originalName = req.file.originalname || "";
+    const extension = originalName.includes(".")
+      ? originalName.split(".").pop().toLowerCase()
+      : mimeType.split("/")[1] || "jpg";
+
+    const fileName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2)}.${extension}`;
+
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, req.file.buffer, {
+        contentType: mimeType,
+        upsert: false,
+      });
+
+    if (error) {
+      console.error("Upload error:", error);
+      return res.status(500).json(error);
+    }
+
+    const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
+
+    res.json({
+      success: true,
+      url: data.publicUrl,
+      type: isVideo ? "video" : "image",
+    });
+  } catch (err) {
+    console.error("Upload server error:", err);
+
+    res.status(500).json({
+      error: "Upload failed",
+    });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Castle X running on port ${PORT}`);
 });

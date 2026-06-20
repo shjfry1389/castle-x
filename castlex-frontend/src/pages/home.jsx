@@ -1,10 +1,8 @@
 import { Link } from "react-router-dom";
 import { supabase } from "../supabase";
-
 import PostCard from "../components/PostCard";
 import { useEffect, useState } from "react";
 import api from "../services/api";
-const role = localStorage.getItem("role");
 
 export default function Home() {
 const [posts, setPosts] = useState([]);
@@ -29,7 +27,8 @@ const loadPosts = () => {
     })
     .then((res) => setPosts(res.data))
     .catch(console.error);
-}; 
+};
+
 useEffect(() => {
   loadPosts();
 
@@ -56,7 +55,6 @@ useEffect(() => {
 const createPost = async () => {
 const token = localStorage.getItem("token");
 
-
 if (!token) {
   alert("اول وارد شوید");
   return;
@@ -73,80 +71,33 @@ let imageUrl = "";
 let videoUrl = "";
 
 try {
- if (media) {
-  console.log("FILE:", media);
-  console.log("NAME:", media?.name);
-  console.log("TYPE:", media?.type);
-  console.log("SIZE:", media?.size);
+  if (media) {
+    if (media.size > 20 * 1024 * 1024) {
+      alert("حجم فایل بیشتر از 20MB است");
+      setLoading(false);
+      return;
+    }
 
-  if (!media) {
-    throw new Error("No file selected");
-  }
+    const formData = new FormData();
+    formData.append("media", media);
 
-  if (media.size > 20 * 1024 * 1024) {
-    alert("حجم فایل بیشتر از 20MB است");
-    setLoading(false);
-    return;
-  }
-
-  const mimeType =
-    media?.type || "";
-
-  const extension =
-    media?.name?.includes(".")
-      ? media.name
-          .split(".")
-          .pop()
-          .toLowerCase()
-      : mimeType.split("/")[1] ||
-        "jpg";
-
-        const fileName =
-`${Date.now()}-${Math.random()
-  .toString(36)
-  .substring(2)}.${extension}`;
-
-  const isVideo =
-    mimeType.startsWith("video");
-
-  const bucket =
-    isVideo ? "videos" : "posts";
-
-  console.log("UPLOADING:", {
-    fileName,
-    bucket,
-    mimeType,
-  });
-
-  const { error } =
-    await supabase.storage
-      .from(bucket)
-      .upload(fileName, media);
-
-  if (error) {
-    console.error(
-      "SUPABASE ERROR:",
-      error
+    const uploadRes = await api.post(
+      "/api/upload/post-media",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
-    throw error;
+
+    if (uploadRes.data.type === "video") {
+      videoUrl = uploadRes.data.url;
+    } else {
+      imageUrl = uploadRes.data.url;
+    }
   }
 
-  const { data } =
-    supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
-
-  console.log(
-    "PUBLIC URL:",
-    data?.publicUrl
-  );
-
-  if (isVideo) {
-    videoUrl = data.publicUrl;
-  } else {
-    imageUrl = data.publicUrl;
-  }
-}
   const res = await api.post(
     "/api/posts/create",
     {
@@ -165,65 +116,60 @@ try {
   setMedia(null);
 
   if (res.data?.post) {
-  setPosts((prev) => [
-    res.data.post,
-    ...prev,
-  ]);
-}
-
-} 
-catch (err) {
+    setPosts((prev) => [
+      res.data.post,
+      ...prev,
+    ]);
+  }
+} catch (err) {
   console.error(err);
-
-  console.log(err.response?.data);
 
   alert(
     err.response?.data?.error ||
-    JSON.stringify(err.response?.data)
+    err.response?.data?.message ||
+    JSON.stringify(err.response?.data) ||
+    "خطا در ارسال پست"
   );
 }
 
 setLoading(false);
-
-
 };
 
 return (
-<> 
-
-<div
-  style={{
-    maxWidth: "700px",
-    margin: "0 auto",
-    minHeight: "100vh",
-    background: "#fff",
-    borderLeft: "1px solid #eff3f4",
-    borderRight: "1px solid #eff3f4",
-    paddingBottom: "90px",
-  }}
->
-<div
-  className="for-you-bar"
-  style={{
-    position: "sticky",
-    top: 0,
-    zIndex: 100,
-    background: "rgba(255,255,255,0.92)",
-    backdropFilter: "blur(12px)",
-    borderBottom: "1px solid #eff3f4",
-    padding: "18px 20px",
-  }}
->
-  <h2
-    className="for-you-title"
+<>
+  <div
     style={{
-      margin: 0,
-      fontWeight: "800",
+      maxWidth: "700px",
+      margin: "0 auto",
+      minHeight: "100vh",
+      background: "#fff",
+      borderLeft: "1px solid #eff3f4",
+      borderRight: "1px solid #eff3f4",
+      paddingBottom: "90px",
     }}
   >
-    For You
-  </h2>
-</div>
+    <div
+      className="for-you-bar"
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+        background: "rgba(255,255,255,0.92)",
+        backdropFilter: "blur(12px)",
+        borderBottom: "1px solid #eff3f4",
+        padding: "18px 20px",
+      }}
+    >
+      <h2
+        className="for-you-title"
+        style={{
+          margin: 0,
+          fontWeight: "800",
+        }}
+      >
+        For You
+      </h2>
+    </div>
 
     <div
       style={{
@@ -247,24 +193,25 @@ return (
       >
         🔍 Search Users
       </Link>
+
       {currentUser?.role === "admin" && (
-  <Link
-    to="/admin"
-    style={{
-      display: "inline-block",
-      marginLeft: "10px",
-      marginBottom: "15px",
-      padding: "10px 18px",
-      background: "#facc15",
-      color: "#000",
-      textDecoration: "none",
-      borderRadius: "9999px",
-      fontWeight: "700",
-    }}
-  >
-    🛡️ Admin Panel
-  </Link>
-)}
+        <Link
+          to="/admin"
+          style={{
+            display: "inline-block",
+            marginLeft: "10px",
+            marginBottom: "15px",
+            padding: "10px 18px",
+            background: "#facc15",
+            color: "#000",
+            textDecoration: "none",
+            borderRadius: "9999px",
+            fontWeight: "700",
+          }}
+        >
+          🛡️ Admin Panel
+        </Link>
+      )}
 
       <textarea
         placeholder="What's happening?"
@@ -283,14 +230,10 @@ return (
       />
 
       {media &&
-        (media.type.startsWith(
-          "video"
-        ) ? (
+        (media.type.startsWith("video") ? (
           <video
             controls
-            src={URL.createObjectURL(
-              media
-            )}
+            src={URL.createObjectURL(media)}
             style={{
               width: "100%",
               marginTop: "12px",
@@ -299,9 +242,7 @@ return (
           />
         ) : (
           <img
-            src={URL.createObjectURL(
-              media
-            )}
+            src={URL.createObjectURL(media)}
             alt=""
             style={{
               width: "100%",
@@ -324,9 +265,7 @@ return (
           type="file"
           accept="image/*,video/*"
           onChange={(e) =>
-            setMedia(
-              e.target.files[0]
-            )
+            setMedia(e.target.files[0])
           }
         />
 
@@ -341,14 +280,10 @@ return (
             borderRadius: "9999px",
             fontWeight: "700",
             cursor: "pointer",
-            opacity: loading
-              ? 0.6
-              : 1,
+            opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading
-            ? "Posting..."
-            : "Post"}
+          {loading ? "Posting..." : "Post"}
         </button>
       </div>
     </div>
@@ -375,7 +310,5 @@ return (
     </div>
   </div>
 </>
-
-
 );
 }
