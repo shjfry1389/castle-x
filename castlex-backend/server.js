@@ -964,15 +964,27 @@ app.post("/api/messages/start", auth, async (req, res) => {
 });
 app.post("/api/messages/send", auth, async (req, res) => {
   try {
-    const { conversation_id, content } = req.body;
+    const { conversation_id, content, reply_to_id } = req.body;
+
+    if (!conversation_id || !content?.trim()) {
+      return res.status(400).json({
+        error: "conversation_id و content الزامی هستند",
+      });
+    }
+
+    const insertData = {
+      conversation_id,
+      sender_id: req.user.id,
+      content: content.trim(),
+    };
+
+    if (reply_to_id) {
+      insertData.reply_to_id = reply_to_id;
+    }
 
     const { data, error } = await supabase
       .from("messages")
-      .insert({
-        conversation_id,
-        sender_id: req.user.id,
-        content,
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -1006,6 +1018,34 @@ app.get("/api/messages/:conversationId", auth, async (req, res) => {
     }
 
     res.json(data);
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: "Server Error",
+    });
+  }
+});
+app.put("/api/messages/:conversationId/seen", auth, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    const { error } = await supabase
+      .from("messages")
+      .update({
+        seen_at: new Date().toISOString(),
+      })
+      .eq("conversation_id", conversationId)
+      .neq("sender_id", req.user.id)
+      .is("seen_at", null);
+
+    if (error) {
+      return res.status(500).json(error);
+    }
+
+    res.json({
+      success: true,
+    });
   } catch (err) {
     console.error(err);
 
