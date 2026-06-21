@@ -2,40 +2,49 @@ import { useState } from "react";
 
 const questions = [
   {
+    icon: "📝",
     question: "چطور پست بگذارم؟",
     answer: "در صفحه اصلی متن بنویس یا عکس/ویدیو انتخاب کن و روی Post بزن.",
   },
   {
+    icon: "🖼️",
     question: "چطور عکس پروفایل عوض کنم؟",
     answer: "وارد پروفایل خودت شو، عکس انتخاب کن و روی Upload Avatar بزن.",
   },
   {
+    icon: "✉️",
     question: "چطور به کسی پیام بدهم؟",
     answer: "وارد پروفایل کاربر شو و روی Message بزن.",
   },
   {
+    icon: "👥",
     question: "چطور کسی را فالو کنم؟",
     answer: "وارد پروفایل کاربر شو و روی Follow بزن.",
   },
   {
+    icon: "⚠️",
     question: "چرا آپلود گاهی خطا می‌دهد؟",
-    answer: "گاهی مسیر اینترنت به سرویس‌های ذخیره‌سازی مشکل دارد. کمی بعد دوباره امتحان کن.",
+    answer: "گاهی مسیر اینترنت یا سرویس ذخیره‌سازی کند می‌شود. کمی بعد دوباره امتحان کن.",
   },
-    {
+  {
+    icon: "🔵",
     question: "چگونه تیک آبی بگیرم؟",
-    answer: "در بله به ایدی @castlex1 مراجعه کنید و با ارسال و اثبات لیدر بودن یا دارای مقام رسمی بودن در اتحاد تیک ابی خود را دریافت کنید",
+    answer: "در بله به آیدی @castlex1 مراجعه کنید و با ارسال مدارک لازم، رسمی بودن یا لیدر بودن خود را اثبات کنید.",
   },
-      {
+  {
+    icon: "👑",
     question: "چگونه تیک طلایی بگیرم؟",
-    answer: "تیک طلایی مخصوص ادمین های سایت هست و برای کاربرای معمولی امکان پذیر نیست",
+    answer: "تیک طلایی مخصوص ادمین‌های سایت است و برای کاربران معمولی امکان‌پذیر نیست.",
   },
-      {
-    question: "چطور تخلف کسی را در سایت گزارش دهم؟",
-    answer: "ابتدا وارد پروفایل شخص شوید سپس بر روی report کلیک کنید و با نوشتن اسم کاربر و دلیل گزارش میتوانید گزارش خود را ثبت کنید",
+  {
+    icon: "🚩",
+    question: "چطور تخلف کسی را گزارش دهم؟",
+    answer: "وارد پروفایل شخص شوید، روی Report کلیک کنید و دلیل گزارش را بنویسید.",
   },
-        {
+  {
+    icon: "💬",
     question: "جواب سوال خود را پیدا نکردید؟",
-    answer: "در بله به پیوی @castlex1 مراجعه کنید و سوال خود را بپرسید",
+    answer: "در بله به پیوی @castlex1 مراجعه کنید و سوال خود را بپرسید.",
   },
 ];
 
@@ -51,12 +60,12 @@ export default function AssistantWidget() {
             position: "fixed",
             right: "18px",
             bottom: "92px",
-            width: "340px",
+            width: "360px",
             maxWidth: "calc(100vw - 32px)",
-            background: "#fff",
-            border: "1px solid #e5e7eb",
-            borderRadius: "18px",
-            boxShadow: "0 20px 50px rgba(0,0,0,0.18)",
+            background: "#ffffff",
+            border: "1px solid rgba(15,23,42,0.08)",
+            borderRadius: "24px",
+            boxShadow: "0 24px 70px rgba(15,23,42,0.26)",
             zIndex: 99999,
             overflow: "hidden",
             direction: "rtl",
@@ -64,87 +73,172 @@ export default function AssistantWidget() {
         >
           <div
             style={{
-              padding: "14px 16px",
-              background: "#1d9bf0",
+              padding: "16px",
+              background: "linear-gradient(135deg,#1d9bf0,#7c3aed)",
               color: "#fff",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              fontWeight: "800",
             }}
           >
-            <span>دستیار Castle X</span>
-
-            <button
-              onClick={() => setOpen(false)}
+            <div
               style={{
-                border: "none",
-                background: "none",
-                color: "#fff",
-                fontSize: "22px",
-                cursor: "pointer",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "12px",
               }}
             >
-              ×
-            </button>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "42px",
+                    height: "42px",
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,0.22)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "23px",
+                  }}
+                >
+                  🤖
+                </div>
+
+                <div>
+                  <div
+                    style={{
+                      fontWeight: "900",
+                      fontSize: "16px",
+                    }}
+                  >
+                    دستیار Castle X
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      opacity: 0.9,
+                      marginTop: "2px",
+                    }}
+                  >
+                    راهنمای سریع سایت
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setOpen(false)}
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "50%",
+                  border: "none",
+                  background: "rgba(255,255,255,0.18)",
+                  color: "#fff",
+                  fontSize: "22px",
+                  cursor: "pointer",
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
           </div>
 
           <div
             style={{
               padding: "14px",
-              maxHeight: "420px",
+              maxHeight: "430px",
               overflowY: "auto",
+              background: "#f8fafc",
             }}
           >
             <div
               style={{
-                background: "#f1f5f9",
+                background: "#ffffff",
                 color: "#111827",
-                padding: "10px 12px",
-                borderRadius: "14px",
+                padding: "12px 14px",
+                borderRadius: "18px",
                 marginBottom: "12px",
                 fontSize: "14px",
-                lineHeight: "1.8",
+                lineHeight: "1.9",
+                border: "1px solid #e5e7eb",
               }}
             >
-              سلام! یکی از سوال‌ها را انتخاب کن.
+              سلام! یکی از سوال‌های آماده را انتخاب کن.
             </div>
 
-            {questions.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => setSelected(item)}
-                style={{
-                  width: "100%",
-                  border: "1px solid #e5e7eb",
-                  background:
-                    selected?.question === item.question ? "#e8f4ff" : "#fff",
-                  color: "#111827",
-                  textAlign: "right",
-                  padding: "10px 12px",
-                  borderRadius: "12px",
-                  cursor: "pointer",
-                  marginBottom: "8px",
-                  fontWeight: "600",
-                  lineHeight: "1.7",
-                }}
-              >
-                {item.question}
-              </button>
-            ))}
+            {questions.map((item, index) => {
+              const active = selected?.question === item.question;
+
+              return (
+                <button
+                  key={index}
+                  onClick={() => setSelected(item)}
+                  style={{
+                    width: "100%",
+                    border: active ? "1px solid #1d9bf0" : "1px solid #e5e7eb",
+                    background: active ? "#e8f4ff" : "#ffffff",
+                    color: "#111827",
+                    textAlign: "right",
+                    padding: "11px 12px",
+                    borderRadius: "16px",
+                    cursor: "pointer",
+                    marginBottom: "8px",
+                    fontWeight: "700",
+                    lineHeight: "1.7",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    boxShadow: active ? "0 8px 20px rgba(29,155,240,0.16)" : "none",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                      background: active ? "#1d9bf0" : "#f1f5f9",
+                      color: active ? "#fff" : "#111827",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {item.icon}
+                  </span>
+
+                  <span>{item.question}</span>
+                </button>
+              );
+            })}
 
             {selected && (
               <div
                 style={{
-                  marginTop: "12px",
+                  marginTop: "14px",
                   background: "#111827",
                   color: "#fff",
-                  padding: "12px",
-                  borderRadius: "14px",
+                  padding: "14px",
+                  borderRadius: "18px",
                   lineHeight: "1.9",
                   fontSize: "14px",
+                  boxShadow: "0 10px 24px rgba(15,23,42,0.18)",
                 }}
               >
+                <div
+                  style={{
+                    fontWeight: "900",
+                    marginBottom: "6px",
+                    color: "#93c5fd",
+                  }}
+                >
+                  پاسخ
+                </div>
                 {selected.answer}
               </div>
             )}
@@ -154,23 +248,24 @@ export default function AssistantWidget() {
 
       <button
         onClick={() => setOpen((prev) => !prev)}
+        title="دستیار سایت"
         style={{
           position: "fixed",
           right: "18px",
           bottom: "78px",
-          width: "56px",
-          height: "56px",
+          width: "60px",
+          height: "60px",
           borderRadius: "50%",
           border: "none",
-          background: "#1d9bf0",
+          background: "linear-gradient(135deg,#1d9bf0,#7c3aed)",
           color: "#fff",
-          fontSize: "25px",
+          fontSize: "27px",
           cursor: "pointer",
-          boxShadow: "0 12px 30px rgba(29,155,240,0.35)",
+          boxShadow: "0 14px 34px rgba(29,155,240,0.42)",
           zIndex: 99999,
         }}
       >
-        🤖
+        {open ? "×" : "🤖"}
       </button>
     </>
   );
