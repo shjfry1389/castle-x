@@ -19,16 +19,17 @@ function Layout({ darkMode, setDarkMode }) {
 
   const hideNavbar =
     location.pathname === "/login" || location.pathname === "/register";
+    const hideAssistant =
+  hideNavbar || location.pathname.startsWith("/chat");
 
   return (
     <>
 
 {!hideNavbar && (
-  <>
-    <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
-    <AssistantWidget />
-  </>
+  <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
 )}
+
+{!hideAssistant && <AssistantWidget />}
 
       <Routes>
         <Route path="/" element={<Home />} />
