@@ -20,7 +20,6 @@ export default function Chat() {
   const channelRef = useRef(null);
 
   const token = localStorage.getItem("token");
-
   const currentUserId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
 
   const authHeader = {
@@ -289,6 +288,7 @@ export default function Chat() {
           const repliedMessage = msg.reply_to_id
             ? getReplyMessage(msg.reply_to_id)
             : null;
+          const replyPreview = msg.reply_to_content || repliedMessage?.content;
 
           return (
             <div
@@ -312,17 +312,33 @@ export default function Chat() {
                   border: !isMine && isDark ? "1px solid #334155" : "none",
                 }}
               >
-                {repliedMessage && (
+                {replyPreview && (
                   <div
                     style={{
                       borderRight: `3px solid ${isMine ? "#fff" : "#1d9bf0"}`,
                       paddingRight: "8px",
                       marginBottom: "8px",
-                      opacity: 0.85,
+                      opacity: 0.9,
                       fontSize: "12px",
+                      background: isMine
+                        ? "rgba(255,255,255,0.14)"
+                        : isDark
+                          ? "rgba(255,255,255,0.08)"
+                          : "#f1f5f9",
+                      borderRadius: "10px",
+                      padding: "8px",
                     }}
                   >
-                    {repliedMessage.content}
+                    <div
+                      style={{
+                        fontWeight: "700",
+                        marginBottom: "3px",
+                        fontSize: "11px",
+                      }}
+                    >
+                      Reply
+                    </div>
+                    {replyPreview}
                   </div>
                 )}
 

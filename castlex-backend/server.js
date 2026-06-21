@@ -966,21 +966,43 @@ app.post("/api/messages/send", auth, async (req, res) => {
   try {
     const { conversation_id, content, reply_to_id } = req.body;
 
-    if (!conversation_id || !content?.trim()) {
+    const text = content?.trim() || "";
+
+    if (!conversation_id || !text) {
       return res.status(400).json({
         error: "conversation_id و content الزامی هستند",
       });
     }
 
+    let replyToContent = null;
+
+    if (reply_to_id) {
+      const { data: replyMessage, error: replyError } = await supabase
+        .from("messages")
+        .select("content")
+        .eq("id", reply_to_id)
+        .eq("conversation_id", conversation_id)
+        .maybeSingle();
+
+      if (replyError) {
+        return res.status(500).json({
+          error: "خطا در بررسی پیام ریپلای شده",
+          details: replyError.message,
+        });
+      }
+
+      if (replyMessage) {
+        replyToContent = replyMessage.content;
+      }
+    }
+
     const insertData = {
       conversation_id,
       sender_id: req.user.id,
-      content: content.trim(),
+      content: text,
+      reply_to_id: reply_to_id || null,
+      reply_to_content: replyToContent,
     };
-
-    if (reply_to_id) {
-      insertData.reply_to_id = reply_to_id;
-    }
 
     const { data, error } = await supabase
       .from("messages")
