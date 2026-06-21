@@ -41,7 +41,10 @@ app.get("/", (req, res) => {
 // ثبت نام
 app.post("/api/auth/register", async (req, res) => {
   try {
-    const { username, display_name, password } = req.body;
+    let { username, display_name, password } = req.body;
+
+    username = username?.trim();
+    display_name = display_name?.trim();
 
     if (!username || !display_name || !password) {
       return res.status(400).json({
@@ -49,14 +52,34 @@ app.post("/api/auth/register", async (req, res) => {
       });
     }
 
-    const { data: existingUser } = await supabase
+    if (username.length < 3) {
+      return res.status(400).json({
+        error: "نام کاربری باید حداقل ۳ کاراکتر باشد",
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        error: "رمز عبور باید حداقل ۶ کاراکتر باشد",
+      });
+    }
+
+    const { data: existingUser, error: existingError } = await supabase
       .from("users")
-      .select("*")
+      .select("id, username")
       .ilike("username", username)
-      .single();
+      .maybeSingle();
+
+    if (existingError) {
+      console.error("REGISTER CHECK USER ERROR:", existingError);
+      return res.status(500).json({
+        error: "خطا در بررسی نام کاربری",
+        details: existingError.message,
+      });
+    }
 
     if (existingUser) {
-      return res.status(400).json({
+      return res.status(409).json({
         error: "این نام کاربری قبلا ثبت شده است",
       });
     }
@@ -72,20 +95,35 @@ app.post("/api/auth/register", async (req, res) => {
           password_hash,
         },
       ])
-      .select();
+      .select("id, username, display_name, avatar_url, is_verified, role")
+      .single();
 
     if (error) {
-      return res.status(500).json(error);
+      console.error("REGISTER INSERT ERROR:", error);
+
+      if (error.code === "23505") {
+        return res.status(409).json({
+          error: "این نام کاربری قبلا ثبت شده است",
+        });
+      }
+
+      return res.status(500).json({
+        error: "خطا در ثبت نام",
+        details: error.message,
+        code: error.code,
+      });
     }
 
-    res.json({
+    return res.json({
       success: true,
-      user: data[0],
+      user: data,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      error: "خطای سرور",
+    console.error("REGISTER SERVER ERROR:", err);
+
+    return res.status(500).json({
+      error: "خطای سرور هنگام ثبت نام",
+      details: err.message,
     });
   }
 });
