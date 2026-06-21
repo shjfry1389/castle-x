@@ -54,6 +54,21 @@ export default function AssistantWidget() {
 
   return (
     <>
+      <style>
+        {`
+          @keyframes assistantPop {
+            from {
+              opacity: 0;
+              transform: translateY(14px) scale(0.96);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+        `}
+      </style>
+
       {open && (
         <div
           style={{
@@ -69,6 +84,8 @@ export default function AssistantWidget() {
             zIndex: 99999,
             overflow: "hidden",
             direction: "rtl",
+            animation: "assistantPop 0.22s ease-out",
+            transformOrigin: "bottom right",
           }}
         >
           <div
@@ -81,17 +98,38 @@ export default function AssistantWidget() {
             <div
               style={{
                 display: "flex",
+                flexDirection: "row-reverse",
                 justifyContent: "space-between",
                 alignItems: "center",
                 gap: "12px",
               }}
             >
+              <button
+                onClick={() => setOpen(false)}
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "50%",
+                  border: "none",
+                  background: "rgba(255,255,255,0.18)",
+                  color: "#fff",
+                  fontSize: "22px",
+                  cursor: "pointer",
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+              >
+                ×
+              </button>
+
               <div
                 style={{
                   display: "flex",
+                  flexDirection: "row-reverse",
                   alignItems: "center",
                   gap: "10px",
                   minWidth: 0,
+                  flex: 1,
                 }}
               >
                 <div
@@ -110,7 +148,12 @@ export default function AssistantWidget() {
                   🤖
                 </div>
 
-                <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    minWidth: 0,
+                    textAlign: "right",
+                  }}
+                >
                   <div
                     style={{
                       fontWeight: "900",
@@ -130,24 +173,6 @@ export default function AssistantWidget() {
                   </div>
                 </div>
               </div>
-
-              <button
-                onClick={() => setOpen(false)}
-                style={{
-                  width: "34px",
-                  height: "34px",
-                  borderRadius: "50%",
-                  border: "none",
-                  background: "rgba(255,255,255,0.18)",
-                  color: "#fff",
-                  fontSize: "22px",
-                  cursor: "pointer",
-                  lineHeight: 1,
-                  flexShrink: 0,
-                }}
-              >
-                ×
-              </button>
             </div>
           </div>
 
@@ -169,6 +194,7 @@ export default function AssistantWidget() {
                 fontSize: "14px",
                 lineHeight: "1.9",
                 border: "1px solid #e5e7eb",
+                textAlign: "right",
               }}
             >
               سلام! یکی از سوال‌های آماده را انتخاب کن.
@@ -194,8 +220,9 @@ export default function AssistantWidget() {
                     fontWeight: "700",
                     lineHeight: "1.7",
                     display: "flex",
+                    flexDirection: "row-reverse",
                     alignItems: "flex-start",
-                    gap: "10px",
+                    gap: "12px",
                     boxShadow: active
                       ? "0 8px 20px rgba(29,155,240,0.16)"
                       : "none",
@@ -223,7 +250,8 @@ export default function AssistantWidget() {
                       flex: 1,
                       minWidth: 0,
                       whiteSpace: "normal",
-                      wordBreak: "break-word",
+                      overflowWrap: "anywhere",
+                      textAlign: "right",
                     }}
                   >
                     {item.question}
@@ -243,6 +271,7 @@ export default function AssistantWidget() {
                   lineHeight: "1.9",
                   fontSize: "14px",
                   boxShadow: "0 10px 24px rgba(15,23,42,0.18)",
+                  textAlign: "right",
                 }}
               >
                 <div
@@ -278,6 +307,7 @@ export default function AssistantWidget() {
           cursor: "pointer",
           boxShadow: "0 14px 34px rgba(29,155,240,0.42)",
           zIndex: 99999,
+          transition: "transform 0.18s ease, box-shadow 0.18s ease",
         }}
       >
         {open ? "×" : "🤖"}
