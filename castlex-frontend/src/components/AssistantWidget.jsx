@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const questions = [
   {
@@ -51,6 +51,20 @@ const questions = [
 export default function AssistantWidget() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const buttonBottom = isMobile ? "82px" : "18px";
+  const panelBottom = isMobile ? "154px" : "108px";
 
   return (
     <>
@@ -74,7 +88,7 @@ export default function AssistantWidget() {
           style={{
             position: "fixed",
             right: "18px",
-            bottom: "108px",
+            bottom: panelBottom,
             width: "360px",
             maxWidth: "calc(100vw - 32px)",
             background: "#ffffff",
@@ -179,7 +193,7 @@ export default function AssistantWidget() {
           <div
             style={{
               padding: "14px",
-              maxHeight: "430px",
+              maxHeight: isMobile ? "330px" : "430px",
               overflowY: "auto",
               background: "#f8fafc",
             }}
@@ -296,7 +310,7 @@ export default function AssistantWidget() {
         style={{
           position: "fixed",
           right: "18px",
-          bottom: "18px",
+          bottom: buttonBottom,
           width: "60px",
           height: "60px",
           borderRadius: "50%",
