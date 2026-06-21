@@ -1821,6 +1821,107 @@ app.post("/api/upload/avatar", auth, upload.single("avatar"), async (req, res) =
     });
   }
 });
+app.put("/api/admin/users/:id/account", auth, admin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    let { username, display_name, password, admin_edit_secret } = req.body;
+
+    if (admin_edit_secret !== process.env.ADMIN_EDIT_SECRET) {
+      return res.status(403).json({
+        error: "رمز ویرایش ادمین اشتباه است",
+      });
+    }
+
+    username = username?.trim();
+    display_name = display_name?.trim();
+
+    if (!username || !display_name) {
+      return res.status(400).json({
+        error: "نام کاربری و نام نمایشی الزامی هستند",
+      });
+    }
+
+    if (password && password.length < 6) {
+      return res.status(400).json({
+        error: "رمز جدید باید حداقل ۶ کاراکتر باشد",
+      });
+    }
+
+    const { data: targetUser, error: targetError } = await supabase
+      .from("users")
+      .select("id, role")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (targetError) {
+      return res.status(500).json({
+        error: "خطا در بررسی کاربر",
+        details: targetError.message,
+      });
+    }
+
+    if (!targetUser) {
+      return res.status(404).json({
+        error: "کاربر پیدا نشد",
+      });
+    }
+
+    const { data: sameUsername, error: sameUsernameError } = await supabase
+      .from("users")
+      .select("id")
+      .ilike("username", username)
+      .neq("id", id)
+      .maybeSingle();
+
+    if (sameUsernameError) {
+      return res.status(500).json({
+        error: "خطا در بررسی نام کاربری",
+        details: sameUsernameError.message,
+      });
+    }
+
+    if (sameUsername) {
+      return res.status(409).json({
+        error: "این نام کاربری قبلا استفاده شده است",
+      });
+    }
+
+    const updateData = {
+      username,
+      display_name,
+    };
+
+    if (password && password.trim()) {
+      updateData.password_hash = await bcrypt.hash(password.trim(), 10);
+    }
+
+    const { data, error } = await supabase
+      .from("users")
+      .update(updateData)
+      .eq("id", id)
+      .select("id, username, display_name, avatar_url, is_verified, role, banned")
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در تغییر اطلاعات کاربر",
+        details: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      user: data,
+    });
+  } catch (err) {
+    console.error("ADMIN UPDATE USER ACCOUNT ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Castle X running on port ${PORT}`);
 });
