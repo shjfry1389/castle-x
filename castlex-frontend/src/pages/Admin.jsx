@@ -11,12 +11,26 @@ export default function Admin() {
   const [comments, setComments] = useState([]);
   const [search, setSearch] = useState("");
 
+  const [editingUser, setEditingUser] = useState(null);
+  const [editUsername, setEditUsername] = useState("");
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [adminEditSecret, setAdminEditSecret] = useState("");
+
   const [stats, setStats] = useState({
     users: 0,
     posts: 0,
     comments: 0,
     likes: 0,
   });
+
+  const token = localStorage.getItem("token");
+
+  const authHeader = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
 
   useEffect(() => {
     loadUsers();
@@ -73,14 +87,7 @@ export default function Admin() {
 
   const loadReports = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await api.get("/api/admin/reports", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const res = await api.get("/api/admin/reports", authHeader);
       setReports(res.data);
     } catch (err) {
       console.error(err);
@@ -89,14 +96,7 @@ export default function Admin() {
 
   const loadPosts = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await api.get("/api/admin/posts", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const res = await api.get("/api/admin/posts", authHeader);
       setPosts(res.data);
     } catch (err) {
       console.error(err);
@@ -105,14 +105,7 @@ export default function Admin() {
 
   const loadUsers = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await api.get("/api/admin/users", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const res = await api.get("/api/admin/users", authHeader);
       setUsers(res.data);
     } catch (err) {
       console.error(err);
@@ -121,14 +114,7 @@ export default function Admin() {
 
   const loadStats = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await api.get("/api/admin/stats", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const res = await api.get("/api/admin/stats", authHeader);
       setStats(res.data);
     } catch (err) {
       console.error(err);
@@ -137,30 +123,69 @@ export default function Admin() {
 
   const loadComments = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await api.get("/api/admin/comments", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const res = await api.get("/api/admin/comments", authHeader);
       setComments(res.data);
     } catch (err) {
       console.error(err);
     }
   };
 
+  const openEditUser = (user) => {
+    setEditingUser(user);
+    setEditUsername(user.username || "");
+    setEditDisplayName(user.display_name || "");
+    setEditPassword("");
+    setAdminEditSecret("");
+  };
+
+  const closeEditUser = () => {
+    setEditingUser(null);
+    setEditPassword("");
+    setAdminEditSecret("");
+  };
+
+  const saveUserAccount = async () => {
+    try {
+      if (!editingUser) return;
+
+      if (!adminEditSecret.trim()) {
+        alert("رمز مخصوص ویرایش ادمین را وارد کن");
+        return;
+      }
+
+      const res = await api.put(
+        `/api/admin/users/${editingUser.id}/account`,
+        {
+          username: editUsername,
+          display_name: editDisplayName,
+          password: editPassword,
+          admin_edit_secret: adminEditSecret.trim(),
+        },
+        authHeader
+      );
+
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === editingUser.id
+            ? {
+                ...user,
+                ...res.data.user,
+              }
+            : user
+        )
+      );
+
+      closeEditUser();
+      alert("اطلاعات کاربر تغییر کرد");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.error || "خطا در تغییر اطلاعات کاربر");
+    }
+  };
+
   const deleteComment = async (id) => {
     try {
-      const token = localStorage.getItem("token");
-
-      await api.delete(`/api/admin/comment/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      await api.delete(`/api/admin/comment/${id}`, authHeader);
       setComments((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
       console.error(err);
@@ -169,14 +194,7 @@ export default function Admin() {
 
   const deleteReport = async (id) => {
     try {
-      const token = localStorage.getItem("token");
-
-      await api.delete(`/api/admin/report/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      await api.delete(`/api/admin/report/${id}`, authHeader);
       setReports((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
       console.error(err);
@@ -185,30 +203,15 @@ export default function Admin() {
 
   const toggleVerify = async (user) => {
     try {
-      const token = localStorage.getItem("token");
-
       const endpoint = user.is_verified
         ? `/api/admin/unverify/${user.id}`
         : `/api/admin/verify/${user.id}`;
 
-      await api.put(
-        endpoint,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await api.put(endpoint, {}, authHeader);
 
       setUsers((prev) =>
         prev.map((u) =>
-          u.id === user.id
-            ? {
-                ...u,
-                is_verified: !u.is_verified,
-              }
-            : u
+          u.id === user.id ? { ...u, is_verified: !u.is_verified } : u
         )
       );
     } catch (err) {
@@ -219,30 +222,17 @@ export default function Admin() {
 
   const toggleAdmin = async (user) => {
     try {
-      const token = localStorage.getItem("token");
-
       const endpoint =
         user.role === "admin"
           ? `/api/admin/remove-admin/${user.id}`
           : `/api/admin/make-admin/${user.id}`;
 
-      await api.put(
-        endpoint,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await api.put(endpoint, {}, authHeader);
 
       setUsers((prev) =>
         prev.map((u) =>
           u.id === user.id
-            ? {
-                ...u,
-                role: u.role === "admin" ? "user" : "admin",
-              }
+            ? { ...u, role: u.role === "admin" ? "user" : "admin" }
             : u
         )
       );
@@ -254,31 +244,14 @@ export default function Admin() {
 
   const toggleBan = async (user) => {
     try {
-      const token = localStorage.getItem("token");
-
       const endpoint = user.banned
         ? `/api/admin/unban/${user.id}`
         : `/api/admin/ban/${user.id}`;
 
-      await api.put(
-        endpoint,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await api.put(endpoint, {}, authHeader);
 
       setUsers((prev) =>
-        prev.map((u) =>
-          u.id === user.id
-            ? {
-                ...u,
-                banned: !u.banned,
-              }
-            : u
-        )
+        prev.map((u) => (u.id === user.id ? { ...u, banned: !u.banned } : u))
       );
     } catch (err) {
       console.error(err);
@@ -288,17 +261,9 @@ export default function Admin() {
 
   const deleteUser = async (id) => {
     try {
-      const token = localStorage.getItem("token");
+      if (!window.confirm("کاربر حذف شود؟")) return;
 
-      if (!window.confirm("کاربر حذف شود؟")) {
-        return;
-      }
-
-      await api.delete(`/api/admin/user/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await api.delete(`/api/admin/user/${id}`, authHeader);
 
       setUsers((prev) => prev.filter((u) => u.id !== id));
       loadStats();
@@ -310,17 +275,9 @@ export default function Admin() {
 
   const deletePost = async (id) => {
     try {
-      const token = localStorage.getItem("token");
+      if (!window.confirm("پست حذف شود؟")) return;
 
-      if (!window.confirm("پست حذف شود؟")) {
-        return;
-      }
-
-      await api.delete(`/api/admin/post/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await api.delete(`/api/admin/post/${id}`, authHeader);
 
       setPosts((prev) => prev.filter((p) => p.id !== id));
       loadStats();
@@ -441,15 +398,11 @@ export default function Admin() {
 
       <h2 style={{ marginTop: "50px" }}>Users ({filteredUsers.length})</h2>
 
-      <div
-        style={{
-          overflowX: isMobile ? "auto" : "visible",
-        }}
-      >
+      <div style={{ overflowX: isMobile ? "auto" : "visible" }}>
         <table
           style={{
             width: "100%",
-            minWidth: isMobile ? "700px" : "100%",
+            minWidth: isMobile ? "850px" : "100%",
             borderCollapse: "collapse",
           }}
         >
@@ -492,6 +445,10 @@ export default function Admin() {
                     flexWrap: isMobile ? "wrap" : "nowrap",
                   }}
                 >
+                  <button onClick={() => openEditUser(user)}>
+                    Edit Account
+                  </button>
+
                   <button onClick={() => toggleVerify(user)}>
                     {user.is_verified ? "Unverify" : "Verify"}
                   </button>
@@ -541,6 +498,117 @@ export default function Admin() {
           </button>
         </div>
       ))}
+
+      {editingUser && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 99999,
+            padding: "15px",
+          }}
+        >
+          <div
+            style={{
+              width: "420px",
+              maxWidth: "100%",
+              background: "#fff",
+              borderRadius: "16px",
+              padding: "20px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+            }}
+          >
+            <h2>Change User Account</h2>
+
+            <p
+              style={{
+                color: "#64748b",
+                fontSize: "14px",
+                lineHeight: "1.8",
+              }}
+            >
+              رمز قبلی کاربر قابل مشاهده نیست. فقط می‌توانی رمز جدید برای او
+              ثبت کنی.
+            </p>
+
+            <label>Username</label>
+            <input
+              value={editUsername}
+              onChange={(e) => setEditUsername(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px",
+                margin: "8px 0 14px",
+              }}
+            />
+
+            <label>Display Name</label>
+            <input
+              value={editDisplayName}
+              onChange={(e) => setEditDisplayName(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px",
+                margin: "8px 0 14px",
+              }}
+            />
+
+            <label>New Password</label>
+            <input
+              type="password"
+              value={editPassword}
+              onChange={(e) => setEditPassword(e.target.value)}
+              placeholder="اگر نمی‌خواهی رمز عوض شود خالی بگذار"
+              style={{
+                width: "100%",
+                padding: "10px",
+                margin: "8px 0 14px",
+              }}
+            />
+
+            <label>Admin Edit Password</label>
+            <input
+              type="password"
+              value={adminEditSecret}
+              onChange={(e) => setAdminEditSecret(e.target.value)}
+              placeholder="رمز مخصوص ویرایش ادمین"
+              style={{
+                width: "100%",
+                padding: "10px",
+                margin: "8px 0 18px",
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                justifyContent: "flex-end",
+              }}
+            >
+              <button onClick={closeEditUser}>Cancel</button>
+
+              <button
+                onClick={saveUserAccount}
+                style={{
+                  background: "#1d9bf0",
+                  color: "#fff",
+                  border: "none",
+                  padding: "9px 16px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
