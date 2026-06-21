@@ -6,6 +6,7 @@ import Home from "./pages/home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Admin from "./pages/Admin";
+import AssistantWidget from "./components/AssistantWidget";
 import Search from "./pages/Search";
 import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
@@ -21,9 +22,13 @@ function Layout({ darkMode, setDarkMode }) {
 
   return (
     <>
-      {!hideNavbar && (
-        <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
-      )}
+
+{!hideNavbar && (
+  <>
+    <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
+    <AssistantWidget />
+  </>
+)}
 
       <Routes>
         <Route path="/" element={<Home />} />
