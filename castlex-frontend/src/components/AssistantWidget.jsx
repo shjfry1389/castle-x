@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const questions = [
   {
     icon: "📝",
     question: "چطور پست بگذارم؟",
-    answer: "در صفحه اصلی متن بنویس یا عکس/ویدیو انتخاب کن و روی Post بزن.",
+    answer:
+      "در صفحه اصلی متن بنویس یا عکس/ویدیو انتخاب کن و روی دکمه Post بزن.",
   },
   {
     icon: "🖼️",
     question: "چطور عکس پروفایل عوض کنم؟",
-    answer: "وارد پروفایل خودت شو، عکس انتخاب کن و روی Upload Avatar بزن.",
+    answer:
+      "وارد پروفایل خودت شو، عکس انتخاب کن و روی Upload Avatar بزن.",
   },
   {
     icon: "✉️",
@@ -24,27 +26,32 @@ const questions = [
   {
     icon: "⚠️",
     question: "چرا آپلود گاهی خطا می‌دهد؟",
-    answer: "گاهی مسیر اینترنت یا سرویس ذخیره‌سازی کند می‌شود. کمی بعد دوباره امتحان کن.",
+    answer:
+      "گاهی مسیر اینترنت یا سرویس ذخیره‌سازی کند می‌شود. کمی بعد دوباره امتحان کن.",
   },
   {
     icon: "🔵",
     question: "چگونه تیک آبی بگیرم؟",
-    answer: "در بله به آیدی @castlex1 مراجعه کنید و با ارسال مدارک لازم، رسمی بودن یا لیدر بودن خود را اثبات کنید.",
+    answer:
+      "در بله به آیدی @castlex1 مراجعه کنید و با ارسال مدارک لازم، رسمی بودن یا لیدر بودن خود را اثبات کنید.",
   },
   {
     icon: "👑",
     question: "چگونه تیک طلایی بگیرم؟",
-    answer: "تیک طلایی مخصوص ادمین‌های سایت است و برای کاربران معمولی امکان‌پذیر نیست.",
+    answer:
+      "تیک طلایی مخصوص ادمین‌های سایت است و برای کاربران معمولی امکان‌پذیر نیست.",
   },
   {
     icon: "🚩",
     question: "چطور تخلف کسی را گزارش دهم؟",
-    answer: "وارد پروفایل شخص شوید، روی Report کلیک کنید و دلیل گزارش را بنویسید.",
+    answer:
+      "وارد پروفایل شخص شوید، روی Report کلیک کنید و دلیل گزارش را بنویسید.",
   },
   {
     icon: "💬",
     question: "جواب سوال خود را پیدا نکردید؟",
-    answer: "در بله به پیوی @castlex1 مراجعه کنید و سوال خود را بپرسید.",
+    answer:
+      "در بله به پیوی @castlex1 مراجعه کنید و سوال خود را بپرسید.",
   },
 ];
 
@@ -52,6 +59,9 @@ export default function AssistantWidget() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  const scrollAreaRef = useRef(null);
+  const answerRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -63,8 +73,19 @@ export default function AssistantWidget() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const buttonBottom = isMobile ? "82px" : "18px";
-  const panelBottom = isMobile ? "154px" : "108px";
+  useEffect(() => {
+    if (selected && answerRef.current) {
+      setTimeout(() => {
+        answerRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      }, 120);
+    }
+  }, [selected]);
+
+  const buttonBottom = isMobile ? "94px" : "18px";
+  const panelBottom = isMobile ? "168px" : "108px";
 
   return (
     <>
@@ -87,10 +108,10 @@ export default function AssistantWidget() {
         <div
           style={{
             position: "fixed",
-            right: "18px",
+            right: isMobile ? "10px" : "18px",
             bottom: panelBottom,
-            width: "360px",
-            maxWidth: "calc(100vw - 32px)",
+            width: isMobile ? "calc(100vw - 20px)" : "360px",
+            maxWidth: "calc(100vw - 20px)",
             background: "#ffffff",
             border: "1px solid rgba(15,23,42,0.08)",
             borderRadius: "24px",
@@ -191,9 +212,10 @@ export default function AssistantWidget() {
           </div>
 
           <div
+            ref={scrollAreaRef}
             style={{
               padding: "14px",
-              maxHeight: isMobile ? "330px" : "430px",
+              maxHeight: isMobile ? "310px" : "430px",
               overflowY: "auto",
               background: "#f8fafc",
             }}
@@ -276,6 +298,7 @@ export default function AssistantWidget() {
 
             {selected && (
               <div
+                ref={answerRef}
                 style={{
                   marginTop: "14px",
                   background: "#111827",
