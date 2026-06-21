@@ -4,6 +4,43 @@ import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import { Link } from "react-router-dom";
 
+function BlueVerifiedBadge({ size = 19 }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size}>
+      <path
+        fill="#1D9BF0"
+        d="M22.5 12c0 1.1-1.1 2-1.4 3-.3 1.1.1 2.5-.5 3.4-.6.9-2 .9-2.9 1.5-.9.6-1.5 1.9-2.6 2.2-1 .3-2.2-.5-3.3-.5s-2.3.8-3.3.5c-1.1-.3-1.7-1.6-2.6-2.2-.9-.6-2.3-.6-2.9-1.5-.6-.9-.2-2.3-.5-3.4-.3-1-1.4-1.9-1.4-3s1.1-2 1.4-3c.3-1.1-.1-2.5.5-3.4.6-.9 2-.9 2.9-1.5.9-.6 1.5-1.9 2.6-2.2 1-.3 2.2.5 3.3.5s2.3-.8 3.3-.5c1.1.3 1.7 1.6 2.6 2.2.9.6 2.3.6 2.9 1.5.6.9.2 2.3.5 3.4.3 1 1.4 1.9 1.4 3z"
+      />
+      <path
+        fill="#fff"
+        d="M10.3 15.3 7.7 12.7l-1.1 1.1 3.7 3.7 7.1-7.1-1.1-1.1z"
+      />
+    </svg>
+  );
+}
+
+function GoldVerifiedBadge({ size = 19 }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      style={{
+        filter: "drop-shadow(0 0 5px #facc15)",
+      }}
+    >
+      <path
+        fill="#facc15"
+        d="M22.5 12c0 1.1-1.1 2-1.4 3-.3 1.1.1 2.5-.5 3.4-.6.9-2 .9-2.9 1.5-.9.6-1.5 1.9-2.6 2.2-1 .3-2.2-.5-3.3-.5s-2.3.8-3.3.5c-1.1-.3-1.7-1.6-2.6-2.2-.9-.6-2.3-.6-2.9-1.5-.6-.9-.2-2.3-.5-3.4-.3-1-1.4-1.9-1.4-3s1.1-2 1.4-3c.3-1.1-.1-2.5.5-3.4.6-.9 2-.9 2.9-1.5.9-.6 1.5-1.9 2.6-2.2 1-.3 2.2.5 3.3.5s2.3-.8 3.3-.5c1.1.3 1.7 1.6 2.6 2.2.9.6 2.3.6 2.9 1.5.6.9.2 2.3.5 3.4.3 1 1.4 1.9 1.4 3z"
+      />
+      <path
+        fill="#fff"
+        d="M10.3 15.3 7.7 12.7l-1.1 1.1 3.7 3.7 7.1-7.1-1.1-1.1z"
+      />
+    </svg>
+  );
+}
+
 export default function Chat() {
   const { conversationId } = useParams();
 
@@ -11,6 +48,7 @@ export default function Chat() {
   const [content, setContent] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [typingUser, setTypingUser] = useState(false);
+  const [chatUser, setChatUser] = useState(null);
   const [isDark, setIsDark] = useState(
     document.body.classList.contains("dark")
   );
@@ -56,6 +94,22 @@ export default function Chat() {
       .catch(console.error);
   };
 
+  const loadChatUser = async () => {
+    if (!token) return;
+
+    try {
+      const res = await api.get("/api/conversations", authHeader);
+
+      const currentConversation = res.data.find(
+        (item) => String(item.conversation_id) === String(conversationId)
+      );
+
+      setChatUser(currentConversation?.user || null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const getReplyMessage = (replyId) => {
     return messages.find((msg) => String(msg.id) === String(replyId));
   };
@@ -87,6 +141,7 @@ export default function Chat() {
 
   useEffect(() => {
     loadMessages();
+    loadChatUser();
 
     const channel = supabase
       .channel(`chat-${conversationId}`, {
@@ -226,7 +281,7 @@ export default function Chat() {
     >
       <div
         style={{
-          padding: "18px",
+          padding: "14px 18px",
           borderBottom: isDark ? "1px solid #334155" : "1px solid #e5e7eb",
           position: "sticky",
           top: 0,
@@ -249,29 +304,87 @@ export default function Chat() {
           ←
         </Link>
 
-        <div>
+        <Link
+          to={
+            chatUser?.username
+              ? `/profile/${encodeURIComponent(chatUser.username)}`
+              : "#"
+          }
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            textDecoration: "none",
+            color: "inherit",
+            minWidth: 0,
+          }}
+        >
+          <img
+            src={
+              chatUser?.avatar_url ||
+              "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+            }
+            alt=""
+            style={{
+              width: "44px",
+              height: "44px",
+              borderRadius: "50%",
+              objectFit: "cover",
+              flexShrink: 0,
+            }}
+          />
+
           <div
             style={{
-              fontWeight: "700",
-              fontSize: "20px",
-              color: isDark ? "#fff" : "#111827",
+              minWidth: 0,
             }}
           >
-            💬 Chat
-          </div>
-
-          {typingUser && (
             <div
               style={{
-                fontSize: "12px",
-                color: "#1d9bf0",
-                marginTop: "2px",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                fontWeight: "800",
+                fontSize: "16px",
+                color: isDark ? "#fff" : "#111827",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
-              در حال نوشتن...
+              <span
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {chatUser?.display_name || "Chat"}
+              </span>
+
+              {chatUser?.role === "admin" || chatUser?.role === "founder" ? (
+                <GoldVerifiedBadge />
+              ) : chatUser?.is_verified ? (
+                <BlueVerifiedBadge />
+              ) : null}
             </div>
-          )}
-        </div>
+
+            <div
+              style={{
+                fontSize: "13px",
+                color: typingUser ? "#1d9bf0" : isDark ? "#cbd5e1" : "#64748b",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {typingUser
+                ? "در حال نوشتن..."
+                : chatUser?.username
+                  ? `@${chatUser.username}`
+                  : "Chat"}
+            </div>
+          </div>
+        </Link>
       </div>
 
       <div

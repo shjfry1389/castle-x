@@ -1099,8 +1099,8 @@ app.get("/api/conversations", auth, async (req, res) => {
       const { data: user } = await supabase
         .from("users")
         .select(
-          "id, username, display_name, avatar_url, is_online, last_seen, is_verified",
-        )
+  "id, username, display_name, avatar_url, is_online, last_seen, is_verified, role",
+)
         .eq("id", other.user_id)
         .single();
 
