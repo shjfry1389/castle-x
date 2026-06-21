@@ -74,7 +74,7 @@ export default function AssistantWidget() {
           style={{
             position: "fixed",
             right: "18px",
-            bottom: "92px",
+            bottom: "108px",
             width: "360px",
             maxWidth: "calc(100vw - 32px)",
             background: "#ffffff",
@@ -296,7 +296,7 @@ export default function AssistantWidget() {
         style={{
           position: "fixed",
           right: "18px",
-          bottom: "78px",
+          bottom: "18px",
           width: "60px",
           height: "60px",
           borderRadius: "50%",
