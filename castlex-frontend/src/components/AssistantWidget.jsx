@@ -91,6 +91,7 @@ export default function AssistantWidget() {
                   display: "flex",
                   alignItems: "center",
                   gap: "10px",
+                  minWidth: 0,
                 }}
               >
                 <div
@@ -103,12 +104,13 @@ export default function AssistantWidget() {
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "23px",
+                    flexShrink: 0,
                   }}
                 >
                   🤖
                 </div>
 
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <div
                     style={{
                       fontWeight: "900",
@@ -141,6 +143,7 @@ export default function AssistantWidget() {
                   fontSize: "22px",
                   cursor: "pointer",
                   lineHeight: 1,
+                  flexShrink: 0,
                 }}
               >
                 ×
@@ -191,9 +194,11 @@ export default function AssistantWidget() {
                     fontWeight: "700",
                     lineHeight: "1.7",
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: "flex-start",
                     gap: "10px",
-                    boxShadow: active ? "0 8px 20px rgba(29,155,240,0.16)" : "none",
+                    boxShadow: active
+                      ? "0 8px 20px rgba(29,155,240,0.16)"
+                      : "none",
                   }}
                 >
                   <span
@@ -207,12 +212,22 @@ export default function AssistantWidget() {
                       alignItems: "center",
                       justifyContent: "center",
                       flexShrink: 0,
+                      marginTop: "2px",
                     }}
                   >
                     {item.icon}
                   </span>
 
-                  <span>{item.question}</span>
+                  <span
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      whiteSpace: "normal",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {item.question}
+                  </span>
                 </button>
               );
             })}
