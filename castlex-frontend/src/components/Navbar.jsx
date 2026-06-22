@@ -33,24 +33,35 @@ export default function Navbar({ darkMode, setDarkMode }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const logout = async () => {
-    try {
-      await api.put(
-        "/api/users/offline",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-    } catch {}
+const logout = async () => {
+  const confirmLogout = window.confirm(
+    "آیا مطمئنید می‌خواهید از حساب کاربری خود خارج شوید؟"
+  );
 
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
+  if (!confirmLogout) {
+    return;
+  }
 
-    window.location.href = "/login";
-  };
+  try {
+    await api.put(
+      "/api/users/offline",
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (err) {
+    console.error(err);
+  }
+
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("role");
+
+  window.location.href = "/login";
+};
 
   const toggleTheme = () => {
     setDarkMode((prev) => !prev);
