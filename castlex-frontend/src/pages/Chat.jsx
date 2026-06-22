@@ -267,9 +267,6 @@ export default function Chat() {
         String(msg.sender_id) === String(currentUserId) && Boolean(msg.seen_at)
     );
 
-  const chatUserRole = String(chatUser?.role || "").toLowerCase().trim();
-  const showGoldBadge = chatUserRole === "admin" || chatUserRole === "founder";
-
   return (
     <div
       style={{
@@ -337,7 +334,11 @@ export default function Chat() {
             }}
           />
 
-          <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              minWidth: 0,
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -360,7 +361,7 @@ export default function Chat() {
                 {chatUser?.display_name || "Chat"}
               </span>
 
-              {showGoldBadge ? (
+              {chatUser?.role === "admin" || chatUser?.role === "founder" ? (
                 <GoldVerifiedBadge />
               ) : chatUser?.is_verified ? (
                 <BlueVerifiedBadge />
