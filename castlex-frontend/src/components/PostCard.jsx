@@ -347,27 +347,29 @@ if (typeof res.data?.views_count === "number") {
               textAlign: isPersian(postContent) ? "right" : "left",
             }}
           >
-            {postContent.split(" ").map((word, i) => {
-              if (word.startsWith("@")) {
-                const mentionedUsername = word.slice(1);
+            {postContent.split(/(\s+|@[a-zA-Z0-9_]+)/g).map((part, i) => {
+  if (!part) return null;
 
-                return (
-                  <Link
-                    key={i}
-                    to={`/profile/${mentionedUsername}`}
-                    style={{
-                      color: "#1d9bf0",
-                      fontWeight: "bold",
-                      textDecoration: "none",
-                    }}
-                  >
-                    {word}{" "}
-                  </Link>
-                );
-              }
+  if (/^@[a-zA-Z0-9_]+$/.test(part)) {
+    const mentionedUsername = part.slice(1);
 
-              return word + " ";
-            })}
+    return (
+      <Link
+        key={i}
+        to={`/profile/${encodeURIComponent(mentionedUsername)}`}
+        style={{
+          color: "#1d9bf0",
+          fontWeight: "bold",
+          textDecoration: "none",
+        }}
+      >
+        {part}
+      </Link>
+    );
+  }
+
+  return part;
+})}
           </div>
 
           {post.image_url &&
