@@ -55,44 +55,104 @@ const questions = [
   },
 ];
 
-function RobotIcon({ size = 34 }) {
+function RobotIcon({ size = 38 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
-      <rect x="13" y="22" width="38" height="29" rx="13" fill="#0f172a" />
-      <rect x="17" y="26" width="30" height="21" rx="10" fill="#ffffff" />
-      <circle cx="26" cy="36" r="3.4" fill="#1d9bf0" />
-      <circle cx="38" cy="36" r="3.4" fill="#7c3aed" />
-      <path
-        d="M27.5 42c2.6 2 6.4 2 9 0"
-        stroke="#0f172a"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-      <path
-        d="M32 22V13"
-        stroke="#0f172a"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <circle cx="32" cy="10" r="4.5" fill="#22c55e" />
-      <path
-        d="M13 34H8.5C6.6 34 5 35.6 5 37.5S6.6 41 8.5 41H13"
-        stroke="#0f172a"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <path
-        d="M51 34h4.5c1.9 0 3.5 1.6 3.5 3.5S57.4 41 55.5 41H51"
-        stroke="#0f172a"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <path
-        d="M20 25c3.5-4 20.5-4 24 0"
-        stroke="#60a5fa"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
+    <svg width={size} height={size} viewBox="0 0 72 72" fill="none">
+      <defs>
+        <linearGradient id="botShell" x1="14" y1="12" x2="60" y2="64">
+          <stop stopColor="#e0f2fe" />
+          <stop offset="0.45" stopColor="#93c5fd" />
+          <stop offset="1" stopColor="#8b5cf6" />
+        </linearGradient>
+
+        <linearGradient id="botFace" x1="20" y1="25" x2="52" y2="52">
+          <stop stopColor="#0f172a" />
+          <stop offset="1" stopColor="#1e1b4b" />
+        </linearGradient>
+
+        <linearGradient id="botEye" x1="24" y1="35" x2="48" y2="42">
+          <stop stopColor="#38bdf8" />
+          <stop offset="1" stopColor="#c084fc" />
+        </linearGradient>
+
+        <filter id="botShadow" x="6" y="6" width="60" height="60">
+          <feDropShadow
+            dx="0"
+            dy="7"
+            stdDeviation="5"
+            floodColor="#0f172a"
+            floodOpacity="0.25"
+          />
+        </filter>
+      </defs>
+
+      <g filter="url(#botShadow)">
+        <rect
+          x="13"
+          y="20"
+          width="46"
+          height="38"
+          rx="19"
+          fill="url(#botShell)"
+        />
+
+        <rect
+          x="19"
+          y="27"
+          width="34"
+          height="25"
+          rx="12.5"
+          fill="url(#botFace)"
+        />
+
+        <path
+          d="M28 18c1.8-4.2 5-6.3 8-6.3s6.2 2.1 8 6.3"
+          stroke="#e0f2fe"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+
+        <circle cx="36" cy="10" r="4" fill="#22c55e" />
+        <circle cx="36" cy="10" r="7" stroke="#bbf7d0" strokeOpacity="0.45" />
+
+        <path
+          d="M13.5 36H9.5C7.6 36 6 37.6 6 39.5S7.6 43 9.5 43H13.5"
+          stroke="#dbeafe"
+          strokeWidth="4.5"
+          strokeLinecap="round"
+        />
+
+        <path
+          d="M58.5 36h4c1.9 0 3.5 1.6 3.5 3.5S64.4 43 62.5 43h-4"
+          stroke="#dbeafe"
+          strokeWidth="4.5"
+          strokeLinecap="round"
+        />
+
+        <circle cx="29" cy="40" r="4" fill="url(#botEye)" />
+        <circle cx="43" cy="40" r="4" fill="url(#botEye)" />
+
+        <path
+          d="M31 47c2.8 2.1 7.2 2.1 10 0"
+          stroke="#e0f2fe"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+
+        <path
+          d="M23.5 29.5c5-3.8 20-3.8 25 0"
+          stroke="#ffffff"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          opacity="0.65"
+        />
+
+        <path
+          d="M53.5 18.5l1.2 2.5 2.6 1.1-2.6 1.1-1.2 2.5-1.1-2.5-2.6-1.1 2.6-1.1 1.1-2.5Z"
+          fill="#ffffff"
+          opacity="0.9"
+        />
+      </g>
     </svg>
   );
 }
@@ -246,17 +306,17 @@ export default function AssistantWidget() {
               >
                 <div
                   style={{
-                    width: "46px",
-                    height: "46px",
+                    width: "48px",
+                    height: "48px",
                     borderRadius: "50%",
-                    background: "rgba(255,255,255,0.22)",
+                    background: "rgba(255,255,255,0.2)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
                   }}
                 >
-                  <RobotIcon size={36} />
+                  <RobotIcon size={40} />
                 </div>
 
                 <div style={{ minWidth: 0, textAlign: "right" }}>
@@ -413,7 +473,7 @@ export default function AssistantWidget() {
           justifyContent: "center",
         }}
       >
-        {open ? <CloseIcon /> : <RobotIcon size={38} />}
+        {open ? <CloseIcon /> : <RobotIcon size={42} />}
       </button>
     </>
   );
