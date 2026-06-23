@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+
 import { Link } from "react-router-dom";
 import api from "../services/api";
-
 function getVisitorKey() {
   let key = localStorage.getItem("castle_x_visitor_key");
 
@@ -17,6 +17,7 @@ function getVisitorKey() {
 }
 
 function EyeIcon() {
+  
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
       <path
@@ -28,60 +29,11 @@ function EyeIcon() {
     </svg>
   );
 }
-
-function DeleteIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M3 6h18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M19 6l-1 14c-.1 1.1-1 2-2.1 2H8.1C7 22 6.1 21.1 6 20L5 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function DeleteButton({ onClick, title }) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      style={{
-        width: "34px",
-        height: "34px",
-        border: "none",
-        borderRadius: "999px",
-        background: "rgba(239,68,68,0.1)",
-        color: "#ef4444",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <DeleteIcon />
-    </button>
-  );
-}
-
-function VerifiedBadge({ type = "blue" }) {
-  const color = type === "gold" ? "#FFD700" : "#1D9BF0";
-
-  return (
-    <svg viewBox="0 0 30 24" width="20" height="20" aria-label="Verified">
-      <path
-        fill={color}
-        d="M22.5 12c0 1.1-1.1 2-1.4 3-.3 1.1.1 2.5-.5 3.4-.6.9-2 .9-2.9 1.5-.9.6-1.5 1.9-2.6 2.2-1 .3-2.2-.5-3.3-.5s-2.3.8-3.3.5c-1.1-.3-1.7-1.6-2.6-2.2-.9-.6-2.3-.6-2.9-1.5-.6-.9-.2-2.3-.5-3.4-.3-1-1.4-1.9-1.4-3s1.1-2 1.4-3c.3-1.1-.1-2.5.5-3.4.6-.9 2-.9 2.9-1.5.9-.6 1.5-1.9 2.6-2.2 1-.3 2.2.5 3.3.5s2.3-.8 3.3-.5c1.1.3 1.7 1.6 2.6 2.2.9.6 2.3.6 2.9 1.5.6.9.2 2.3.5 3.4.3 1 1.4 1.9 1.4 3z"
-      />
-      <path fill="#fff" d="M10.3 15.3 7.7 12.7l-1.1 1.1 3.7 3.7 7.1-7.1-1.1-1.1z" />
-    </svg>
-  );
-}
-
 export default function PostCard({ post }) {
   const username = localStorage.getItem("username");
   const cardRef = useRef(null);
-  const viewTimerRef = useRef(null);
-  const sentViewRef = useRef(false);
+const viewTimerRef = useRef(null);
+const sentViewRef = useRef(false);
 
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
@@ -92,70 +44,9 @@ export default function PostCard({ post }) {
 
   const postContent = post.content || "";
 
-  useEffect(() => {
-    if (!post.id || !cardRef.current) return;
-
-    const sessionKey = `castle_x_view_sent_${post.id}`;
-    if (sessionStorage.getItem(sessionKey)) return;
-
-    const sendView = async () => {
-      if (sentViewRef.current) return;
-
-      sentViewRef.current = true;
-
-      try {
-        const token = localStorage.getItem("token");
-
-        const res = await api.post(
-          `/api/posts/${post.id}/view`,
-          {
-            visitor_key: getVisitorKey(),
-          },
-          {
-            headers: token
-              ? {
-                  Authorization: `Bearer ${token}`,
-                }
-              : {},
-          }
-        );
-
-        sessionStorage.setItem(sessionKey, "1");
-
-        if (typeof res.data?.views_count === "number") {
-          setViewsCount(res.data.views_count);
-        }
-      } catch (err) {
-        sentViewRef.current = false;
-        console.error(err);
-      }
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-          viewTimerRef.current = setTimeout(sendView, 2000);
-        } else if (viewTimerRef.current) {
-          clearTimeout(viewTimerRef.current);
-        }
-      },
-      {
-        threshold: [0, 0.6, 1],
-      }
-    );
-
-    observer.observe(cardRef.current);
-
-    return () => {
-      observer.disconnect();
-
-      if (viewTimerRef.current) {
-        clearTimeout(viewTimerRef.current);
-      }
-    };
-  }, [post.id]);
-
-  const isPersian = (text) => /[\u0600-\u06FF]/.test(text || "");
+  const isPersian = (text) => {
+    return /[\u0600-\u06FF]/.test(text || "");
+  };
 
   const deletePost = async () => {
     const token = localStorage.getItem("token");
@@ -269,12 +160,77 @@ export default function PostCard({ post }) {
         },
       });
 
-      setComments((prev) => prev.filter((comment) => comment.id !== commentId));
+      setComments((prev) =>
+        prev.filter((comment) => comment.id !== commentId)
+      );
     } catch (err) {
       console.error(err);
       alert("خطا در حذف کامنت");
     }
   };
+    useEffect(() => {
+    if (!post.id || !cardRef.current) return;
+
+    const sessionKey = `castle_x_view_sent_${post.id}`;
+
+    if (sessionStorage.getItem(sessionKey)) return;
+
+    const sendView = async () => {
+      if (sentViewRef.current) return;
+
+      sentViewRef.current = true;
+
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await api.post(
+          `/api/posts/${post.id}/view`,
+          {
+            visitor_key: getVisitorKey(),
+          },
+          {
+            headers: token
+              ? {
+                  Authorization: `Bearer ${token}`,
+                }
+              : {},
+          }
+        );
+
+        sessionStorage.setItem(sessionKey, "1");
+
+        if (typeof res.data?.views_count === "number") {
+          setViewsCount(res.data.views_count);
+        }
+      } catch (err) {
+        sentViewRef.current = false;
+        console.error(err);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+          viewTimerRef.current = setTimeout(sendView, 2000);
+        } else if (viewTimerRef.current) {
+          clearTimeout(viewTimerRef.current);
+        }
+      },
+      {
+        threshold: [0, 0.6, 1],
+      }
+    );
+
+    observer.observe(cardRef.current);
+
+    return () => {
+      observer.disconnect();
+
+      if (viewTimerRef.current) {
+        clearTimeout(viewTimerRef.current);
+      }
+    };
+  }, [post.id]);
 
   return (
     <div
@@ -286,7 +242,12 @@ export default function PostCard({ post }) {
         transition: "0.2s",
       }}
     >
-      <div style={{ display: "flex", gap: "12px" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+        }}
+      >
         <img
           src={
             post.author?.avatar_url ||
@@ -302,7 +263,13 @@ export default function PostCard({ post }) {
         />
 
         <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
             <Link
               to={`/profile/${encodeURIComponent(post.author?.username || "")}`}
               style={{
@@ -313,25 +280,66 @@ export default function PostCard({ post }) {
                 gap: "6px",
               }}
             >
-              <span style={{ fontWeight: "700", fontSize: "15px" }}>
+              <span
+                style={{
+                  fontWeight: "700",
+                  fontSize: "15px",
+                  cursor: "pointer",
+                }}
+              >
                 {post.author?.display_name || post.author?.username}
               </span>
 
-              {post.author?.role === "admin" ? (
-                <VerifiedBadge type="gold" />
-              ) : post.author?.is_verified ? (
-                <VerifiedBadge type="blue" />
-              ) : null}
+              {post.author?.is_verified && (
+                <svg viewBox="0 0 30 24" width="20" height="20" aria-label="Verified">
+                  <path
+                    fill="#1D9BF0"
+                    d="M22.5 12c0 1.1-1.1 2-1.4 3-.3 1.1.1 2.5-.5 3.4-.6.9-2 .9-2.9 1.5-.9.6-1.5 1.9-2.6 2.2-1 .3-2.2-.5-3.3-.5s-2.3.8-3.3.5c-1.1-.3-1.7-1.6-2.6-2.2-.9-.6-2.3-.6-2.9-1.5-.6-.9-.2-2.3-.5-3.4-.3-1-1.4-1.9-1.4-3s1.1-2 1.4-3c.3-1.1-.1-2.5.5-3.4.6-.9 2-.9 2.9-1.5.9-.6 1.5-1.9 2.6-2.2 1-.3 2.2.5 3.3.5s2.3-.8 3.3-.5c1.1.3 1.7 1.6 2.6 2.2.9.6 2.3.6 2.9 1.5.6.9.2 2.3.5 3.4.3 1 1.4 1.9 1.4 3z"
+                  />
+                  <path fill="#fff" d="M10.3 15.3 7.7 12.7l-1.1 1.1 3.7 3.7 7.1-7.1-1.1-1.1z" />
+                </svg>
+              )}
 
-              <span style={{ color: "#536471", fontSize: "14px" }}>
+              {post.author?.role === "admin" && (
+                <svg
+                  viewBox="0 0 30 24"
+                  width="20"
+                  height="20"
+                  aria-label="Admin"
+                  style={{ filter: "drop-shadow(0 0 8px gold)" }}
+                >
+                  <path
+                    fill="#FFD700"
+                    d="M22.5 12c0 1.1-1.1 2-1.4 3-.3 1.1.1 2.5-.5 3.4-.6.9-2 .9-2.9 1.5-.9.6-1.5 1.9-2.6 2.2-1 .3-2.2-.5-3.3-.5s-2.3.8-3.3.5c-1.1-.3-1.7-1.6-2.6-2.2-.9-.6-2.3-.6-2.9-1.5-.6-.9-.2-2.3-.5-3.4-.3-1-1.4-1.9-1.4-3s1.1-2 1.4-3c.3-1.1-.1-2.5.5-3.4.6-.9 2-.9 2.9-1.5.9-.6 1.5-1.9 2.6-2.2 1-.3 2.2.5 3.3.5s2.3-.8 3.3-.5c1.1.3 1.7 1.6 2.6 2.2.9.6 2.3.6 2.9 1.5.6.9.2 2.3.5 3.4.3 1 1.4 1.9 1.4 3z"
+                  />
+                  <path fill="#fff" d="M10.3 15.3 7.7 12.7l-1.1 1.1 3.7 3.7 7.1-7.1-1.1-1.1z" />
+                </svg>
+              )}
+
+              <span
+                style={{
+                  color: "#536471",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
                 @{post.author?.username}
               </span>
             </Link>
 
             {username === post.author?.username && (
-              <div style={{ marginLeft: "auto" }}>
-                <DeleteButton onClick={deletePost} title="حذف پست" />
-              </div>
+              <button
+                onClick={deletePost}
+                style={{
+                  marginLeft: "auto",
+                  border: "none",
+                  background: "none",
+                  cursor: "pointer",
+                  color: "#f4212e",
+                }}
+              >
+                🗑️
+              </button>
             )}
           </div>
 
@@ -352,7 +360,7 @@ export default function PostCard({ post }) {
                 return (
                   <Link
                     key={i}
-                    to={`/profile/${encodeURIComponent(mentionedUsername)}`}
+                    to={`/profile/${mentionedUsername}`}
                     style={{
                       color: "#1d9bf0",
                       fontWeight: "bold",
@@ -406,26 +414,34 @@ export default function PostCard({ post }) {
               color: "#536471",
               borderTop: "1px solid #eff3f4",
               paddingTop: "8px",
-              textAlign: "left",
             }}
           >
-            {new Date(post.created_at + "Z").toLocaleString("fa-IR", {
-              timeZone: "Asia/Tehran",
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            <div
+              style={{
+                marginTop: "10px",
+                fontSize: "12px",
+                color: "#536471",
+                textAlign: "left",
+              }}
+            >
+              🕒{" "}
+              {new Date(post.created_at + "Z").toLocaleString("fa-IR", {
+                timeZone: "Asia/Tehran",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </div>
           </div>
 
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
               marginTop: "14px",
-              maxWidth: "460px",
+              maxWidth: "420px",
             }}
           >
             <button
@@ -437,7 +453,7 @@ export default function PostCard({ post }) {
                 cursor: "pointer",
               }}
             >
-              💬 {post.comments_count || 0}
+              💬 {post.comments_count}
             </button>
 
             <button
@@ -450,22 +466,29 @@ export default function PostCard({ post }) {
                 color: liked ? "#f91880" : "#536471",
               }}
             >
-              {liked ? "❤️" : "♡"} {likesCount}
+              {liked ? "❤️" : "🤍"} {likesCount}
             </button>
-
             <div
-              title="بازدید"
+  style={{
+    color: "#536471",
+    fontSize: "14px",
+    display: "flex",
+    alignItems: "center",
+    gap: "5px",
+  }}
+>
+  <EyeIcon />
+  {viewsCount}
+</div>
+            <button
               style={{
+                background: "none",
+                border: "none",
                 color: "#536471",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
               }}
             >
-              <EyeIcon />
-              {viewsCount}
-            </div>
+              🔁
+            </button>
 
             <button
               style={{
@@ -474,7 +497,7 @@ export default function PostCard({ post }) {
                 color: "#536471",
               }}
             >
-              ↗
+              📤
             </button>
           </div>
 
@@ -486,7 +509,13 @@ export default function PostCard({ post }) {
                 paddingTop: "15px",
               }}
             >
-              <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  marginBottom: "15px",
+                }}
+              >
                 <input
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
@@ -529,15 +558,27 @@ export default function PostCard({ post }) {
                       alignItems: "center",
                     }}
                   >
-                    <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
+                    <div
+                      style={{
+                        fontWeight: "bold",
+                        marginBottom: "4px",
+                      }}
+                    >
                       @{comment.author?.display_name || comment.author?.username}
                     </div>
 
                     {comment.author?.username === username && (
-                      <DeleteButton
+                      <button
                         onClick={() => deleteComment(comment.id)}
-                        title="حذف کامنت"
-                      />
+                        style={{
+                          border: "none",
+                          background: "none",
+                          cursor: "pointer",
+                          color: "#f4212e",
+                        }}
+                      >
+                        🗑️
+                      </button>
                     )}
                   </div>
 
