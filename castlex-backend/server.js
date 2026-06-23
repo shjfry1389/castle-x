@@ -1445,11 +1445,18 @@ app.put("/api/admin/users/:id/account", auth, admin, async (req, res) => {
 });
 // حذف کاربر
 
-app.delete("/api/admin/user/:id", auth, admin, async (req, res) => {
+app.post("/api/admin/users/:id/delete-secure", auth, admin, async (req, res) => {
   try {
+    const { id } = req.params;
     const { admin_edit_secret } = req.body || {};
 
-    if (admin_edit_secret !== process.env.ADMIN_EDIT_SECRET) {
+    if (!process.env.ADMIN_EDIT_SECRET) {
+      return res.status(500).json({
+        error: "ADMIN_EDIT_SECRET روی سرور تنظیم نشده است",
+      });
+    }
+
+    if (!admin_edit_secret || admin_edit_secret.trim() !== process.env.ADMIN_EDIT_SECRET) {
       return res.status(403).json({
         error: "رمز محرمانه ادمین اشتباه است",
       });
@@ -1458,24 +1465,19 @@ app.delete("/api/admin/user/:id", auth, admin, async (req, res) => {
     await supabase
       .from("followers")
       .delete()
-      .or(`follower_id.eq.${req.params.id},following_id.eq.${req.params.id}`);
+      .or(`follower_id.eq.${id},following_id.eq.${id}`);
 
-    await supabase.from("likes").delete().eq("user_id", req.params.id);
+    await supabase.from("likes").delete().eq("user_id", id);
+    await supabase.from("comments").delete().eq("user_id", id);
+    await supabase.from("posts").delete().eq("user_id", id);
+    await supabase.from("users").delete().eq("id", id);
 
-    await supabase.from("comments").delete().eq("user_id", req.params.id);
-
-    await supabase.from("posts").delete().eq("user_id", req.params.id);
-
-    await supabase.from("users").delete().eq("id", req.params.id);
-
-    res.json({
-      success: true,
-    });
+    res.json({ success: true });
   } catch (err) {
-    console.error("ADMIN DELETE USER ERROR:", err);
+    console.error("ADMIN SECURE DELETE USER ERROR:", err);
 
     res.status(500).json({
-      error: "Server Error",
+      error: "خطا در حذف کاربر",
       details: err.message,
     });
   }

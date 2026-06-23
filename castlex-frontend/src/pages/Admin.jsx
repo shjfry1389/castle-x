@@ -259,7 +259,7 @@ export default function Admin() {
     }
   };
 
-  const deleteUser = async (id) => {
+ const deleteUser = async (id) => {
   try {
     const confirmDelete = window.confirm(
       "آیا مطمئنید می‌خواهید این کاربر را حذف کنید؟ این عملیات قابل برگشت نیست."
@@ -274,14 +274,13 @@ export default function Admin() {
       return;
     }
 
-    await api.delete(`/api/admin/user/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      data: {
+    await api.post(
+      `/api/admin/users/${id}/delete-secure`,
+      {
         admin_edit_secret: secret.trim(),
       },
-    });
+      authHeader
+    );
 
     setUsers((prev) => prev.filter((u) => u.id !== id));
     loadStats();
