@@ -55,104 +55,70 @@ const questions = [
   },
 ];
 
-function RobotIcon({ size = 38 }) {
+function RobotIcon({ size = 42 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 72 72" fill="none">
-      <defs>
-        <linearGradient id="botShell" x1="14" y1="12" x2="60" y2="64">
-          <stop stopColor="#e0f2fe" />
-          <stop offset="0.45" stopColor="#93c5fd" />
-          <stop offset="1" stopColor="#8b5cf6" />
-        </linearGradient>
+      <circle cx="36" cy="36" r="32" fill="#0f172a" />
+      <circle cx="36" cy="36" r="28" stroke="#38bdf8" strokeWidth="3" />
+      <circle cx="36" cy="36" r="23" fill="#1d4ed8" />
 
-        <linearGradient id="botFace" x1="20" y1="25" x2="52" y2="52">
-          <stop stopColor="#0f172a" />
-          <stop offset="1" stopColor="#1e1b4b" />
-        </linearGradient>
+      <path
+        d="M25 26h22c5.5 0 10 4.5 10 10v8c0 5.5-4.5 10-10 10H25c-5.5 0-10-4.5-10-10v-8c0-5.5 4.5-10 10-10Z"
+        fill="#2563eb"
+      />
 
-        <linearGradient id="botEye" x1="24" y1="35" x2="48" y2="42">
-          <stop stopColor="#38bdf8" />
-          <stop offset="1" stopColor="#c084fc" />
-        </linearGradient>
+      <path
+        d="M27 31h18c4.4 0 8 3.6 8 8v3c0 4.4-3.6 8-8 8H27c-4.4 0-8-3.6-8-8v-3c0-4.4 3.6-8 8-8Z"
+        fill="#f8fafc"
+      />
 
-        <filter id="botShadow" x="6" y="6" width="60" height="60">
-          <feDropShadow
-            dx="0"
-            dy="7"
-            stdDeviation="5"
-            floodColor="#0f172a"
-            floodOpacity="0.25"
-          />
-        </filter>
-      </defs>
+      <circle cx="30" cy="40" r="4.2" fill="#0ea5e9" />
+      <circle cx="42" cy="40" r="4.2" fill="#8b5cf6" />
 
-      <g filter="url(#botShadow)">
-        <rect
-          x="13"
-          y="20"
-          width="46"
-          height="38"
-          rx="19"
-          fill="url(#botShell)"
-        />
+      <circle cx="30" cy="40" r="1.5" fill="#ffffff" />
+      <circle cx="42" cy="40" r="1.5" fill="#ffffff" />
 
-        <rect
-          x="19"
-          y="27"
-          width="34"
-          height="25"
-          rx="12.5"
-          fill="url(#botFace)"
-        />
+      <path
+        d="M31 46c3 2.4 7 2.4 10 0"
+        stroke="#111827"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
 
-        <path
-          d="M28 18c1.8-4.2 5-6.3 8-6.3s6.2 2.1 8 6.3"
-          stroke="#e0f2fe"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
+      <path
+        d="M36 26V17"
+        stroke="#38bdf8"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <circle cx="36" cy="13" r="5" fill="#22c55e" />
+      <circle cx="36" cy="13" r="2" fill="#ffffff" />
 
-        <circle cx="36" cy="10" r="4" fill="#22c55e" />
-        <circle cx="36" cy="10" r="7" stroke="#bbf7d0" strokeOpacity="0.45" />
+      <path
+        d="M15 38h-4c-2.2 0-4 1.8-4 4s1.8 4 4 4h4"
+        stroke="#60a5fa"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
 
-        <path
-          d="M13.5 36H9.5C7.6 36 6 37.6 6 39.5S7.6 43 9.5 43H13.5"
-          stroke="#dbeafe"
-          strokeWidth="4.5"
-          strokeLinecap="round"
-        />
+      <path
+        d="M57 38h4c2.2 0 4 1.8 4 4s-1.8 4-4 4h-4"
+        stroke="#60a5fa"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
 
-        <path
-          d="M58.5 36h4c1.9 0 3.5 1.6 3.5 3.5S64.4 43 62.5 43h-4"
-          stroke="#dbeafe"
-          strokeWidth="4.5"
-          strokeLinecap="round"
-        />
+      <path
+        d="M50 17l1.8 3.8 3.8 1.8-3.8 1.8L50 29l-1.8-3.6-3.8-1.8 3.8-1.8L50 17Z"
+        fill="#facc15"
+      />
 
-        <circle cx="29" cy="40" r="4" fill="url(#botEye)" />
-        <circle cx="43" cy="40" r="4" fill="url(#botEye)" />
-
-        <path
-          d="M31 47c2.8 2.1 7.2 2.1 10 0"
-          stroke="#e0f2fe"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-
-        <path
-          d="M23.5 29.5c5-3.8 20-3.8 25 0"
-          stroke="#ffffff"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          opacity="0.65"
-        />
-
-        <path
-          d="M53.5 18.5l1.2 2.5 2.6 1.1-2.6 1.1-1.2 2.5-1.1-2.5-2.6-1.1 2.6-1.1 1.1-2.5Z"
-          fill="#ffffff"
-          opacity="0.9"
-        />
-      </g>
+      <path
+        d="M22 28c5-4 23-4 28 0"
+        stroke="#bfdbfe"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -316,7 +282,7 @@ export default function AssistantWidget() {
                     flexShrink: 0,
                   }}
                 >
-                  <RobotIcon size={40} />
+                  <RobotIcon size={42} />
                 </div>
 
                 <div style={{ minWidth: 0, textAlign: "right" }}>
@@ -473,7 +439,7 @@ export default function AssistantWidget() {
           justifyContent: "center",
         }}
       >
-        {open ? <CloseIcon /> : <RobotIcon size={42} />}
+        {open ? <CloseIcon /> : <RobotIcon size={44} />}
       </button>
     </>
   );
