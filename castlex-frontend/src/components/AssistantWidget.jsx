@@ -2,65 +2,140 @@ import { useEffect, useRef, useState } from "react";
 
 const questions = [
   {
-    icon: "📝",
+    type: "post",
     question: "چطور پست بگذارم؟",
     answer:
       "در صفحه اصلی متن بنویس یا عکس/ویدیو انتخاب کن و روی دکمه Post بزن.",
   },
   {
-    icon: "🖼️",
+    type: "avatar",
     question: "چطور عکس پروفایل عوض کنم؟",
     answer:
       "وارد پروفایل خودت شو، عکس انتخاب کن و روی Upload Avatar بزن.",
   },
   {
-    icon: "✉️",
+    type: "message",
     question: "چطور به کسی پیام بدهم؟",
     answer: "وارد پروفایل کاربر شو و روی Message بزن.",
   },
   {
-    icon: "👥",
+    type: "follow",
     question: "چطور کسی را فالو کنم؟",
     answer: "وارد پروفایل کاربر شو و روی Follow بزن.",
   },
   {
-    icon: "⚠️",
+    type: "upload",
     question: "چرا آپلود گاهی خطا می‌دهد؟",
     answer:
       "گاهی مسیر اینترنت یا سرویس ذخیره‌سازی کند می‌شود. کمی بعد دوباره امتحان کن.",
   },
   {
-    icon: "🔵",
+    type: "blue",
     question: "چگونه تیک آبی بگیرم؟",
     answer:
       "در بله به آیدی @castlex1 مراجعه کنید و با ارسال مدارک لازم، رسمی بودن یا لیدر بودن خود را اثبات کنید.",
   },
   {
-    icon: "👑",
+    type: "gold",
     question: "تیک طلایی چیست؟",
     answer:
       "تیک طلایی مخصوص ادمین‌های سایت است و برای کاربران معمولی امکان‌پذیر نیست.",
   },
   {
-    icon: "🚩",
+    type: "report",
     question: "چطور تخلف کسی را گزارش دهم؟",
     answer:
       "وارد پروفایل شخص شوید، روی Report کلیک کنید و دلیل گزارش را بنویسید.",
   },
   {
-    icon: "💬",
+    type: "help",
     question: "جواب سوال خود را پیدا نکردید؟",
     answer:
       "در بله به پیوی @castlex1 مراجعه کنید و سوال خود را بپرسید.",
   },
 ];
 
+function RobotIcon({ size = 34 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+      <rect x="13" y="22" width="38" height="29" rx="13" fill="#0f172a" />
+      <rect x="17" y="26" width="30" height="21" rx="10" fill="#ffffff" />
+      <circle cx="26" cy="36" r="3.4" fill="#1d9bf0" />
+      <circle cx="38" cy="36" r="3.4" fill="#7c3aed" />
+      <path
+        d="M27.5 42c2.6 2 6.4 2 9 0"
+        stroke="#0f172a"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M32 22V13"
+        stroke="#0f172a"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <circle cx="32" cy="10" r="4.5" fill="#22c55e" />
+      <path
+        d="M13 34H8.5C6.6 34 5 35.6 5 37.5S6.6 41 8.5 41H13"
+        stroke="#0f172a"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M51 34h4.5c1.9 0 3.5 1.6 3.5 3.5S57.4 41 55.5 41H51"
+        stroke="#0f172a"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M20 25c3.5-4 20.5-4 24 0"
+        stroke="#60a5fa"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M6 6l12 12M18 6L6 18"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MiniIcon({ active }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <circle
+        cx="12"
+        cy="12"
+        r="8"
+        stroke={active ? "#fff" : "#1d9bf0"}
+        strokeWidth="2.4"
+      />
+      <path
+        d="M8.5 12.3l2.2 2.2 4.8-5"
+        stroke={active ? "#fff" : "#7c3aed"}
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function AssistantWidget() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  const scrollAreaRef = useRef(null);
   const answerRef = useRef(null);
 
   useEffect(() => {
@@ -141,6 +216,7 @@ export default function AssistantWidget() {
             >
               <button
                 onClick={() => setOpen(false)}
+                title="بستن"
                 style={{
                   width: "34px",
                   height: "34px",
@@ -148,13 +224,14 @@ export default function AssistantWidget() {
                   border: "none",
                   background: "rgba(255,255,255,0.18)",
                   color: "#fff",
-                  fontSize: "22px",
                   cursor: "pointer",
-                  lineHeight: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   flexShrink: 0,
                 }}
               >
-                ×
+                <CloseIcon />
               </button>
 
               <div
@@ -169,32 +246,21 @@ export default function AssistantWidget() {
               >
                 <div
                   style={{
-                    width: "42px",
-                    height: "42px",
+                    width: "46px",
+                    height: "46px",
                     borderRadius: "50%",
                     background: "rgba(255,255,255,0.22)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "23px",
                     flexShrink: 0,
                   }}
                 >
-                  🤖
+                  <RobotIcon size={36} />
                 </div>
 
-                <div
-                  style={{
-                    minWidth: 0,
-                    textAlign: "right",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontWeight: "900",
-                      fontSize: "16px",
-                    }}
-                  >
+                <div style={{ minWidth: 0, textAlign: "right" }}>
+                  <div style={{ fontWeight: "900", fontSize: "16px" }}>
                     دستیار Castle X
                   </div>
                   <div
@@ -212,7 +278,6 @@ export default function AssistantWidget() {
           </div>
 
           <div
-            ref={scrollAreaRef}
             style={{
               padding: "14px",
               maxHeight: isMobile ? "310px" : "430px",
@@ -270,7 +335,6 @@ export default function AssistantWidget() {
                       height: "32px",
                       borderRadius: "50%",
                       background: active ? "#1d9bf0" : "#f1f5f9",
-                      color: active ? "#fff" : "#111827",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -278,7 +342,7 @@ export default function AssistantWidget() {
                       marginTop: "2px",
                     }}
                   >
-                    {item.icon}
+                    <MiniIcon active={active} />
                   </span>
 
                   <span
@@ -340,14 +404,16 @@ export default function AssistantWidget() {
           border: "none",
           background: "linear-gradient(135deg,#1d9bf0,#7c3aed)",
           color: "#fff",
-          fontSize: "27px",
           cursor: "pointer",
           boxShadow: "0 14px 34px rgba(29,155,240,0.42)",
           zIndex: 99999,
           transition: "transform 0.18s ease, box-shadow 0.18s ease",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        {open ? "×" : "🤖"}
+        {open ? <CloseIcon /> : <RobotIcon size={38} />}
       </button>
     </>
   );
