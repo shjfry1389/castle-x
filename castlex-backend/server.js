@@ -1447,6 +1447,14 @@ app.put("/api/admin/users/:id/account", auth, admin, async (req, res) => {
 
 app.delete("/api/admin/user/:id", auth, admin, async (req, res) => {
   try {
+    const { admin_edit_secret } = req.body || {};
+
+    if (admin_edit_secret !== process.env.ADMIN_EDIT_SECRET) {
+      return res.status(403).json({
+        error: "رمز محرمانه ادمین اشتباه است",
+      });
+    }
+
     await supabase
       .from("followers")
       .delete()
@@ -1464,10 +1472,11 @@ app.delete("/api/admin/user/:id", auth, admin, async (req, res) => {
       success: true,
     });
   } catch (err) {
-    console.error(err);
+    console.error("ADMIN DELETE USER ERROR:", err);
 
     res.status(500).json({
       error: "Server Error",
+      details: err.message,
     });
   }
 });

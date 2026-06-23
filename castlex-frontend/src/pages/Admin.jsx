@@ -260,18 +260,38 @@ export default function Admin() {
   };
 
   const deleteUser = async (id) => {
-    try {
-      if (!window.confirm("کاربر حذف شود؟")) return;
+  try {
+    const confirmDelete = window.confirm(
+      "آیا مطمئنید می‌خواهید این کاربر را حذف کنید؟ این عملیات قابل برگشت نیست."
+    );
 
-      await api.delete(`/api/admin/user/${id}`, authHeader);
+    if (!confirmDelete) return;
 
-      setUsers((prev) => prev.filter((u) => u.id !== id));
-      loadStats();
-    } catch (err) {
-      console.error(err);
-      alert("خطا در حذف کاربر");
+    const secret = window.prompt("رمز محرمانه ادمین را وارد کنید:");
+
+    if (!secret || !secret.trim()) {
+      alert("برای حذف کاربر باید رمز محرمانه ادمین را وارد کنید");
+      return;
     }
-  };
+
+    await api.delete(`/api/admin/user/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      data: {
+        admin_edit_secret: secret.trim(),
+      },
+    });
+
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+    loadStats();
+
+    alert("کاربر با موفقیت حذف شد");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در حذف کاربر");
+  }
+};
 
   const deletePost = async (id) => {
     try {
