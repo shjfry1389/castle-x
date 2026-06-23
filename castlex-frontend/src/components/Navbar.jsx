@@ -4,7 +4,6 @@ import api from "../services/api";
 
 export default function Navbar({ darkMode, setDarkMode }) {
   const token = localStorage.getItem("token");
-
   let username = localStorage.getItem("username");
 
   if (!username && token) {
@@ -65,50 +64,86 @@ export default function Navbar({ darkMode, setDarkMode }) {
   };
 
   const getIcon = (lightIcon, darkIcon) => {
-    return darkMode ? darkIcon : lightIcon;
+    return darkMode ? `/icons/${darkIcon}?v=3` : `/icons/${lightIcon}?v=3`;
   };
 
   const iconStyle = {
-    width: "27px",
-    height: "27px",
+    width: "28px",
+    height: "28px",
     objectFit: "contain",
     display: "block",
   };
 
   const iconLinkStyle = {
+    width: "34px",
+    height: "34px",
     textDecoration: "none",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    color: darkMode ? "#f8fafc" : "#111827",
+    fontSize: "22px",
+    overflow: "hidden",
   };
+
+  function NavIcon({ light, dark, alt, fallback }) {
+    const [failed, setFailed] = useState(false);
+
+    if (failed) {
+      return (
+        <span
+          aria-label={alt}
+          title={alt}
+          style={{
+            lineHeight: 1,
+            fontSize: "22px",
+          }}
+        >
+          {fallback}
+        </span>
+      );
+    }
+
+    return (
+      <img
+        src={getIcon(light, dark)}
+        alt={alt}
+        title={alt}
+        style={iconStyle}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
 
   const themeButton = (
     <button
       onClick={toggleTheme}
       title={darkMode ? "Light mode" : "Dark mode"}
       style={{
+        ...iconLinkStyle,
         border: "none",
         background: "none",
         cursor: "pointer",
         padding: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
       }}
     >
       <img
-        src={darkMode ? "/icons/sun.png" : "/icons/moon.png"}
+        src={darkMode ? "/icons/sun.png?v=3" : "/icons/moon.png?v=3"}
         alt="Theme"
         style={iconStyle}
+        onError={(e) => {
+          e.currentTarget.style.display = "none";
+        }}
       />
     </button>
   );
 
   const homeIcon = (
-    <img
-      src={getIcon("/icons/home-light.png", "/icons/home-dark.png")}
+    <NavIcon
+      light="home-light.png"
+      dark="home-dark.png"
       alt="Home"
-      style={iconStyle}
+      fallback="🏠"
     />
   );
 
@@ -134,31 +169,31 @@ export default function Navbar({ darkMode, setDarkMode }) {
         </Link>
 
         <Link to="/search" style={iconLinkStyle}>
-          <img
-            src={getIcon("/icons/search-light.png", "/icons/search-dark.png")}
+          <NavIcon
+            light="search-light.png"
+            dark="search-dark.png"
             alt="Search"
-            style={iconStyle}
+            fallback="🔍"
           />
         </Link>
 
         {token ? (
           <>
             <Link to="/messages" style={iconLinkStyle}>
-              <img
-                src={getIcon(
-                  "/icons/messages-light.png",
-                  "/icons/messages-dark.png"
-                )}
+              <NavIcon
+                light="messages-light.png"
+                dark="messages-dark.png"
                 alt="Messages"
-                style={iconStyle}
+                fallback="✉️"
               />
             </Link>
 
             <Link to="/notifications" style={iconLinkStyle}>
-              <img
-                src={getIcon("/icons/bell-light.png", "/icons/bell-dark.png")}
+              <NavIcon
+                light="bell-light.png"
+                dark="bell-dark.png"
                 alt="Notifications"
-                style={iconStyle}
+                fallback="🔔"
               />
             </Link>
 
@@ -166,13 +201,11 @@ export default function Navbar({ darkMode, setDarkMode }) {
               to={username ? `/profile/${encodeURIComponent(username)}` : "/login"}
               style={iconLinkStyle}
             >
-              <img
-                src={getIcon(
-                  "/icons/profile-light.png",
-                  "/icons/profile-dark.png"
-                )}
+              <NavIcon
+                light="profile-light.png"
+                dark="profile-dark.png"
                 alt="Profile"
-                style={iconStyle}
+                fallback="👤"
               />
             </Link>
 
@@ -182,22 +215,18 @@ export default function Navbar({ darkMode, setDarkMode }) {
               onClick={logout}
               title="Logout"
               style={{
+                ...iconLinkStyle,
                 border: "none",
                 background: "none",
                 cursor: "pointer",
                 padding: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
               }}
             >
-              <img
-                src={getIcon(
-                  "/icons/logout-light.png",
-                  "/icons/logout-dark.png"
-                )}
+              <NavIcon
+                light="logout-light.png"
+                dark="logout-dark.png"
                 alt="Logout"
-                style={iconStyle}
+                fallback="🚪"
               />
             </button>
           </>
@@ -277,31 +306,31 @@ export default function Navbar({ darkMode, setDarkMode }) {
           </Link>
 
           <Link to="/search" style={iconLinkStyle}>
-            <img
-              src={getIcon("/icons/search-light.png", "/icons/search-dark.png")}
+            <NavIcon
+              light="search-light.png"
+              dark="search-dark.png"
               alt="Search"
-              style={iconStyle}
+              fallback="🔍"
             />
           </Link>
 
           {token ? (
             <>
               <Link to="/messages" style={iconLinkStyle}>
-                <img
-                  src={getIcon(
-                    "/icons/messages-light.png",
-                    "/icons/messages-dark.png"
-                  )}
+                <NavIcon
+                  light="messages-light.png"
+                  dark="messages-dark.png"
                   alt="Messages"
-                  style={iconStyle}
+                  fallback="✉️"
                 />
               </Link>
 
               <Link to="/notifications" style={iconLinkStyle}>
-                <img
-                  src={getIcon("/icons/bell-light.png", "/icons/bell-dark.png")}
+                <NavIcon
+                  light="bell-light.png"
+                  dark="bell-dark.png"
                   alt="Notifications"
-                  style={iconStyle}
+                  fallback="🔔"
                 />
               </Link>
 
@@ -309,13 +338,11 @@ export default function Navbar({ darkMode, setDarkMode }) {
                 to={username ? `/profile/${encodeURIComponent(username)}` : "/login"}
                 style={iconLinkStyle}
               >
-                <img
-                  src={getIcon(
-                    "/icons/profile-light.png",
-                    "/icons/profile-dark.png"
-                  )}
+                <NavIcon
+                  light="profile-light.png"
+                  dark="profile-dark.png"
                   alt="Profile"
-                  style={iconStyle}
+                  fallback="👤"
                 />
               </Link>
 
