@@ -2,6 +2,23 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../services/api";
 
+function Icon({ children, color }) {
+  return (
+    <svg
+      width="26"
+      height="26"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {children}
+    </svg>
+  );
+}
+
 export default function Navbar({ darkMode, setDarkMode }) {
   const token = localStorage.getItem("token");
   let username = localStorage.getItem("username");
@@ -19,13 +36,10 @@ export default function Navbar({ darkMode, setDarkMode }) {
     }
   }
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
@@ -63,52 +77,100 @@ export default function Navbar({ darkMode, setDarkMode }) {
     setDarkMode((prev) => !prev);
   };
 
-  const iconSrc = (lightIcon, darkIcon) => {
-    return darkMode ? `/icons/${darkIcon}` : `/icons/${lightIcon}`;
-  };
-
-  const iconStyle = {
-    width: "28px",
-    height: "28px",
-    objectFit: "contain",
-    display: "block",
-  };
+  const iconColor = darkMode ? "#f8fafc" : "#111827";
 
   const iconLinkStyle = {
-    width: "36px",
-    height: "36px",
+    width: "38px",
+    height: "38px",
+    borderRadius: "999px",
     textDecoration: "none",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    color: iconColor,
+    transition: "background 0.2s ease, transform 0.2s ease",
   };
+
+  const iconButtonStyle = {
+    ...iconLinkStyle,
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    padding: 0,
+  };
+
+  const HomeIcon = () => (
+    <Icon color={iconColor}>
+      <path d="M3 11.5L12 4l9 7.5" />
+      <path d="M5 10.5V20h5v-6h4v6h5v-9.5" />
+    </Icon>
+  );
+
+  const SearchIcon = () => (
+    <Icon color={iconColor}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-4.5-4.5" />
+    </Icon>
+  );
+
+  const MessagesIcon = () => (
+    <Icon color={iconColor}>
+      <path d="M4 6.5A3.5 3.5 0 0 1 7.5 3h9A3.5 3.5 0 0 1 20 6.5v6A3.5 3.5 0 0 1 16.5 16H10l-5 4v-4.5A3.5 3.5 0 0 1 4 12.5z" />
+      <path d="M8 9h8" />
+      <path d="M8 12h5" />
+    </Icon>
+  );
+
+  const BellIcon = () => (
+    <Icon color={iconColor}>
+      <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+      <path d="M10 21a2.5 2.5 0 0 0 4 0" />
+    </Icon>
+  );
+
+  const ProfileIcon = () => (
+    <Icon color={iconColor}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </Icon>
+  );
+
+  const MoonIcon = () => (
+    <Icon color={iconColor}>
+      <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3a7 7 0 1 0 11.5 11.5z" />
+    </Icon>
+  );
+
+  const SunIcon = () => (
+    <Icon color={iconColor}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2" />
+      <path d="M12 20v2" />
+      <path d="M4.93 4.93l1.41 1.41" />
+      <path d="M17.66 17.66l1.41 1.41" />
+      <path d="M2 12h2" />
+      <path d="M20 12h2" />
+      <path d="M4.93 19.07l1.41-1.41" />
+      <path d="M17.66 6.34l1.41-1.41" />
+    </Icon>
+  );
+
+  const LogoutIcon = () => (
+    <Icon color={iconColor}>
+      <path d="M10 17l5-5-5-5" />
+      <path d="M15 12H3" />
+      <path d="M14 4h4a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-4" />
+    </Icon>
+  );
 
   const themeButton = (
     <button
       onClick={toggleTheme}
       title={darkMode ? "Light mode" : "Dark mode"}
-      style={{
-        ...iconLinkStyle,
-        border: "none",
-        background: "none",
-        cursor: "pointer",
-        padding: 0,
-      }}
+      style={iconButtonStyle}
     >
-      <img
-        src={darkMode ? "/icons/sun.png" : "/icons/moon.png"}
-        alt="Theme"
-        style={iconStyle}
-      />
+      {darkMode ? <SunIcon /> : <MoonIcon />}
     </button>
-  );
-
-  const homeIcon = (
-    <img
-      src={iconSrc("home-light.png", "home-dark.png")}
-      alt="Home"
-      style={iconStyle}
-    />
   );
 
   if (isMobile) {
@@ -129,64 +191,34 @@ export default function Navbar({ darkMode, setDarkMode }) {
         }}
       >
         <Link to="/" style={iconLinkStyle}>
-          {homeIcon}
+          <HomeIcon />
         </Link>
 
         <Link to="/search" style={iconLinkStyle}>
-          <img
-            src={iconSrc("search-light.png", "search-dark.png")}
-            alt="Search"
-            style={iconStyle}
-          />
+          <SearchIcon />
         </Link>
 
         {token ? (
           <>
             <Link to="/messages" style={iconLinkStyle}>
-              <img
-                src={iconSrc("messages-light.png", "messages-dark.png")}
-                alt="Messages"
-                style={iconStyle}
-              />
+              <MessagesIcon />
             </Link>
 
             <Link to="/notifications" style={iconLinkStyle}>
-              <img
-                src={iconSrc("bell-light.png", "bell-dark.png")}
-                alt="Notifications"
-                style={iconStyle}
-              />
+              <BellIcon />
             </Link>
 
             <Link
               to={username ? `/profile/${encodeURIComponent(username)}` : "/login"}
               style={iconLinkStyle}
             >
-              <img
-                src={iconSrc("profile-light.png", "profile-dark.png")}
-                alt="Profile"
-                style={iconStyle}
-              />
+              <ProfileIcon />
             </Link>
 
             {themeButton}
 
-            <button
-              onClick={logout}
-              title="Logout"
-              style={{
-                ...iconLinkStyle,
-                border: "none",
-                background: "none",
-                cursor: "pointer",
-                padding: 0,
-              }}
-            >
-              <img
-                src={iconSrc("logout-light.png", "logout-dark.png")}
-                alt="Logout"
-                style={iconStyle}
-              />
+            <button onClick={logout} title="Logout" style={iconButtonStyle}>
+              <LogoutIcon />
             </button>
           </>
         ) : (
@@ -245,7 +277,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
           to="/"
           style={{
             textDecoration: "none",
-            color: darkMode ? "#f8fafc" : "#000",
+            color: iconColor,
             fontWeight: "800",
             fontSize: "24px",
           }}
@@ -257,48 +289,32 @@ export default function Navbar({ darkMode, setDarkMode }) {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "18px",
+            gap: "16px",
           }}
         >
           <Link to="/" style={iconLinkStyle}>
-            {homeIcon}
+            <HomeIcon />
           </Link>
 
           <Link to="/search" style={iconLinkStyle}>
-            <img
-              src={iconSrc("search-light.png", "search-dark.png")}
-              alt="Search"
-              style={iconStyle}
-            />
+            <SearchIcon />
           </Link>
 
           {token ? (
             <>
               <Link to="/messages" style={iconLinkStyle}>
-                <img
-                  src={iconSrc("messages-light.png", "messages-dark.png")}
-                  alt="Messages"
-                  style={iconStyle}
-                />
+                <MessagesIcon />
               </Link>
 
               <Link to="/notifications" style={iconLinkStyle}>
-                <img
-                  src={iconSrc("bell-light.png", "bell-dark.png")}
-                  alt="Notifications"
-                  style={iconStyle}
-                />
+                <BellIcon />
               </Link>
 
               <Link
                 to={username ? `/profile/${encodeURIComponent(username)}` : "/login"}
                 style={iconLinkStyle}
               >
-                <img
-                  src={iconSrc("profile-light.png", "profile-dark.png")}
-                  alt="Profile"
-                  style={iconStyle}
-                />
+                <ProfileIcon />
               </Link>
 
               {themeButton}
