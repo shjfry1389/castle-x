@@ -326,6 +326,10 @@ return {
       ? (likesCount || 0) + 100
       : likesCount || 0,
   comments_count: commentsCount || 0,
+  views_count:
+    author?.role === "admin"
+      ? (post.views_count || 0) + 200
+      : post.views_count || 0,
   is_liked: !!likeRow,
 };
   })
@@ -864,8 +868,12 @@ result.push({
       ? (likesCount || 0) + 100
       : likesCount || 0,
 
-  comments_count:
-    commentsCount || 0,
+  comments_count: commentsCount || 0,
+
+  views_count:
+    author?.role === "admin"
+      ? (post.views_count || 0) + 200
+      : post.views_count || 0,
 });
     }
 
@@ -1904,7 +1912,15 @@ app.get("/api/posts/:id", async (req, res) => {
     return res.status(404).json(error);
   }
 
-  res.json(data);
+  const responsePost = {
+  ...data,
+  views_count:
+    data.author?.role === "admin"
+      ? (data.views_count || 0) + 200
+      : data.views_count || 0,
+};
+
+res.json(responsePost);
 });
 app.delete("/api/comments/:id", auth, async (req, res) => {
   try {
