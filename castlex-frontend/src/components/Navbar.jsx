@@ -10,7 +10,6 @@ export default function Navbar({ darkMode, setDarkMode }) {
   if (!username && token) {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
-
       username = payload.username || payload.user?.username;
 
       if (username) {
@@ -33,38 +32,54 @@ export default function Navbar({ darkMode, setDarkMode }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-const logout = async () => {
-  const confirmLogout = window.confirm(
-    "آیا مطمئنید می‌خواهید از حساب کاربری خود خارج شوید؟"
-  );
-
-  if (!confirmLogout) {
-    return;
-  }
-
-  try {
-    await api.put(
-      "/api/users/offline",
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+  const logout = async () => {
+    const confirmLogout = window.confirm(
+      "آیا مطمئنید می‌خواهید از حساب کاربری خود خارج شوید؟"
     );
-  } catch (err) {
-    console.error(err);
-  }
 
-  localStorage.removeItem("token");
-  localStorage.removeItem("username");
-  localStorage.removeItem("role");
+    if (!confirmLogout) return;
 
-  window.location.href = "/login";
-};
+    try {
+      await api.put(
+        "/api/users/offline",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    } catch (err) {
+      console.error(err);
+    }
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("role");
+
+    window.location.href = "/login";
+  };
 
   const toggleTheme = () => {
     setDarkMode((prev) => !prev);
+  };
+
+  const getIcon = (lightIcon, darkIcon) => {
+    return darkMode ? darkIcon : lightIcon;
+  };
+
+  const iconStyle = {
+    width: "27px",
+    height: "27px",
+    objectFit: "contain",
+    display: "block",
+  };
+
+  const iconLinkStyle = {
+    textDecoration: "none",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   };
 
   const themeButton = (
@@ -74,14 +89,27 @@ const logout = async () => {
       style={{
         border: "none",
         background: "none",
-        fontSize: "22px",
         cursor: "pointer",
         padding: 0,
-        lineHeight: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
-      {darkMode ? "☀️" : "🌙"}
+      <img
+        src={darkMode ? "/icons/sun.png" : "/icons/moon.png"}
+        alt="Theme"
+        style={iconStyle}
+      />
     </button>
+  );
+
+  const homeIcon = (
+    <img
+      src={getIcon("/icons/home-light.png", "/icons/home-dark.png")}
+      alt="Home"
+      style={iconStyle}
+    />
   );
 
   if (isMobile) {
@@ -101,71 +129,76 @@ const logout = async () => {
           zIndex: 9999,
         }}
       >
-        <Link
-          to="/"
-          style={{
-            textDecoration: "none",
-            fontSize: "24px",
-          }}
-        >
-          🏠
+        <Link to="/" style={iconLinkStyle}>
+          {homeIcon}
         </Link>
 
-        <Link
-          to="/search"
-          style={{
-            textDecoration: "none",
-            fontSize: "24px",
-          }}
-        >
-          🔍
+        <Link to="/search" style={iconLinkStyle}>
+          <img
+            src={getIcon("/icons/search-light.png", "/icons/search-dark.png")}
+            alt="Search"
+            style={iconStyle}
+          />
         </Link>
 
         {token ? (
           <>
-            <Link
-              to="/messages"
-              style={{
-                textDecoration: "none",
-                fontSize: "24px",
-              }}
-            >
-              ✉️
+            <Link to="/messages" style={iconLinkStyle}>
+              <img
+                src={getIcon(
+                  "/icons/messages-light.png",
+                  "/icons/messages-dark.png"
+                )}
+                alt="Messages"
+                style={iconStyle}
+              />
+            </Link>
+
+            <Link to="/notifications" style={iconLinkStyle}>
+              <img
+                src={getIcon("/icons/bell-light.png", "/icons/bell-dark.png")}
+                alt="Notifications"
+                style={iconStyle}
+              />
             </Link>
 
             <Link
-              to="/notifications"
-              style={{
-                textDecoration: "none",
-                fontSize: "24px",
-              }}
+              to={username ? `/profile/${encodeURIComponent(username)}` : "/login"}
+              style={iconLinkStyle}
             >
-              🔔
-            </Link>
-
-            <Link
-              to={username ? `/profile/${username}` : "/login"}
-              style={{
-                textDecoration: "none",
-                fontSize: "24px",
-              }}
-            >
-              👤
+              <img
+                src={getIcon(
+                  "/icons/profile-light.png",
+                  "/icons/profile-dark.png"
+                )}
+                alt="Profile"
+                style={iconStyle}
+              />
             </Link>
 
             {themeButton}
 
             <button
               onClick={logout}
+              title="Logout"
               style={{
                 border: "none",
                 background: "none",
-                fontSize: "22px",
                 cursor: "pointer",
-                marginLeft: "8px",
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              🚪
+              <img
+                src={getIcon(
+                  "/icons/logout-light.png",
+                  "/icons/logout-dark.png"
+                )}
+                alt="Logout"
+                style={iconStyle}
+              />
             </button>
           </>
         ) : (
@@ -174,20 +207,22 @@ const logout = async () => {
               to="/login"
               style={{
                 textDecoration: "none",
-                fontSize: "24px",
+                fontWeight: "700",
+                color: "#1d9bf0",
               }}
             >
-              🔑
+              Login
             </Link>
 
             <Link
               to="/register"
               style={{
                 textDecoration: "none",
-                fontSize: "24px",
+                fontWeight: "700",
+                color: "#1d9bf0",
               }}
             >
-              📝
+              Register
             </Link>
 
             {themeButton}
@@ -237,16 +272,52 @@ const logout = async () => {
             gap: "18px",
           }}
         >
-          <Link to="/">🏠</Link>
-          <Link to="/search">🔍</Link>
+          <Link to="/" style={iconLinkStyle}>
+            {homeIcon}
+          </Link>
+
+          <Link to="/search" style={iconLinkStyle}>
+            <img
+              src={getIcon("/icons/search-light.png", "/icons/search-dark.png")}
+              alt="Search"
+              style={iconStyle}
+            />
+          </Link>
 
           {token ? (
             <>
-              <Link to="/messages">✉️</Link>
+              <Link to="/messages" style={iconLinkStyle}>
+                <img
+                  src={getIcon(
+                    "/icons/messages-light.png",
+                    "/icons/messages-dark.png"
+                  )}
+                  alt="Messages"
+                  style={iconStyle}
+                />
+              </Link>
 
-              <Link to="/notifications">🔔</Link>
+              <Link to="/notifications" style={iconLinkStyle}>
+                <img
+                  src={getIcon("/icons/bell-light.png", "/icons/bell-dark.png")}
+                  alt="Notifications"
+                  style={iconStyle}
+                />
+              </Link>
 
-              <Link to={username ? `/profile/${username}` : "/login"}>👤</Link>
+              <Link
+                to={username ? `/profile/${encodeURIComponent(username)}` : "/login"}
+                style={iconLinkStyle}
+              >
+                <img
+                  src={getIcon(
+                    "/icons/profile-light.png",
+                    "/icons/profile-dark.png"
+                  )}
+                  alt="Profile"
+                  style={iconStyle}
+                />
+              </Link>
 
               {themeButton}
 
@@ -259,6 +330,7 @@ const logout = async () => {
                   padding: "8px 18px",
                   borderRadius: "9999px",
                   cursor: "pointer",
+                  fontWeight: "700",
                 }}
               >
                 Logout
@@ -295,5 +367,4 @@ const logout = async () => {
       </div>
     </div>
   );
-  
 }
