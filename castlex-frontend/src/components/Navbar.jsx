@@ -63,8 +63,8 @@ export default function Navbar({ darkMode, setDarkMode }) {
     setDarkMode((prev) => !prev);
   };
 
-  const getIcon = (lightIcon, darkIcon) => {
-    return darkMode ? `/icons/${darkIcon}?v=3` : `/icons/${lightIcon}?v=3`;
+  const iconSrc = (lightIcon, darkIcon) => {
+    return darkMode ? `/icons/${darkIcon}` : `/icons/${lightIcon}`;
   };
 
   const iconStyle = {
@@ -75,45 +75,13 @@ export default function Navbar({ darkMode, setDarkMode }) {
   };
 
   const iconLinkStyle = {
-    width: "34px",
-    height: "34px",
+    width: "36px",
+    height: "36px",
     textDecoration: "none",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: darkMode ? "#f8fafc" : "#111827",
-    fontSize: "22px",
-    overflow: "hidden",
   };
-
-  function NavIcon({ light, dark, alt, fallback }) {
-    const [failed, setFailed] = useState(false);
-
-    if (failed) {
-      return (
-        <span
-          aria-label={alt}
-          title={alt}
-          style={{
-            lineHeight: 1,
-            fontSize: "22px",
-          }}
-        >
-          {fallback}
-        </span>
-      );
-    }
-
-    return (
-      <img
-        src={getIcon(light, dark)}
-        alt={alt}
-        title={alt}
-        style={iconStyle}
-        onError={() => setFailed(true)}
-      />
-    );
-  }
 
   const themeButton = (
     <button
@@ -128,22 +96,18 @@ export default function Navbar({ darkMode, setDarkMode }) {
       }}
     >
       <img
-        src={darkMode ? "/icons/sun.png?v=3" : "/icons/moon.png?v=3"}
+        src={darkMode ? "/icons/sun.png" : "/icons/moon.png"}
         alt="Theme"
         style={iconStyle}
-        onError={(e) => {
-          e.currentTarget.style.display = "none";
-        }}
       />
     </button>
   );
 
   const homeIcon = (
-    <NavIcon
-      light="home-light.png"
-      dark="home-dark.png"
+    <img
+      src={iconSrc("home-light.png", "home-dark.png")}
       alt="Home"
-      fallback="🏠"
+      style={iconStyle}
     />
   );
 
@@ -169,31 +133,28 @@ export default function Navbar({ darkMode, setDarkMode }) {
         </Link>
 
         <Link to="/search" style={iconLinkStyle}>
-          <NavIcon
-            light="search-light.png"
-            dark="search-dark.png"
+          <img
+            src={iconSrc("search-light.png", "search-dark.png")}
             alt="Search"
-            fallback="🔍"
+            style={iconStyle}
           />
         </Link>
 
         {token ? (
           <>
             <Link to="/messages" style={iconLinkStyle}>
-              <NavIcon
-                light="messages-light.png"
-                dark="messages-dark.png"
+              <img
+                src={iconSrc("messages-light.png", "messages-dark.png")}
                 alt="Messages"
-                fallback="✉️"
+                style={iconStyle}
               />
             </Link>
 
             <Link to="/notifications" style={iconLinkStyle}>
-              <NavIcon
-                light="bell-light.png"
-                dark="bell-dark.png"
+              <img
+                src={iconSrc("bell-light.png", "bell-dark.png")}
                 alt="Notifications"
-                fallback="🔔"
+                style={iconStyle}
               />
             </Link>
 
@@ -201,11 +162,10 @@ export default function Navbar({ darkMode, setDarkMode }) {
               to={username ? `/profile/${encodeURIComponent(username)}` : "/login"}
               style={iconLinkStyle}
             >
-              <NavIcon
-                light="profile-light.png"
-                dark="profile-dark.png"
+              <img
+                src={iconSrc("profile-light.png", "profile-dark.png")}
                 alt="Profile"
-                fallback="👤"
+                style={iconStyle}
               />
             </Link>
 
@@ -222,11 +182,10 @@ export default function Navbar({ darkMode, setDarkMode }) {
                 padding: 0,
               }}
             >
-              <NavIcon
-                light="logout-light.png"
-                dark="logout-dark.png"
+              <img
+                src={iconSrc("logout-light.png", "logout-dark.png")}
                 alt="Logout"
-                fallback="🚪"
+                style={iconStyle}
               />
             </button>
           </>
@@ -306,31 +265,28 @@ export default function Navbar({ darkMode, setDarkMode }) {
           </Link>
 
           <Link to="/search" style={iconLinkStyle}>
-            <NavIcon
-              light="search-light.png"
-              dark="search-dark.png"
+            <img
+              src={iconSrc("search-light.png", "search-dark.png")}
               alt="Search"
-              fallback="🔍"
+              style={iconStyle}
             />
           </Link>
 
           {token ? (
             <>
               <Link to="/messages" style={iconLinkStyle}>
-                <NavIcon
-                  light="messages-light.png"
-                  dark="messages-dark.png"
+                <img
+                  src={iconSrc("messages-light.png", "messages-dark.png")}
                   alt="Messages"
-                  fallback="✉️"
+                  style={iconStyle}
                 />
               </Link>
 
               <Link to="/notifications" style={iconLinkStyle}>
-                <NavIcon
-                  light="bell-light.png"
-                  dark="bell-dark.png"
+                <img
+                  src={iconSrc("bell-light.png", "bell-dark.png")}
                   alt="Notifications"
-                  fallback="🔔"
+                  style={iconStyle}
                 />
               </Link>
 
@@ -338,11 +294,10 @@ export default function Navbar({ darkMode, setDarkMode }) {
                 to={username ? `/profile/${encodeURIComponent(username)}` : "/login"}
                 style={iconLinkStyle}
               >
-                <NavIcon
-                  light="profile-light.png"
-                  dark="profile-dark.png"
+                <img
+                  src={iconSrc("profile-light.png", "profile-dark.png")}
                   alt="Profile"
-                  fallback="👤"
+                  style={iconStyle}
                 />
               </Link>
 
