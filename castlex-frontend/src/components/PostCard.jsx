@@ -192,10 +192,10 @@ const sentViewRef = useRef(false);
               : {},
           }
         );
-
-        if (typeof res.data?.views_count === "number") {
-          setViewsCount(res.data.views_count);
-        }
+if (typeof res.data?.views_count === "number") {
+  const isAdminPost = post.author?.role === "admin";
+  setViewsCount(isAdminPost ? res.data.views_count + 200 : res.data.views_count);
+}
       } catch (err) {
         sentViewRef.current = false;
         console.error(err);
