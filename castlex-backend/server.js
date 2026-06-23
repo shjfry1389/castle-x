@@ -345,6 +345,120 @@ res.status(500).json({
 
 }
 });
+app.post("/api/posts/:id/view", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { visitor_key } = req.body || {};
+
+    let viewerKey = null;
+
+    const authHeader = req.headers.authorization || "";
+
+    if (authHeader.startsWith("Bearer ")) {
+      try {
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        if (decoded?.id) {
+          viewerKey = `user:${decoded.id}`;
+        }
+      } catch (err) {
+        viewerKey = null;
+      }
+    }
+
+    if (!viewerKey) {
+      const safeVisitorKey =
+        visitor_key ||
+        `${req.ip || "unknown"}-${req.headers["user-agent"] || "unknown"}`;
+
+      viewerKey = `visitor:${safeVisitorKey}`;
+    }
+
+    const { data: post, error: postError } = await supabase
+      .from("posts")
+      .select("id, views_count")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (postError) {
+      return res.status(500).json({
+        error: "خطا در بررسی پست",
+        details: postError.message,
+      });
+    }
+
+    if (!post) {
+      return res.status(404).json({
+        error: "پست پیدا نشد",
+      });
+    }
+
+    const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+
+    const { data: existingView, error: existingError } = await supabase
+      .from("post_views")
+      .select("id")
+      .eq("post_id", id)
+      .eq("viewer_key", viewerKey)
+      .gte("created_at", sixHoursAgo)
+      .maybeSingle();
+
+    if (existingError) {
+      return res.status(500).json({
+        error: "خطا در بررسی بازدید",
+        details: existingError.message,
+      });
+    }
+
+    if (existingView) {
+      return res.json({
+        success: true,
+        counted: false,
+        views_count: post.views_count || 0,
+      });
+    }
+
+    const { error: insertError } = await supabase.from("post_views").insert({
+      post_id: id,
+      viewer_key: viewerKey,
+    });
+
+    if (insertError) {
+      return res.status(500).json({
+        error: "خطا در ثبت بازدید",
+        details: insertError.message,
+      });
+    }
+
+    const { data: newViewsCount, error: incrementError } = await supabase.rpc(
+      "increment_post_views",
+      {
+        post_id_input: Number(id),
+      }
+    );
+
+    if (incrementError) {
+      return res.status(500).json({
+        error: "خطا در افزایش بازدید",
+        details: incrementError.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      counted: true,
+      views_count: newViewsCount || 0,
+    });
+  } catch (err) {
+    console.error("POST VIEW ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور در ثبت ویو",
+      details: err.message,
+    });
+  }
+});
 
 app.post("/api/posts/:id/like", auth, async (req, res) => {
   try {
