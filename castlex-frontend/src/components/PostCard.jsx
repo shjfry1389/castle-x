@@ -171,10 +171,6 @@ const sentViewRef = useRef(false);
     useEffect(() => {
     if (!post.id || !cardRef.current) return;
 
-    const sessionKey = `castle_x_view_sent_${post.id}`;
-
-    if (sessionStorage.getItem(sessionKey)) return;
-
     const sendView = async () => {
       if (sentViewRef.current) return;
 
@@ -197,8 +193,6 @@ const sentViewRef = useRef(false);
           }
         );
 
-        sessionStorage.setItem(sessionKey, "1");
-
         if (typeof res.data?.views_count === "number") {
           setViewsCount(res.data.views_count);
         }
@@ -210,14 +204,14 @@ const sentViewRef = useRef(false);
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.25) {
           viewTimerRef.current = setTimeout(sendView, 2000);
         } else if (viewTimerRef.current) {
           clearTimeout(viewTimerRef.current);
         }
       },
       {
-        threshold: [0, 0.6, 1],
+        threshold: [0, 0.25, 1],
       }
     );
 
