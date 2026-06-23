@@ -7,19 +7,32 @@ export default function Register() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const register = async () => {
     try {
+      if (loading) return;
+
+      setLoading(true);
+
       await api.post("/api/auth/register", {
-        username,
-        display_name: displayName,
+        username: username.trim(),
+        display_name: displayName.trim(),
         password,
       });
 
       alert("ثبت نام موفق");
       window.location.href = "/login";
-    } catch {
-      alert("خطا در ثبت نام");
+    } catch (err) {
+      console.error(err.response?.data || err);
+
+      alert(
+        err.response?.data?.error ||
+          err.response?.data?.message ||
+          "خطا در ثبت نام"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -30,8 +43,7 @@ export default function Register() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background:
-          "linear-gradient(135deg,#1d9bf0,#6c63ff)",
+        background: "linear-gradient(135deg,#1d9bf0,#6c63ff)",
         padding: "20px",
       }}
     >
@@ -42,8 +54,7 @@ export default function Register() {
           background: "white",
           padding: "35px",
           borderRadius: "20px",
-          boxShadow:
-            "0 10px 30px rgba(0,0,0,0.15)",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
         }}
       >
         <h1
@@ -53,7 +64,7 @@ export default function Register() {
             color: "#1d9bf0",
           }}
         >
-          🏰 Castle X
+          Castle X
         </h1>
 
         <p
@@ -69,9 +80,10 @@ export default function Register() {
         <input
           placeholder="نام کاربری"
           value={username}
-          onChange={(e) =>
-            setUsername(e.target.value)
-          }
+          onChange={(e) => setUsername(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") register();
+          }}
           style={{
             width: "100%",
             padding: "14px",
@@ -86,9 +98,10 @@ export default function Register() {
         <input
           placeholder="نام نمایشی"
           value={displayName}
-          onChange={(e) =>
-            setDisplayName(e.target.value)
-          }
+          onChange={(e) => setDisplayName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") register();
+          }}
           style={{
             width: "100%",
             padding: "14px",
@@ -104,9 +117,10 @@ export default function Register() {
           type="password"
           placeholder="رمز عبور"
           value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") register();
+          }}
           style={{
             width: "100%",
             padding: "14px",
@@ -120,19 +134,20 @@ export default function Register() {
 
         <button
           onClick={register}
+          disabled={loading}
           style={{
             width: "100%",
             padding: "14px",
             border: "none",
             borderRadius: "10px",
-            background: "#1d9bf0",
+            background: loading ? "#93c5fd" : "#1d9bf0",
             color: "white",
             fontSize: "16px",
             fontWeight: "bold",
-            cursor: "pointer",
+            cursor: loading ? "not-allowed" : "pointer",
           }}
         >
-          ثبت نام
+          {loading ? "در حال ثبت نام..." : "ثبت نام"}
         </button>
 
         <p
