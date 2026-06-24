@@ -1604,6 +1604,121 @@ app.post("/api/admin/users/:id/delete-secure", auth, admin, async (req, res) => 
     });
   }
 });
+app.post("/api/admin/posts/:id/hot", auth, admin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    let {
+      duration_hours,
+      priority,
+      bump_interval_minutes,
+    } = req.body || {};
+
+    duration_hours = Number(duration_hours) || 24;
+    priority = Number(priority) || 1;
+    bump_interval_minutes = Number(bump_interval_minutes) || 60;
+
+    if (duration_hours < 1) duration_hours = 1;
+    if (duration_hours > 720) duration_hours = 720;
+
+    if (priority < 1) priority = 1;
+    if (priority > 10) priority = 10;
+
+    if (bump_interval_minutes < 10) bump_interval_minutes = 10;
+    if (bump_interval_minutes > 1440) bump_interval_minutes = 1440;
+
+    const endsAt = new Date(
+      Date.now() + duration_hours * 60 * 60 * 1000
+    ).toISOString();
+
+    const { data: post, error: postError } = await supabase
+      .from("posts")
+      .select("id")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (postError) {
+      return res.status(500).json({
+        error: "خطا در بررسی پست",
+        details: postError.message,
+      });
+    }
+
+    if (!post) {
+      return res.status(404).json({
+        error: "پست پیدا نشد",
+      });
+    }
+
+    await supabase
+      .from("post_promotions")
+      .update({ active: false })
+      .eq("post_id", id)
+      .eq("active", true);
+
+    const { data, error } = await supabase
+      .from("post_promotions")
+      .insert({
+        post_id: id,
+        active: true,
+        priority,
+        ends_at: endsAt,
+        bump_interval_minutes,
+        last_bumped_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در داغ کردن پست",
+        details: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      promotion: data,
+    });
+  } catch (err) {
+    console.error("MAKE HOT POST ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور در داغ کردن پست",
+      details: err.message,
+    });
+  }
+});
+
+app.post("/api/admin/posts/:id/stop-hot", auth, admin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { error } = await supabase
+      .from("post_promotions")
+      .update({ active: false })
+      .eq("post_id", id)
+      .eq("active", true);
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در خاموش کردن پست داغ",
+        details: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+    });
+  } catch (err) {
+    console.error("STOP HOT POST ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.get("/api/admin/stats", auth, admin, async (req, res) => {
   try {
     const { count: users } = await supabase.from("users").select("*", {
