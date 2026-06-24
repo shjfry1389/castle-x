@@ -272,82 +272,108 @@ app.post("/api/posts/create", auth, async (req, res) => {
   }
 });
 app.get("/api/posts", auth, async (req, res) => {
-try {
-const { data: posts, error } = await supabase
-  .from("posts")
-  .select("*")
-  .order("created_at", {
-    ascending: false,
-  });
+  try {
+    const { data: posts, error } = await supabase
+      .from("posts")
+      .select("*")
+      .order("created_at", { ascending: false });
 
+    if (error) return res.status(500).json(error);
 
-if (error) {
-  return res.status(500).json(error);
-}
+    const now = new Date();
 
-const result = await Promise.all(
-  posts.map(async (post) => {
-    const { count: likesCount } = await supabase
-      .from("likes")
-      .select("*", {
-        count: "exact",
-        head: true,
+    const result = await Promise.all(
+      posts.map(async (post) => {
+        const { count: likesCount } = await supabase
+          .from("likes")
+          .select("*", { count: "exact", head: true })
+          .eq("post_id", post.id);
+
+        const { count: commentsCount } = await supabase
+          .from("comments")
+          .select("*", { count: "exact", head: true })
+          .eq("post_id", post.id);
+
+        const { data: author } = await supabase
+          .from("users")
+          .select("id, username, display_name, avatar_url, is_verified, role")
+          .eq("id", post.user_id)
+          .single();
+
+        const { data: likeRow } = await supabase
+          .from("likes")
+          .select("id")
+          .eq("post_id", post.id)
+          .eq("user_id", req.user.id)
+          .maybeSingle();
+
+        const { data: promotion } = await supabase
+          .from("post_promotions")
+          .select("*")
+          .eq("post_id", post.id)
+          .eq("active", true)
+          .lte("starts_at", now.toISOString())
+          .gt("ends_at", now.toISOString())
+          .order("priority", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        let feedTime = post.created_at;
+
+        if (promotion) {
+          const lastBumpedAt = new Date(promotion.last_bumped_at || promotion.created_at);
+          const intervalMs = (promotion.bump_interval_minutes || 60) * 60 * 1000;
+
+          if (now.getTime() - lastBumpedAt.getTime() >= intervalMs) {
+            const bumpedAt = now.toISOString();
+
+            await supabase
+              .from("post_promotions")
+              .update({ last_bumped_at: bumpedAt })
+              .eq("id", promotion.id);
+
+            feedTime = bumpedAt;
+          } else {
+            feedTime = promotion.last_bumped_at || promotion.created_at;
+          }
+        }
+
+        return {
+          ...post,
+          author,
+          likes_count:
+            author?.role === "admin"
+              ? (likesCount || 0) + 100
+              : likesCount || 0,
+          comments_count: commentsCount || 0,
+          views_count:
+            author?.role === "admin"
+              ? (post.views_count || 0) + 200
+              : post.views_count || 0,
+          is_liked: !!likeRow,
+          is_hot: !!promotion,
+          hot_priority: promotion?.priority || 0,
+          hot_until: promotion?.ends_at || null,
+          feed_time: feedTime,
+        };
       })
-      .eq("post_id", post.id);
+    );
 
-    const { count: commentsCount } = await supabase
-      .from("comments")
-      .select("*", {
-        count: "exact",
-        head: true,
-      })
-      .eq("post_id", post.id);
+    result.sort((a, b) => {
+      const hotDiff = (b.hot_priority || 0) - (a.hot_priority || 0);
+      if (hotDiff !== 0) return hotDiff;
 
-    const { data: author } = await supabase
-      .from("users")
-      .select(
-        "id, username, display_name, avatar_url, is_verified, role"
-      )
-      .eq("id", post.user_id)
-      .single();
+      return new Date(b.feed_time).getTime() - new Date(a.feed_time).getTime();
+    });
 
-    const { data: likeRow } = await supabase
-      .from("likes")
-      .select("id")
-      .eq("post_id", post.id)
-      .eq("user_id", req.user.id)
-      .maybeSingle();
+    res.json(result);
+  } catch (err) {
+    console.error(err);
 
-return {
-  ...post,
-  author,
-  likes_count:
-    author?.role === "admin"
-      ? (likesCount || 0) + 100
-      : likesCount || 0,
-  comments_count: commentsCount || 0,
-  views_count:
-    author?.role === "admin"
-      ? (post.views_count || 0) + 200
-      : post.views_count || 0,
-  is_liked: !!likeRow,
-};
-  })
-);
-
-res.json(result);
-
-
-} catch (err) {
-console.error(err);
-
-
-res.status(500).json({
-  error: "خطای سرور",
-});
-
-
-}
+    res.status(500).json({
+      error: "خطای سرور",
+    });
+  }
 });
 app.post("/api/posts/:id/view", async (req, res) => {
   try {

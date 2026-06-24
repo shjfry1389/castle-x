@@ -305,6 +305,52 @@ export default function Admin() {
       alert("خطا در حذف پست");
     }
   };
+  const makeHotPost = async (post) => {
+  try {
+    const duration = window.prompt("پست چند ساعت داغ باشد؟", "24");
+    if (!duration) return;
+
+    const interval = window.prompt("هر چند دقیقه دوباره بالا بیاید؟", "60");
+    if (!interval) return;
+
+    const priority = window.prompt("اولویت چند باشد؟ عدد 1 تا 10", "1");
+    if (!priority) return;
+
+    await api.post(
+      `/api/admin/posts/${post.id}/hot`,
+      {
+        duration_hours: Number(duration),
+        bump_interval_minutes: Number(interval),
+        priority: Number(priority),
+      },
+      authHeader
+    );
+
+    setPosts((prev) =>
+      prev.map((p) => (p.id === post.id ? { ...p, is_hot: true } : p))
+    );
+
+    alert("پست داغ شد");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در داغ کردن پست");
+  }
+};
+
+const stopHotPost = async (post) => {
+  try {
+    await api.post(`/api/admin/posts/${post.id}/stop-hot`, {}, authHeader);
+
+    setPosts((prev) =>
+      prev.map((p) => (p.id === post.id ? { ...p, is_hot: false } : p))
+    );
+
+    alert("پست از حالت داغ خارج شد");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در خاموش کردن پست داغ");
+  }
+};
 
   const statCard = (background) => ({
     background,
@@ -501,6 +547,35 @@ export default function Admin() {
           <button onClick={() => deletePost(post.id)} style={dangerButton}>
             Delete Post
           </button>
+          <button
+  onClick={() => makeHotPost(post)}
+  style={{
+    background: "#f59e0b",
+    color: "#fff",
+    border: "none",
+    padding: "8px 14px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    marginLeft: "8px",
+  }}
+>
+  Make Hot
+</button>
+
+<button
+  onClick={() => stopHotPost(post)}
+  style={{
+    background: "#334155",
+    color: "#fff",
+    border: "none",
+    padding: "8px 14px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    marginLeft: "8px",
+  }}
+>
+  Stop Hot
+</button>
         </div>
       ))}
 

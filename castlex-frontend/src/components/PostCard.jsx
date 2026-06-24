@@ -336,7 +336,23 @@ if (typeof res.data?.views_count === "number") {
               </button>
             )}
           </div>
-
+                    {post.is_hot && (
+            <div
+              style={{
+                display: "inline-flex",
+                marginTop: "8px",
+                marginBottom: "4px",
+                padding: "5px 10px",
+                borderRadius: "999px",
+                background: "linear-gradient(135deg,#f59e0b,#ef4444)",
+                color: "#fff",
+                fontSize: "12px",
+                fontWeight: "800",
+              }}
+            >
+              پست داغ
+            </div>
+          )}
           <div
             style={{
               marginTop: "6px",
