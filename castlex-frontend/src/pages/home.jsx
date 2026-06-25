@@ -9,13 +9,23 @@ const [posts, setPosts] = useState([]);
 const [content, setContent] = useState("");
 const [media, setMedia] = useState(null);
 const [feedMode, setFeedMode] = useState("forYou");
+const [feedSwitching, setFeedSwitching] = useState(false);
 const [loading, setLoading] = useState(false);
 const token = localStorage.getItem("token");
 
 const currentUser = token
   ? JSON.parse(atob(token.split(".")[1]))
   : null;
+const switchFeed = (mode) => {
+  if (mode === feedMode) return;
 
+  setFeedSwitching(true);
+
+  setTimeout(() => {
+    setFeedMode(mode);
+    setFeedSwitching(false);
+  }, 140);
+};
 const loadPosts = (mode = feedMode) => {
   const token = localStorage.getItem("token");
 
@@ -170,7 +180,7 @@ return (
   }}
 >
   <button
-    onClick={() => setFeedMode("forYou")}
+    onClick={() => switchFeed("forYou")}
     style={{
       border: "none",
       background: feedMode === "forYou" ? "#1d9bf0" : "transparent",
@@ -185,7 +195,7 @@ return (
   </button>
 
   <button
-    onClick={() => setFeedMode("following")}
+    onClick={() => switchFeed("following")}
     style={{
       border: "none",
       background: feedMode === "following" ? "#1d9bf0" : "transparent",
@@ -318,8 +328,14 @@ return (
       </div>
     </div>
 
-    <div>
-      {posts.length === 0 ? (
+<div
+  style={{
+    opacity: feedSwitching ? 0 : 1,
+    transform: feedSwitching ? "translateY(8px)" : "translateY(0)",
+    transition: "opacity 0.18s ease, transform 0.18s ease",
+  }}
+>
+  {posts.length === 0 ? (
         <div
           style={{
             padding: "50px",
