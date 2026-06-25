@@ -8,6 +8,7 @@ export default function Home() {
 const [posts, setPosts] = useState([]);
 const [content, setContent] = useState("");
 const [media, setMedia] = useState(null);
+const [feedMode, setFeedMode] = useState("forYou");
 const [loading, setLoading] = useState(false);
 const token = localStorage.getItem("token");
 
@@ -15,12 +16,13 @@ const currentUser = token
   ? JSON.parse(atob(token.split(".")[1]))
   : null;
 
-const loadPosts = () => {
-  const token =
-    localStorage.getItem("token");
+const loadPosts = (mode = feedMode) => {
+  const token = localStorage.getItem("token");
+
+  const endpoint = mode === "following" ? "/api/posts/following" : "/api/posts";
 
   api
-    .get("/api/posts", {
+    .get(endpoint, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -30,7 +32,7 @@ const loadPosts = () => {
 };
 
 useEffect(() => {
-  loadPosts();
+  loadPosts(feedMode);
 
   const channel = supabase
     .channel("posts-feed")
@@ -42,7 +44,7 @@ useEffect(() => {
         table: "posts",
       },
       () => {
-        loadPosts();
+        loadPosts(feedMode);
       }
     )
     .subscribe();
@@ -50,7 +52,7 @@ useEffect(() => {
   return () => {
     supabase.removeChannel(channel);
   };
-}, []);
+}, [feedMode]);
 
 const createPost = async () => {
 const token = localStorage.getItem("token");
@@ -115,12 +117,13 @@ try {
   setContent("");
   setMedia(null);
 
-  if (res.data?.post) {
-    setPosts((prev) => [
-      res.data.post,
-      ...prev,
-    ]);
+if (res.data?.post) {
+  if (feedMode === "forYou") {
+    setPosts((prev) => [res.data.post, ...prev]);
+  } else {
+    loadPosts(feedMode);
   }
+}
 } catch (err) {
   console.error(err);
 
@@ -160,15 +163,42 @@ return (
         padding: "18px 20px",
       }}
     >
-      <h2
-        className="for-you-title"
-        style={{
-          margin: 0,
-          fontWeight: "800",
-        }}
-      >
-        For You
-      </h2>
+      <div
+  style={{
+    display: "flex",
+    gap: "10px",
+  }}
+>
+  <button
+    onClick={() => setFeedMode("forYou")}
+    style={{
+      border: "none",
+      background: feedMode === "forYou" ? "#1d9bf0" : "transparent",
+      color: feedMode === "forYou" ? "#fff" : "#111827",
+      padding: "9px 16px",
+      borderRadius: "999px",
+      fontWeight: "800",
+      cursor: "pointer",
+    }}
+  >
+    For You
+  </button>
+
+  <button
+    onClick={() => setFeedMode("following")}
+    style={{
+      border: "none",
+      background: feedMode === "following" ? "#1d9bf0" : "transparent",
+      color: feedMode === "following" ? "#fff" : "#111827",
+      padding: "9px 16px",
+      borderRadius: "999px",
+      fontWeight: "800",
+      cursor: "pointer",
+    }}
+  >
+    Following
+  </button>
+</div>
     </div>
 
     <div
@@ -297,7 +327,9 @@ return (
             color: "#536471",
           }}
         >
-          No posts yet
+          {feedMode === "following"
+  ? "No posts from people you follow yet"
+  : "No posts yet"}
         </div>
       ) : (
         posts.map((post) => (
