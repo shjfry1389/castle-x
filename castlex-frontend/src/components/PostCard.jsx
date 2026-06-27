@@ -29,6 +29,26 @@ function EyeIcon() {
     </svg>
   );
 }
+function ShareIcon({ size = 18 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M8.6 10.7L15.4 6.3" />
+      <path d="M8.6 13.3L15.4 17.7" />
+    </svg>
+  );
+}
 export default function PostCard({ post }) {
   const username = localStorage.getItem("username");
   const cardRef = useRef(null);
@@ -168,6 +188,36 @@ const sentViewRef = useRef(false);
       alert("خطا در حذف کامنت");
     }
   };
+    const sharePost = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const postUsername = post.author?.username;
+
+    if (!postUsername) {
+      alert("اطلاعات نویسنده پست آماده نیست");
+      return;
+    }
+
+    const postLink = `${window.location.origin}/profile/${encodeURIComponent(
+      postUsername
+    )}?post=${post.id}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Castle X",
+          text: "این پست رو ببین",
+          url: postLink,
+        });
+      } else {
+        await navigator.clipboard.writeText(postLink);
+        alert("لینک پست کپی شد");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
     useEffect(() => {
     if (!post.id || !cardRef.current) return;
 
@@ -226,10 +276,11 @@ if (typeof res.data?.views_count === "number") {
     };
   }, [post.id]);
 
-  return (
-    <div
-      ref={cardRef}
-      style={{
+return (
+  <div
+    ref={cardRef}
+    id={`post-${post.id}`}
+    style={{
         padding: "16px",
         borderBottom: "1px solid #eff3f4",
         background: "#fff",
@@ -492,15 +543,21 @@ if (typeof res.data?.views_count === "number") {
   <EyeIcon />
   {viewsCount}
 </div>
-            <button
-              style={{
-                background: "none",
-                border: "none",
-                color: "#536471",
-              }}
-            >
-              🔁
-            </button>
+<button
+  onClick={sharePost}
+  title="Share post"
+  style={{
+    background: "none",
+    border: "none",
+    color: "#536471",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "5px",
+  }}
+>
+  <ShareIcon />
+</button>
 
             <button
               style={{

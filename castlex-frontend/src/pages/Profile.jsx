@@ -1,12 +1,33 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import api from "../services/api";
 import PostCard from "../components/PostCard";
-
+function ShareIcon({ size = 18 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M8.6 10.7L15.4 6.3" />
+      <path d="M8.6 13.3L15.4 17.7" />
+    </svg>
+  );
+}
 export default function Profile() {
   const { username } = useParams();
   const profileUsername = decodeURIComponent(username || "");
   const navigate = useNavigate();
+    const location = useLocation();
+  const targetPostId = new URLSearchParams(location.search).get("post");
 
   const [currentUser, setCurrentUser] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
@@ -66,6 +87,44 @@ export default function Profile() {
       })
       .catch(console.error);
   }, [user]);
+    useEffect(() => {
+    if (!targetPostId) return;
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("برای دیدن این پست باید وارد حساب کاربری شوید");
+
+      window.location.href = `/login?redirect=${encodeURIComponent(
+        `${location.pathname}${location.search}`
+      )}`;
+
+      return;
+    }
+
+    if (!posts || posts.length === 0) return;
+
+    const timer = setTimeout(() => {
+      const postElement = document.getElementById(`post-${targetPostId}`);
+
+      if (postElement) {
+        postElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+
+        postElement.style.boxShadow = "0 0 0 3px rgba(29,155,240,0.35)";
+        postElement.style.borderRadius = "16px";
+        postElement.style.transition = "box-shadow 0.3s ease";
+
+        setTimeout(() => {
+          postElement.style.boxShadow = "";
+        }, 2200);
+      }
+    }, 700);
+
+    return () => clearTimeout(timer);
+  }, [targetPostId, posts, location.pathname, location.search]);
 
   const uploadAvatar = async () => {
     try {
@@ -182,7 +241,26 @@ export default function Profile() {
       console.error(err);
     }
   };
+  const shareProfile = async () => {
+    const profileLink = `${window.location.origin}/profile/${encodeURIComponent(
+      user.username
+    )}`;
 
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Castle X",
+          text: `پروفایل ${user.username} رو ببین`,
+          url: profileLink,
+        });
+      } else {
+        await navigator.clipboard.writeText(profileLink);
+        alert("لینک پروفایل کپی شد");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const openFollowList = async (type) => {
     try {
       setFollowListLoading(true);
@@ -299,7 +377,27 @@ export default function Profile() {
               flexWrap: "wrap",
               justifyContent: "flex-end",
             }}
+            
           >
+            <button
+  onClick={shareProfile}
+  title="Share profile"
+  style={{
+    border: "1px solid #cfd9de",
+    background: "white",
+    color: "#0f172a",
+    borderRadius: "9999px",
+    padding: "10px 14px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    display: "flex",
+    alignItems: "center",
+    gap: "7px",
+  }}
+>
+  <ShareIcon />
+  Share
+</button>
             {currentUser?.username !== user.username && (
               <>
                 <button
