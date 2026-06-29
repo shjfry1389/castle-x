@@ -273,10 +273,15 @@ app.post("/api/posts/create", auth, async (req, res) => {
 });
 app.get("/api/posts", auth, async (req, res) => {
   try {
+    const limit = Math.min(Number(req.query.limit) || 15, 30);
+const page = Math.max(Number(req.query.page) || 1, 1);
+const from = (page - 1) * limit;
+const to = from + limit - 1;
     const { data: posts, error } = await supabase
       .from("posts")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
     if (error) return res.status(500).json(error);
 

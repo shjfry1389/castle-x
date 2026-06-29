@@ -11,6 +11,11 @@ const [media, setMedia] = useState(null);
 const [feedMode, setFeedMode] = useState("forYou");
 const [feedSwitching, setFeedSwitching] = useState(false);
 const [loading, setLoading] = useState(false);
+const [postsLoading, setPostsLoading] = useState(false);
+const [page, setPage] = useState(1);
+const [hasMore, setHasMore] = useState(true);
+
+const POSTS_LIMIT = 15;
 const token = localStorage.getItem("token");
 
 const currentUser = token
@@ -20,25 +25,43 @@ const switchFeed = (mode) => {
   if (mode === feedMode) return;
 
   setFeedSwitching(true);
+  setPosts([]);
+  setPage(1);
+  setHasMore(true);
 
   setTimeout(() => {
     setFeedMode(mode);
     setFeedSwitching(false);
   }, 140);
 };
-const loadPosts = (mode = feedMode) => {
+const loadPosts = async (mode = feedMode, nextPage = 1, append = false) => {
   const token = localStorage.getItem("token");
 
   const endpoint = mode === "following" ? "/api/posts/following" : "/api/posts";
 
-  api
-    .get(endpoint, {
+  try {
+    setPostsLoading(true);
+
+    const res = await api.get(endpoint, {
+      params: {
+        limit: POSTS_LIMIT,
+        page: nextPage,
+      },
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    })
-    .then((res) => setPosts(res.data))
-    .catch(console.error);
+    });
+
+    const newPosts = Array.isArray(res.data) ? res.data : [];
+
+    setPosts((prev) => (append ? [...prev, ...newPosts] : newPosts));
+    setPage(nextPage);
+    setHasMore(newPosts.length === POSTS_LIMIT);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setPostsLoading(false);
+  }
 };
 
 useEffect(() => {
@@ -129,7 +152,7 @@ try {
 
 if (res.data?.post) {
   if (feedMode === "forYou") {
-    setPosts((prev) => [res.data.post, ...prev]);
+    setPosts((prev) => [res.data.post, ...prev].slice(0, POSTS_LIMIT));
   } else {
     loadPosts(feedMode);
   }
@@ -335,26 +358,56 @@ return (
     transition: "opacity 0.18s ease, transform 0.18s ease",
   }}
 >
-  {posts.length === 0 ? (
-        <div
+ {posts.length === 0 ? (
+  <div
+    style={{
+      padding: "50px",
+      textAlign: "center",
+      color: "#536471",
+    }}
+  >
+    {postsLoading
+      ? "Loading posts..."
+      : feedMode === "following"
+      ? "No posts from people you follow yet"
+      : "No posts yet"}
+  </div>
+) : (
+  <>
+    {posts.map((post) => (
+      <PostCard
+        key={post.id}
+        post={post}
+      />
+    ))}
+
+    {hasMore && (
+      <div
+        style={{
+          padding: "20px",
+          textAlign: "center",
+        }}
+      >
+        <button
+          onClick={() => loadPosts(feedMode, page + 1, true)}
+          disabled={postsLoading}
           style={{
-            padding: "50px",
-            textAlign: "center",
-            color: "#536471",
+            border: "none",
+            background: "#1d9bf0",
+            color: "#fff",
+            padding: "10px 22px",
+            borderRadius: "999px",
+            cursor: "pointer",
+            fontWeight: "800",
+            opacity: postsLoading ? 0.6 : 1,
           }}
         >
-          {feedMode === "following"
-  ? "No posts from people you follow yet"
-  : "No posts yet"}
-        </div>
-      ) : (
-        posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-          />
-        ))
-      )}
+          {postsLoading ? "Loading..." : "Load more"}
+        </button>
+      </div>
+    )}
+  </>
+)}
     </div>
   </div>
 </>
