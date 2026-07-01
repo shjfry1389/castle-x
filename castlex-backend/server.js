@@ -724,7 +724,7 @@ app.get("/api/comments/:postId", async (req, res) => {
       const { data: user } = await supabase
         .from("users")
         .select(
-          "username, display_name, avatar_url"
+          "username, display_name, avatar_url, role, is_verified"
         )
         .eq("id", comment.user_id)
         .single();
