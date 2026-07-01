@@ -49,6 +49,48 @@ function ShareIcon({ size = 18 }) {
     </svg>
   );
 }
+function CommentBadge({ author }) {
+  if (author?.role === "admin") {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        aria-label="Admin"
+        style={{
+          filter:
+            "drop-shadow(0 0 6px #facc15) drop-shadow(0 0 12px #facc15)",
+        }}
+      >
+        <path
+          fill="#facc15"
+          d="M22.5 12c0 1.1-1.1 2-1.4 3-.3 1.1.1 2.5-.5 3.4-.6.9-2 .9-2.9 1.5-.9.6-1.5 1.9-2.6 2.2-1 .3-2.2-.5-3.3-.5s-2.3.8-3.3.5c-1.1-.3-1.7-1.6-2.6-2.2-.9-.6-2.3-.6-2.9-1.5-.6-.9-.2-2.3-.5-3.4-.3-1-1.4-1.9-1.4-3s1.1-2 1.4-3c.3-1.1-.1-2.5.5-3.4.6-.9 2-.9 2.9-1.5.9-.6 1.5-1.9 2.6-2.2 1-.3 2.2.5 3.3.5s2.3-.8 3.3-.5c1.1.3 1.7 1.6 2.6 2.2.9.6 2.3.6 2.9 1.5.6.9.2 2.3.5 3.4.3 1 1.4 1.9 1.4 3z"
+        />
+        <path
+          fill="#fff"
+          d="M10.3 15.3 7.7 12.7l-1.1 1.1 3.7 3.7 7.1-7.1-1.1-1.1z"
+        />
+      </svg>
+    );
+  }
+
+  if (author?.is_verified) {
+    return (
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-label="Verified">
+        <path
+          fill="#1D9BF0"
+          d="M22.5 12c0 1.1-1.1 2-1.4 3-.3 1.1.1 2.5-.5 3.4-.6.9-2 .9-2.9 1.5-.9.6-1.5 1.9-2.6 2.2-1 .3-2.2-.5-3.3-.5s-2.3.8-3.3.5c-1.1-.3-1.7-1.6-2.6-2.2-.9-.6-2.3-.6-2.9-1.5-.6-.9-.2-2.3-.5-3.4-.3-1-1.4-1.9-1.4-3s1.1-2 1.4-3c.3-1.1-.1-2.5.5-3.4.6-.9 2-.9 2.9-1.5.9-.6 1.5-1.9 2.6-2.2 1-.3 2.2.5 3.3.5s2.3-.8 3.3-.5c1.1.3 1.7 1.6 2.6 2.2.9.6 2.3.6 2.9 1.5.6.9.2 2.3.5 3.4.3 1 1.4 1.9 1.4 3z"
+        />
+        <path
+          fill="#fff"
+          d="M10.3 15.3 7.7 12.7l-1.1 1.1 3.7 3.7 7.1-7.1-1.1-1.1z"
+        />
+      </svg>
+    );
+  }
+
+  return null;
+}
 export default function PostCard({ post }) {
   const username = localStorage.getItem("username");
   const cardRef = useRef(null);
@@ -612,48 +654,109 @@ return (
                 </button>
               </div>
 
-              {comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  style={{
-                    padding: "10px 0",
-                    borderBottom: "1px solid #f1f5f9",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontWeight: "bold",
-                        marginBottom: "4px",
-                      }}
-                    >
-                      @{comment.author?.display_name || comment.author?.username}
-                    </div>
+             {comments.map((comment) => (
+  <div
+    key={comment.id}
+    style={{
+      display: "flex",
+      gap: "10px",
+      padding: "12px",
+      marginBottom: "10px",
+      background: "#f8fafc",
+      border: "1px solid #e5e7eb",
+      borderRadius: "14px",
+    }}
+  >
+    <Link
+      to={`/profile/${encodeURIComponent(comment.author?.username || "")}`}
+      style={{ flexShrink: 0 }}
+    >
+      <img
+        src={
+          comment.author?.avatar_url ||
+          "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+        }
+        alt=""
+        style={{
+          width: "38px",
+          height: "38px",
+          borderRadius: "50%",
+          objectFit: "cover",
+        }}
+      />
+    </Link>
 
-                    {comment.author?.username === username && (
-                      <button
-                        onClick={() => deleteComment(comment.id)}
-                        style={{
-                          border: "none",
-                          background: "none",
-                          cursor: "pointer",
-                          color: "#f4212e",
-                        }}
-                      >
-                        🗑️
-                      </button>
-                    )}
-                  </div>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: "10px",
+          alignItems: "flex-start",
+        }}
+      >
+        <Link
+          to={`/profile/${encodeURIComponent(comment.author?.username || "")}`}
+          style={{
+            color: "inherit",
+            textDecoration: "none",
+            minWidth: 0,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              flexWrap: "wrap",
+            }}
+          >
+            <b>
+              {comment.author?.display_name || comment.author?.username}
+            </b>
 
-                  <div>{comment.content}</div>
-                </div>
-              ))}
+            <CommentBadge author={comment.author} />
+
+            <span
+              style={{
+                color: "#536471",
+                fontSize: "13px",
+              }}
+            >
+              @{comment.author?.username}
+            </span>
+          </div>
+        </Link>
+
+        {comment.author?.username === username && (
+          <button
+            onClick={() => deleteComment(comment.id)}
+            style={{
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              color: "#f4212e",
+              fontSize: "16px",
+            }}
+          >
+            حذف
+          </button>
+        )}
+      </div>
+
+      <div
+        style={{
+          marginTop: "6px",
+          fontSize: "14px",
+          lineHeight: "1.6",
+          whiteSpace: "pre-wrap",
+        }}
+      >
+        {comment.content}
+      </div>
+    </div>
+  </div>
+))}
             </div>
           )}
         </div>
