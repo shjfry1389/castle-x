@@ -556,6 +556,9 @@ return (
                 border: "none",
                 color: "#536471",
                 cursor: "pointer",
+                transition: "transform 0.18s ease, color 0.18s ease",
+transform: showComments ? "scale(1.06)" : "scale(1)",
+color: showComments ? "#1d9bf0" : "#536471",
               }}
             >
               💬 {post.comments_count}
@@ -569,6 +572,8 @@ return (
                 cursor: "pointer",
                 fontWeight: "600",
                 color: liked ? "#f91880" : "#536471",
+                transition: "transform 0.18s ease, color 0.18s ease",
+transform: liked ? "scale(1.08)" : "scale(1)",
               }}
             >
               {liked ? "❤️" : "🤍"} {likesCount}
@@ -612,14 +617,19 @@ return (
             </button>
           </div>
 
-          {showComments && (
-            <div
-              style={{
-                marginTop: "15px",
-                borderTop: "1px solid #eff3f4",
-                paddingTop: "15px",
-              }}
-            >
+         
+<div
+  style={{
+    marginTop: showComments ? "15px" : "0",
+    borderTop: showComments ? "1px solid #eff3f4" : "1px solid transparent",
+    paddingTop: showComments ? "15px" : "0",
+    maxHeight: showComments ? "800px" : "0",
+    opacity: showComments ? 1 : 0,
+    overflow: "hidden",
+    transition:
+      "max-height 0.28s ease, opacity 0.22s ease, margin-top 0.22s ease, padding-top 0.22s ease",
+  }}
+> 
               <div
                 style={{
                   display: "flex",
@@ -758,7 +768,7 @@ return (
   </div>
 ))}
             </div>
-          )}
+          
         </div>
       </div>
     </div>
