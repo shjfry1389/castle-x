@@ -2158,17 +2158,7 @@ app.get("/api/hashtags/:tag/posts", auth, async (req, res) => {
 
     const { data: posts, error } = await supabase
       .from("posts")
-      .select(`
-        *,
-        author:users (
-          id,
-          username,
-          display_name,
-          avatar_url,
-          role,
-          is_verified
-        )
-      `)
+      .select("*")
       .ilike("content", `%#${tag}%`)
       .order("created_at", { ascending: false })
       .range(from, to);
@@ -2177,10 +2167,54 @@ app.get("/api/hashtags/:tag/posts", auth, async (req, res) => {
       return res.status(500).json(error);
     }
 
-    res.json(posts || []);
+    const result = await Promise.all(
+      (posts || []).map(async (post) => {
+        const { count: likesCount } = await supabase
+          .from("likes")
+          .select("*", { count: "exact", head: true })
+          .eq("post_id", post.id);
+
+        const { count: commentsCount } = await supabase
+          .from("comments")
+          .select("*", { count: "exact", head: true })
+          .eq("post_id", post.id);
+
+        const { data: author } = await supabase
+          .from("users")
+          .select("id, username, display_name, avatar_url, role, is_verified")
+          .eq("id", post.user_id)
+          .single();
+
+        const { data: likeRow } = await supabase
+          .from("likes")
+          .select("id")
+          .eq("post_id", post.id)
+          .eq("user_id", req.user.id)
+          .maybeSingle();
+
+        return {
+          ...post,
+          author,
+          likes_count:
+            author?.role === "admin" ? (likesCount || 0) + 100 : likesCount || 0,
+          comments_count: commentsCount || 0,
+          views_count:
+            author?.role === "admin"
+              ? (post.views_count || 0) + 200
+              : post.views_count || 0,
+          is_liked: !!likeRow,
+        };
+      })
+    );
+
+    res.json(result);
   } catch (err) {
     console.error("HASHTAG POSTS ERROR:", err);
-    res.status(500).json({ error: "خطای سرور" });
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
   }
 });
 app.get("/api/posts/:id", async (req, res) => {
