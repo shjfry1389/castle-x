@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import { supabase } from "../supabase";
 
 function Icon({ children, color }) {
   return (
@@ -42,7 +41,6 @@ export default function Navbar({ darkMode, setDarkMode }) {
   const location = useLocation();
   const token = localStorage.getItem("token");
   let username = localStorage.getItem("username");
-  let currentUserId = null;
 
   if (!username && token) {
     try {
@@ -52,15 +50,6 @@ export default function Navbar({ darkMode, setDarkMode }) {
       if (username) {
         localStorage.setItem("username", username);
       }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      currentUserId = payload.id || payload.user?.id;
     } catch (err) {
       console.error(err);
     }
@@ -95,57 +84,94 @@ export default function Navbar({ darkMode, setDarkMode }) {
   }, []);
 
   useEffect(() => {
-    if (!token || !currentUserId) return;
+    if (!token) return;
 
-    const messagesChannel = supabase
-      .channel(`navbar-messages-${currentUserId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-        },
-        (payload) => {
-          const message = payload.new;
+    const normalizeItems = (data) => {
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.messages)) return data.messages;
+      if (Array.isArray(data?.conversations)) return data.conversations;
+      if (Array.isArray(data?.notifications)) return data.notifications;
+      return [];
+    };
 
-          if (String(message.sender_id) !== String(currentUserId)) {
+    const getNewestTime = (items) => {
+      const times = items
+        .map((item) => {
+          const value =
+            item.last_message_at ||
+            item.last_message?.created_at ||
+            item.updated_at ||
+            item.created_at;
+
+          return value ? new Date(value).getTime() : 0;
+        })
+        .filter(Boolean);
+
+      return times.length ? Math.max(...times) : 0;
+    };
+
+    const checkBadges = async () => {
+      try {
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const [messagesRes, notificationsRes] = await Promise.allSettled([
+          api.get("/api/messages", { headers }),
+          api.get("/api/notifications", { headers }),
+        ]);
+
+        if (messagesRes.status === "fulfilled") {
+          const messages = normalizeItems(messagesRes.value.data);
+          const newestMessageTime = getNewestTime(messages);
+          const seenMessageTime = Number(
+            localStorage.getItem("castle_x_seen_message_at") || 0
+          );
+
+          if (!seenMessageTime && newestMessageTime) {
+            localStorage.setItem(
+              "castle_x_seen_message_at",
+              String(newestMessageTime)
+            );
+          } else if (
+            newestMessageTime > seenMessageTime &&
+            !location.pathname.startsWith("/messages") &&
+            !location.pathname.startsWith("/chat")
+          ) {
             setMessageBadge(true);
           }
         }
-      )
-      .subscribe();
 
-    const notificationsChannel = supabase
-      .channel(`navbar-notifications-${currentUserId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-        },
-        (payload) => {
-          const notification = payload.new;
+        if (notificationsRes.status === "fulfilled") {
+          const notifications = normalizeItems(notificationsRes.value.data);
+          const newestNotificationTime = getNewestTime(notifications);
+          const seenNotificationTime = Number(
+            localStorage.getItem("castle_x_seen_notification_at") || 0
+          );
 
-          const notificationUserId =
-            notification.user_id ||
-            notification.receiver_id ||
-            notification.to_user_id ||
-            notification.target_user_id;
-
-          if (String(notificationUserId) === String(currentUserId)) {
+          if (!seenNotificationTime && newestNotificationTime) {
+            localStorage.setItem(
+              "castle_x_seen_notification_at",
+              String(newestNotificationTime)
+            );
+          } else if (
+            newestNotificationTime > seenNotificationTime &&
+            !location.pathname.startsWith("/notifications")
+          ) {
             setNotificationBadge(true);
           }
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(messagesChannel);
-      supabase.removeChannel(notificationsChannel);
+      } catch (err) {
+        console.error(err);
+      }
     };
-  }, [token, currentUserId]);
+
+    checkBadges();
+
+    const interval = setInterval(checkBadges, 15000);
+
+    return () => clearInterval(interval);
+  }, [token, location.pathname]);
 
   useEffect(() => {
     if (
@@ -153,16 +179,18 @@ export default function Navbar({ darkMode, setDarkMode }) {
       location.pathname.startsWith("/chat")
     ) {
       setMessageBadge(false);
+      localStorage.setItem("castle_x_seen_message_at", String(Date.now()));
     }
 
     if (location.pathname.startsWith("/notifications")) {
       setNotificationBadge(false);
+      localStorage.setItem("castle_x_seen_notification_at", String(Date.now()));
     }
   }, [location.pathname]);
 
   const logout = async () => {
     const confirmLogout = window.confirm(
-      "آیا مطمئنید می‌خواهید از حساب کاربری خود خارج شوید؟"
+      "ط¢غŒط§ ظ…ط·ظ…ط¦ظ†غŒط¯ ظ…غŒâ€Œط®ظˆط§ظ‡غŒط¯ ط§ط² ط­ط³ط§ط¨ ع©ط§ط±ط¨ط±غŒ ط®ظˆط¯ ط®ط§ط±ط¬ ط´ظˆغŒط¯طں"
     );
 
     if (!confirmLogout) return;
