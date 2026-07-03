@@ -456,7 +456,7 @@ return (
               textAlign: isPersian(postContent) ? "right" : "left",
             }}
           >
-            {postContent.split(/(\s+|@[a-zA-Z0-9_]+)/g).map((part, i) => {
+            {postContent.split(/(\s+|@[a-zA-Z0-9_]+|#[\p{L}\p{N}_]+)/gu).map((part, i) => {
   if (!part) return null;
 
   if (/^@[a-zA-Z0-9_]+$/.test(part)) {
@@ -623,7 +623,7 @@ transform: liked ? "scale(1.08)" : "scale(1)",
     marginTop: showComments ? "15px" : "0",
     borderTop: showComments ? "1px solid #eff3f4" : "1px solid transparent",
     paddingTop: showComments ? "15px" : "0",
-    maxHeight: showComments ? "800px" : "0",
+    maxHeight: showComments ? "2000px" : "0",
     opacity: showComments ? 1 : 0,
     overflow: "hidden",
     transition:

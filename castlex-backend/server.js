@@ -2143,6 +2143,46 @@ app.delete("/api/admin/report/:id", auth, admin, async (req, res) => {
     });
   }
 });
+app.get("/api/hashtags/:tag/posts", auth, async (req, res) => {
+  try {
+    const tag = decodeURIComponent(req.params.tag || "").replace("#", "").trim();
+
+    if (!tag) {
+      return res.status(400).json({ error: "هشتگ نامعتبر است" });
+    }
+
+    const limit = Math.min(Number(req.query.limit) || 15, 30);
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data: posts, error } = await supabase
+      .from("posts")
+      .select(`
+        *,
+        author:users (
+          id,
+          username,
+          display_name,
+          avatar_url,
+          role,
+          is_verified
+        )
+      `)
+      .ilike("content", `%#${tag}%`)
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      return res.status(500).json(error);
+    }
+
+    res.json(posts || []);
+  } catch (err) {
+    console.error("HASHTAG POSTS ERROR:", err);
+    res.status(500).json({ error: "خطای سرور" });
+  }
+});
 app.get("/api/posts/:id", async (req, res) => {
   const { data, error } = await supabase
     .from("posts")

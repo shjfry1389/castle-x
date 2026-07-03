@@ -3,6 +3,7 @@ import "./theme.css";
 import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Home from "./pages/home";
+import Hashtag from "./pages/Hashtag";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Admin from "./pages/Admin";
@@ -51,6 +52,7 @@ function Layout({ darkMode, setDarkMode }) {
         <Route path="/chat/:conversationId" element={<Chat />} />
 
         <Route path="/post/:postId" element={<Post />} />
+        <Route path="/hashtag/:tag" element={<Hashtag />} />
       </Routes>
     </>
   );
