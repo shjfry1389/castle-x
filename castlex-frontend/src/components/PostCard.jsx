@@ -476,6 +476,23 @@ return (
       </Link>
     );
   }
+    if (/^#[\p{L}\p{N}_]+$/u.test(part)) {
+    const hashtag = part.slice(1);
+
+    return (
+      <Link
+        key={i}
+        to={`/hashtag/${encodeURIComponent(hashtag)}`}
+        style={{
+          color: "#1d9bf0",
+          fontWeight: "bold",
+          textDecoration: "none",
+        }}
+      >
+        {part}
+      </Link>
+    );
+  }
 
   return part;
 })}
