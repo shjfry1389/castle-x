@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import { supabase } from "../supabase";
 
 function Icon({ children, color }) {
   return (
@@ -19,9 +20,29 @@ function Icon({ children, color }) {
   );
 }
 
+function NotificationDot({ borderColor }) {
+  return (
+    <span
+      style={{
+        position: "absolute",
+        top: "5px",
+        right: "5px",
+        width: "10px",
+        height: "10px",
+        borderRadius: "50%",
+        background: "#ef4444",
+        border: `2px solid ${borderColor}`,
+        boxShadow: "0 0 0 2px rgba(239,68,68,0.15)",
+      }}
+    />
+  );
+}
+
 export default function Navbar({ darkMode, setDarkMode }) {
+  const location = useLocation();
   const token = localStorage.getItem("token");
   let username = localStorage.getItem("username");
+  let currentUserId = null;
 
   if (!username && token) {
     try {
@@ -36,7 +57,35 @@ export default function Navbar({ darkMode, setDarkMode }) {
     }
   }
 
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      currentUserId = payload.id || payload.user?.id;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+  const [hasNewMessage, setHasNewMessage] = useState(
+    () => localStorage.getItem("castle_x_has_new_message") === "true"
+  );
+  const [hasNewNotification, setHasNewNotification] = useState(
+    () => localStorage.getItem("castle_x_has_new_notification") === "true"
+  );
+
+  const setMessageBadge = (value) => {
+    setHasNewMessage(value);
+    localStorage.setItem("castle_x_has_new_message", value ? "true" : "false");
+  };
+
+  const setNotificationBadge = (value) => {
+    setHasNewNotification(value);
+    localStorage.setItem(
+      "castle_x_has_new_notification",
+      value ? "true" : "false"
+    );
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -44,6 +93,72 @@ export default function Navbar({ darkMode, setDarkMode }) {
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (!token || !currentUserId) return;
+
+    const messagesChannel = supabase
+      .channel(`navbar-messages-${currentUserId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          const message = payload.new;
+
+          if (String(message.sender_id) !== String(currentUserId)) {
+            setMessageBadge(true);
+          }
+        }
+      )
+      .subscribe();
+
+    const notificationsChannel = supabase
+      .channel(`navbar-notifications-${currentUserId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+        },
+        (payload) => {
+          const notification = payload.new;
+
+          const notificationUserId =
+            notification.user_id ||
+            notification.receiver_id ||
+            notification.to_user_id ||
+            notification.target_user_id;
+
+          if (String(notificationUserId) === String(currentUserId)) {
+            setNotificationBadge(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(notificationsChannel);
+    };
+  }, [token, currentUserId]);
+
+  useEffect(() => {
+    if (
+      location.pathname.startsWith("/messages") ||
+      location.pathname.startsWith("/chat")
+    ) {
+      setMessageBadge(false);
+    }
+
+    if (location.pathname.startsWith("/notifications")) {
+      setNotificationBadge(false);
+    }
+  }, [location.pathname]);
 
   const logout = async () => {
     const confirmLogout = window.confirm(
@@ -89,6 +204,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
     justifyContent: "center",
     color: iconColor,
     transition: "background 0.2s ease, transform 0.2s ease",
+    position: "relative",
   };
 
   const iconButtonStyle = {
@@ -163,6 +279,8 @@ export default function Navbar({ darkMode, setDarkMode }) {
     </Icon>
   );
 
+  const dotBorderColor = darkMode ? "#0f172a" : "#fff";
+
   const themeButton = (
     <button
       onClick={toggleTheme}
@@ -202,10 +320,14 @@ export default function Navbar({ darkMode, setDarkMode }) {
           <>
             <Link to="/messages" style={iconLinkStyle}>
               <MessagesIcon />
+              {hasNewMessage && <NotificationDot borderColor={dotBorderColor} />}
             </Link>
 
             <Link to="/notifications" style={iconLinkStyle}>
               <BellIcon />
+              {hasNewNotification && (
+                <NotificationDot borderColor={dotBorderColor} />
+              )}
             </Link>
 
             <Link
@@ -304,10 +426,16 @@ export default function Navbar({ darkMode, setDarkMode }) {
             <>
               <Link to="/messages" style={iconLinkStyle}>
                 <MessagesIcon />
+                {hasNewMessage && (
+                  <NotificationDot borderColor={dotBorderColor} />
+                )}
               </Link>
 
               <Link to="/notifications" style={iconLinkStyle}>
                 <BellIcon />
+                {hasNewNotification && (
+                  <NotificationDot borderColor={dotBorderColor} />
+                )}
               </Link>
 
               <Link
