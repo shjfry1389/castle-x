@@ -56,7 +56,7 @@ function ShareIcon({ size = 18 }) {
     </svg>
   );
 }
-function SilverBadge({ size = 20 }) {
+function SilverBadge({ size = 15 }) {
   return (
     <svg
       viewBox="0 0 24 24"
