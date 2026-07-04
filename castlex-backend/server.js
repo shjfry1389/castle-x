@@ -95,7 +95,7 @@ app.post("/api/auth/register", async (req, res) => {
           password_hash,
         },
       ])
-      .select("id, username, display_name, avatar_url, is_verified, role")
+      .select("id, username, display_name, avatar_url, is_verified, role, premium_until, premium_plan")
       .single();
 
     if (error) {
@@ -301,7 +301,7 @@ const to = from + limit - 1;
 
         const { data: author } = await supabase
           .from("users")
-          .select("id, username, display_name, avatar_url, is_verified, role")
+          .select("id, username, display_name, avatar_url, is_verified, role, premium_until, premium_plan")
           .eq("id", post.user_id)
           .single();
 
@@ -426,7 +426,7 @@ app.get("/api/posts/following", auth, async (req, res) => {
 
         const { data: author } = await supabase
           .from("users")
-          .select("id, username, display_name, avatar_url, is_verified, role")
+          .select("id, username, display_name, avatar_url, is_verified, role, premium_until, premium_plan")
           .eq("id", post.user_id)
           .single();
 
@@ -724,7 +724,7 @@ app.get("/api/comments/:postId", async (req, res) => {
       const { data: user } = await supabase
         .from("users")
         .select(
-          "username, display_name, avatar_url, role, is_verified"
+          "username, display_name, avatar_url, role, is_verified, premium_until, premium_plan"
         )
         .eq("id", comment.user_id)
         .single();
@@ -841,7 +841,7 @@ app.get("/api/users/:username/followers", async (req, res) => {
     for (const id of ids) {
       const { data: foundUser, error: foundUserError } = await supabase
         .from("users")
-        .select("id, username, display_name, avatar_url, is_verified, role")
+        .select("id, username, display_name, avatar_url, is_verified, role, premium_until, premium_plan")
         .eq("id", id)
         .maybeSingle();
 
@@ -920,7 +920,7 @@ app.get("/api/users/:username/following", async (req, res) => {
     for (const id of ids) {
       const { data: foundUser, error: foundUserError } = await supabase
         .from("users")
-        .select("id, username, display_name, avatar_url, is_verified, role")
+        .select("id, username, display_name, avatar_url, is_verified, role, premium_until, premium_plan")
         .eq("id", id)
         .maybeSingle();
 
@@ -975,7 +975,9 @@ app.get("/api/users/:username/posts", async (req, res) => {
         display_name,
         avatar_url,
         is_verified,
-        role
+        role,
+      premium_until,
+      premium_plan
         
       `,
         )
@@ -1358,7 +1360,7 @@ app.get("/api/conversations", auth, async (req, res) => {
       const { data: user } = await supabase
         .from("users")
         .select(
-  "id, username, display_name, avatar_url, is_online, last_seen, is_verified, role",
+  "id, username, display_name, avatar_url, is_online, last_seen, is_verified, role, premium_until, premium_plan",
 )
         .eq("id", other.user_id)
         .single();
@@ -1679,7 +1681,7 @@ app.put("/api/admin/users/:id/account", auth, admin, async (req, res) => {
       .from("users")
       .update(updateData)
       .eq("id", id)
-      .select("id, username, display_name, avatar_url, is_verified, role, banned")
+      .select("id, username, display_name, avatar_url, is_verified, role, banned, premium_until, premium_plan")
       .single();
 
     if (error) {
@@ -1849,6 +1851,387 @@ app.post("/api/admin/posts/:id/stop-hot", auth, admin, async (req, res) => {
     });
   } catch (err) {
     console.error("STOP HOT POST ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
+app.post("/api/posts/:id/hot-request", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("id, premium_plan, premium_until")
+      .eq("id", req.user.id)
+      .single();
+
+    if (userError || !user) {
+      return res.status(404).json({ error: "کاربر پیدا نشد" });
+    }
+
+    const premiumActive =
+      user.premium_plan === "silver" &&
+      user.premium_until &&
+      new Date(user.premium_until).getTime() > Date.now();
+
+    if (!premiumActive) {
+      return res.status(403).json({
+        error: "فقط کاربران Premium می‌توانند درخواست پست داغ بدهند",
+      });
+    }
+
+    const { data: post, error: postError } = await supabase
+      .from("posts")
+      .select("id, user_id")
+      .eq("id", id)
+      .eq("user_id", req.user.id)
+      .maybeSingle();
+
+    if (postError || !post) {
+      return res.status(404).json({
+        error: "این پست برای شما نیست یا پیدا نشد",
+      });
+    }
+
+    const { count } = await supabase
+      .from("hot_post_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", req.user.id)
+      .in("status", ["pending", "approved"]);
+
+    if ((count || 0) >= 3) {
+      return res.status(403).json({
+        error: "شما فقط می‌توانید برای ۳ پست درخواست داغ شدن بدهید",
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("hot_post_requests")
+      .insert({
+        user_id: req.user.id,
+        post_id: id,
+        status: "pending",
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در ثبت درخواست",
+        details: error.message,
+      });
+    }
+
+    res.json({ success: true, request: data });
+  } catch (err) {
+    console.error("HOT REQUEST ERROR:", err);
+    res.status(500).json({ error: "خطای سرور", details: err.message });
+  }
+});
+app.get("/api/admin/hot-requests", auth, admin, async (req, res) => {
+  try {
+    const { data: requests, error } = await supabase
+      .from("hot_post_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در دریافت درخواست‌ها",
+        details: error.message,
+      });
+    }
+
+    const result = await Promise.all(
+      (requests || []).map(async (request) => {
+        const { data: user } = await supabase
+          .from("users")
+          .select(
+            "id, username, display_name, avatar_url, role, is_verified, premium_until, premium_plan"
+          )
+          .eq("id", request.user_id)
+          .maybeSingle();
+
+        const { data: post } = await supabase
+          .from("posts")
+          .select("id, content, media_url, media_type, user_id, created_at")
+          .eq("id", request.post_id)
+          .maybeSingle();
+
+        return {
+          ...request,
+          user,
+          post,
+        };
+      })
+    );
+
+    res.json(result);
+  } catch (err) {
+    console.error("GET HOT REQUESTS ERROR:", err);
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
+
+app.post("/api/admin/hot-requests/:id/approve", auth, admin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    let { duration_hours, priority, bump_interval_minutes, admin_note } =
+      req.body || {};
+
+    duration_hours = Number(duration_hours) || 24;
+    priority = Number(priority) || 1;
+    bump_interval_minutes = Number(bump_interval_minutes) || 60;
+
+    if (duration_hours < 1) duration_hours = 1;
+    if (duration_hours > 720) duration_hours = 720;
+
+    if (priority < 1) priority = 1;
+    if (priority > 10) priority = 10;
+
+    if (bump_interval_minutes < 10) bump_interval_minutes = 10;
+    if (bump_interval_minutes > 1440) bump_interval_minutes = 1440;
+
+    const { data: request, error: requestError } = await supabase
+      .from("hot_post_requests")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (requestError) {
+      return res.status(500).json({
+        error: "خطا در بررسی درخواست",
+        details: requestError.message,
+      });
+    }
+
+    if (!request) {
+      return res.status(404).json({
+        error: "درخواست پیدا نشد",
+      });
+    }
+
+    if (request.status !== "pending") {
+      return res.status(400).json({
+        error: "این درخواست قبلاً بررسی شده است",
+      });
+    }
+
+    const { data: post, error: postError } = await supabase
+      .from("posts")
+      .select("id")
+      .eq("id", request.post_id)
+      .maybeSingle();
+
+    if (postError || !post) {
+      return res.status(404).json({
+        error: "پست پیدا نشد",
+      });
+    }
+
+    const endsAt = new Date(
+      Date.now() + duration_hours * 60 * 60 * 1000
+    ).toISOString();
+
+    await supabase
+      .from("post_promotions")
+      .update({ active: false })
+      .eq("post_id", request.post_id)
+      .eq("active", true);
+
+    const { data: promotion, error: promotionError } = await supabase
+      .from("post_promotions")
+      .insert({
+        post_id: request.post_id,
+        active: true,
+        priority,
+        ends_at: endsAt,
+        bump_interval_minutes,
+        last_bumped_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (promotionError) {
+      return res.status(500).json({
+        error: "خطا در داغ کردن پست",
+        details: promotionError.message,
+      });
+    }
+
+    const { data: updatedRequest, error: updateError } = await supabase
+      .from("hot_post_requests")
+      .update({
+        status: "approved",
+        admin_note: admin_note || null,
+        decided_at: new Date().toISOString(),
+        decided_by: req.user.id,
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (updateError) {
+      return res.status(500).json({
+        error: "پست داغ شد ولی وضعیت درخواست آپدیت نشد",
+        details: updateError.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      request: updatedRequest,
+      promotion,
+    });
+  } catch (err) {
+    console.error("APPROVE HOT REQUEST ERROR:", err);
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
+
+app.post("/api/admin/hot-requests/:id/reject", auth, admin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { admin_note } = req.body || {};
+
+    const { data: request, error: requestError } = await supabase
+      .from("hot_post_requests")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (requestError) {
+      return res.status(500).json({
+        error: "خطا در بررسی درخواست",
+        details: requestError.message,
+      });
+    }
+
+    if (!request) {
+      return res.status(404).json({
+        error: "درخواست پیدا نشد",
+      });
+    }
+
+    if (request.status !== "pending") {
+      return res.status(400).json({
+        error: "این درخواست قبلاً بررسی شده است",
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("hot_post_requests")
+      .update({
+        status: "rejected",
+        admin_note: admin_note || null,
+        decided_at: new Date().toISOString(),
+        decided_by: req.user.id,
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در رد کردن درخواست",
+        details: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      request: data,
+    });
+  } catch (err) {
+    console.error("REJECT HOT REQUEST ERROR:", err);
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
+app.put("/api/admin/users/:id/premium", auth, admin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { months } = req.body;
+
+    const premiumMonths = Math.max(Number(months) || 1, 1);
+
+    const premiumUntil = new Date();
+    premiumUntil.setMonth(premiumUntil.getMonth() + premiumMonths);
+
+    const { data, error } = await supabase
+      .from("users")
+      .update({
+        premium_plan: "silver",
+        premium_until: premiumUntil.toISOString(),
+      })
+      .eq("id", id)
+      .select(
+        "id, username, display_name, avatar_url, role, is_verified, banned, premium_until, premium_plan"
+      )
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در فعال کردن پریمیوم",
+        details: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      user: data,
+    });
+  } catch (err) {
+    console.error("SET PREMIUM ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
+
+app.delete("/api/admin/users/:id/premium", auth, admin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data, error } = await supabase
+      .from("users")
+      .update({
+        premium_plan: null,
+        premium_until: null,
+      })
+      .eq("id", id)
+      .select(
+        "id, username, display_name, avatar_url, role, is_verified, banned, premium_until, premium_plan"
+      )
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در غیرفعال کردن پریمیوم",
+        details: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      user: data,
+    });
+  } catch (err) {
+    console.error("REMOVE PREMIUM ERROR:", err);
 
     res.status(500).json({
       error: "خطای سرور",
@@ -2181,7 +2564,7 @@ app.get("/api/hashtags/:tag/posts", auth, async (req, res) => {
 
         const { data: author } = await supabase
           .from("users")
-          .select("id, username, display_name, avatar_url, role, is_verified")
+          .select("id, username, display_name, avatar_url, role, is_verified, premium_until, premium_plan")
           .eq("id", post.user_id)
           .single();
 
@@ -2228,7 +2611,9 @@ app.get("/api/posts/:id", async (req, res) => {
         display_name,
         avatar_url,
         role,
-        is_verified
+        is_verified,
+  premium_until,
+  premium_plan
       )
     `)
     .eq("id", req.params.id)

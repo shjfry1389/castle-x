@@ -9,6 +9,7 @@ export default function Admin() {
   const [reports, setReports] = useState([]);
   const [posts, setPosts] = useState([]);
   const [comments, setComments] = useState([]);
+  const [hotRequests, setHotRequests] = useState([]);
   const [search, setSearch] = useState("");
 
   const [editingUser, setEditingUser] = useState(null);
@@ -37,6 +38,7 @@ export default function Admin() {
     loadStats();
     loadPosts();
     loadComments();
+    loadHotRequests();
     loadReports();
   }, []);
 
@@ -49,6 +51,13 @@ export default function Admin() {
       .filter((value) => value !== null && value !== undefined)
       .some((value) => String(value).toLowerCase().includes(q));
   };
+  const isPremiumActive = (user) => {
+  return (
+    user?.premium_plan === "silver" &&
+    user?.premium_until &&
+    new Date(user.premium_until).getTime() > Date.now()
+  );
+};
 
   const filteredReports = reports.filter((report) =>
     matchesSearch(
@@ -68,6 +77,10 @@ export default function Admin() {
       user.role,
       user.banned ? "banned" : "active",
       user.is_verified ? "verified" : "unverified"
+      ,
+isPremiumActive(user) ? "premium" : "free",
+user.premium_plan,
+user.premium_until
     )
   );
 
@@ -84,6 +97,16 @@ export default function Admin() {
   const filteredComments = comments.filter((comment) =>
     matchesSearch(comment.id, comment.content, comment.user_id, comment.post_id)
   );
+  const filteredHotRequests = hotRequests.filter((request) =>
+  matchesSearch(
+    request.id,
+    request.status,
+    request.user?.username,
+    request.user?.display_name,
+    request.post?.content,
+    request.post_id
+  )
+);
 
   const loadReports = async () => {
     try {
@@ -93,6 +116,14 @@ export default function Admin() {
       console.error(err);
     }
   };
+  const loadHotRequests = async () => {
+  try {
+    const res = await api.get("/api/admin/hot-requests", authHeader);
+    setHotRequests(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const loadPosts = async () => {
     try {
@@ -258,7 +289,50 @@ export default function Admin() {
       alert("خطا در بن کردن کاربر");
     }
   };
+const activatePremium = async (user) => {
+  try {
+    const months = window.prompt("Premium چند ماه فعال شود؟", "1");
 
+    if (!months) return;
+
+    const res = await api.put(
+      `/api/admin/users/${user.id}/premium`,
+      {
+        months: Number(months),
+      },
+      authHeader
+    );
+
+    setUsers((prev) =>
+      prev.map((u) => (u.id === user.id ? { ...u, ...res.data.user } : u))
+    );
+
+    alert("Premium فعال شد");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در فعال کردن Premium");
+  }
+};
+
+const removePremium = async (user) => {
+  try {
+    if (!window.confirm("Premium این کاربر حذف شود؟")) return;
+
+    const res = await api.delete(
+      `/api/admin/users/${user.id}/premium`,
+      authHeader
+    );
+
+    setUsers((prev) =>
+      prev.map((u) => (u.id === user.id ? { ...u, ...res.data.user } : u))
+    );
+
+    alert("Premium حذف شد");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در حذف Premium");
+  }
+};
  const deleteUser = async (id) => {
   try {
     const confirmDelete = window.confirm(
@@ -349,6 +423,73 @@ const stopHotPost = async (post) => {
   } catch (err) {
     console.error(err);
     alert(err.response?.data?.error || "خطا در خاموش کردن پست داغ");
+  }
+};
+const approveHotRequest = async (request) => {
+  try {
+    const duration = window.prompt("پست چند ساعت داغ باشد؟", "24");
+    if (!duration) return;
+
+    const interval = window.prompt("هر چند دقیقه دوباره بالا بیاید؟", "60");
+    if (!interval) return;
+
+    const priority = window.prompt("اولویت چند باشد؟ عدد 1 تا 10", "1");
+    if (!priority) return;
+
+    const adminNote = window.prompt("یادداشت ادمین اختیاری:", "");
+
+    const res = await api.post(
+      `/api/admin/hot-requests/${request.id}/approve`,
+      {
+        duration_hours: Number(duration),
+        bump_interval_minutes: Number(interval),
+        priority: Number(priority),
+        admin_note: adminNote || "",
+      },
+      authHeader
+    );
+
+    setHotRequests((prev) =>
+      prev.map((item) =>
+        item.id === request.id ? { ...item, ...res.data.request } : item
+      )
+    );
+
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === request.post_id ? { ...post, is_hot: true } : post
+      )
+    );
+
+    alert("درخواست تایید شد و پست داغ شد");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در تایید درخواست");
+  }
+};
+
+const rejectHotRequest = async (request) => {
+  try {
+    const adminNote = window.prompt("دلیل رد درخواست اختیاری:", "");
+
+    const res = await api.post(
+      `/api/admin/hot-requests/${request.id}/reject`,
+      {
+        admin_note: adminNote || "",
+      },
+      authHeader
+    );
+
+    setHotRequests((prev) =>
+      prev.map((item) =>
+        item.id === request.id ? { ...item, ...res.data.request } : item
+      )
+    );
+
+    alert("درخواست رد شد");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در رد درخواست");
   }
 };
 
@@ -460,6 +601,78 @@ const stopHotPost = async (post) => {
           </button>
         </div>
       ))}
+      <h2 style={{ marginTop: "50px" }}>
+  Hot Post Requests ({filteredHotRequests.length})
+</h2>
+
+{filteredHotRequests.length === 0 && <p>No Hot Requests</p>}
+
+{filteredHotRequests.map((request) => (
+  <div key={request.id} style={boxStyle}>
+    <p>
+      <b>Request ID:</b> {request.id}
+    </p>
+
+    <p>
+      <b>User:</b>{" "}
+      {request.user?.display_name || request.user?.username || "Unknown"}{" "}
+      {request.user?.username && `@${request.user.username}`}
+    </p>
+
+    <p>
+      <b>Post ID:</b> {request.post_id}
+    </p>
+
+    <p>
+      <b>Post:</b> {request.post?.content || "No content"}
+    </p>
+
+    <p>
+      <b>Status:</b>{" "}
+      <span
+        style={{
+          fontWeight: "bold",
+          color:
+            request.status === "approved"
+              ? "#16a34a"
+              : request.status === "rejected"
+              ? "#ef4444"
+              : "#f59e0b",
+        }}
+      >
+        {request.status}
+      </span>
+    </p>
+
+    {request.admin_note && (
+      <p>
+        <b>Admin Note:</b> {request.admin_note}
+      </p>
+    )}
+
+    {request.status === "pending" && (
+      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <button
+          onClick={() => approveHotRequest(request)}
+          style={{
+            background: "#22c55e",
+            color: "#fff",
+            border: "none",
+            padding: "8px 14px",
+            borderRadius: "8px",
+            cursor: "pointer",
+          }}
+        >
+          Approve
+        </button>
+
+        <button onClick={() => rejectHotRequest(request)} style={dangerButton}>
+          Reject
+        </button>
+      </div>
+    )}
+  </div>
+))}
 
       <h2 style={{ marginTop: "50px" }}>Users ({filteredUsers.length})</h2>
 
@@ -479,6 +692,7 @@ const stopHotPost = async (post) => {
               <th>Verified</th>
               <th>Banned</th>
               <th>Role</th>
+              <th>Premium</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -501,7 +715,16 @@ const stopHotPost = async (post) => {
                   {user.role}
                   {user.role === "admin" && " 👑"}
                 </td>
-
+                <td>
+  {isPremiumActive(user) ? (
+    <span style={{ color: "#64748b", fontWeight: "bold" }}>
+      Silver تا{" "}
+      {new Date(user.premium_until).toLocaleDateString("fa-IR")}
+    </span>
+  ) : (
+    "Free"
+  )}
+</td>
                 <td
                   style={{
                     display: "flex",
@@ -525,6 +748,11 @@ const stopHotPost = async (post) => {
                   <button onClick={() => toggleBan(user)}>
                     {user.banned ? "Unban" : "Ban"}
                   </button>
+                  {isPremiumActive(user) ? (
+  <button onClick={() => removePremium(user)}>Remove Premium</button>
+) : (
+  <button onClick={() => activatePremium(user)}>Make Premium</button>
+)}
 
                   <button onClick={() => deleteUser(user.id)}>Delete</button>
                 </td>

@@ -15,6 +15,13 @@ function getVisitorKey() {
 
   return key;
 }
+function isPremiumActive(user) {
+  return (
+    user?.premium_plan === "silver" &&
+    user?.premium_until &&
+    new Date(user.premium_until).getTime() > Date.now()
+  );
+}
 
 function EyeIcon() {
   
@@ -46,6 +53,29 @@ function ShareIcon({ size = 18 }) {
       <circle cx="18" cy="19" r="3" />
       <path d="M8.6 10.7L15.4 6.3" />
       <path d="M8.6 13.3L15.4 17.7" />
+    </svg>
+  );
+}
+function SilverBadge({ size = 20 }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      aria-label="Premium"
+      style={{
+        filter:
+          "drop-shadow(0 0 5px #cbd5e1) drop-shadow(0 0 10px #94a3b8)",
+      }}
+    >
+      <path
+        fill="#cbd5e1"
+        d="M22.5 12c0 1.1-1.1 2-1.4 3-.3 1.1.1 2.5-.5 3.4-.6.9-2 .9-2.9 1.5-.9.6-1.5 1.9-2.6 2.2-1 .3-2.2-.5-3.3-.5s-2.3.8-3.3.5c-1.1-.3-1.7-1.6-2.6-2.2-.9-.6-2.3-.6-2.9-1.5-.6-.9-.2-2.3-.5-3.4-.3-1-1.4-1.9-1.4-3s1.1-2 1.4-3c.3-1.1-.1-2.5.5-3.4.6-.9 2-.9 2.9-1.5.9-.6 1.5-1.9 2.6-2.2 1-.3 2.2.5 3.3.5s2.3-.8 3.3-.5c1.1.3 1.7 1.6 2.6 2.2.9.6 2.3.6 2.9 1.5.6.9.2 2.3.5 3.4.3 1 1.4 1.9 1.4 3z"
+      />
+      <path
+        fill="#fff"
+        d="M10.3 15.3 7.7 12.7l-1.1 1.1 3.7 3.7 7.1-7.1-1.1-1.1z"
+      />
     </svg>
   );
 }
@@ -88,7 +118,9 @@ function CommentBadge({ author }) {
       </svg>
     );
   }
-
+    if (isPremiumActive(author)) {
+    return <SilverBadge size={18} />;
+  }
   return null;
 }
 export default function PostCard({ post }) {
@@ -103,6 +135,7 @@ const sentViewRef = useRef(false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
   const [viewsCount, setViewsCount] = useState(post.views_count || 0);
   const [liked, setLiked] = useState(post.is_liked || false);
+  const [hotRequested, setHotRequested] = useState(false);
 
   const postContent = post.content || "";
 
@@ -159,6 +192,32 @@ const sentViewRef = useRef(false);
       console.error(err);
     }
   };
+  const requestHotPost = async () => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    alert("اول وارد شوید");
+    return;
+  }
+
+  try {
+    await api.post(
+      `/api/posts/${post.id}/hot-request`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setHotRequested(true);
+    alert("درخواست پست داغ برای ادمین ارسال شد");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در ارسال درخواست پست داغ");
+  }
+};
 
   const loadComments = async () => {
     try {
@@ -386,7 +445,9 @@ return (
                   <path fill="#fff" d="M10.3 15.3 7.7 12.7l-1.1 1.1 3.7 3.7 7.1-7.1-1.1-1.1z" />
                 </svg>
               )}
-
+              {post.author?.role !== "admin" &&
+  !post.author?.is_verified &&
+  isPremiumActive(post.author) && <SilverBadge size={20} />}
               {post.author?.role === "admin" && (
                 <svg
                   viewBox="0 0 30 24"
@@ -607,6 +668,26 @@ transform: liked ? "scale(1.08)" : "scale(1)",
   <EyeIcon />
   {viewsCount}
 </div>
+{username === post.author?.username &&
+  isPremiumActive(post.author) &&
+  !post.is_hot && (
+    <button
+      onClick={requestHotPost}
+      disabled={hotRequested}
+      title="Request hot post"
+      style={{
+        background: hotRequested ? "#e5e7eb" : "#fff7ed",
+        border: "1px solid #fdba74",
+        color: hotRequested ? "#64748b" : "#ea580c",
+        borderRadius: "999px",
+        padding: "6px 10px",
+        cursor: hotRequested ? "default" : "pointer",
+        fontWeight: "700",
+      }}
+    >
+      {hotRequested ? "Requested" : "Hot Request"}
+    </button>
+  )}
 <button
   onClick={sharePost}
   title="Share post"
