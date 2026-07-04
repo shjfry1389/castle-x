@@ -265,19 +265,7 @@ onMouseLeave={(e) => {
                   ✅
                 </span>
               ) : null}
-              {c.user?.role !== "admin" && isPremiumActive(c.user) && (
-  <span
-    title="Premium"
-    style={{
-      color: "#94a3b8",
-      filter: "drop-shadow(0 0 4px #cbd5e1)",
-      fontSize: "15px",
-      lineHeight: 1,
-    }}
-  >
-    💎
-  </span>
-)}
+              
             </div>
 
             <div
