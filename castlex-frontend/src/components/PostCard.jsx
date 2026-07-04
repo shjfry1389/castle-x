@@ -56,7 +56,7 @@ function ShareIcon({ size = 18 }) {
     </svg>
   );
 }
-function SilverBadge({ size = 15 }) {
+function SilverBadge({ size = 16 }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -67,7 +67,7 @@ function SilverBadge({ size = 15 }) {
         display: "inline-block",
         flexShrink: 0,
         verticalAlign: "middle",
-        filter: "drop-shadow(0 0 4px rgba(156,163,175,0.9))",
+        filter: "drop-shadow(0 0 3px rgba(156,163,175,0.75))",
       }}
     >
       <path
@@ -121,7 +121,7 @@ function CommentBadge({ author }) {
     );
   }
     if (isPremiumActive(author)) {
-    return <SilverBadge size={18} />;
+    return <SilverBadge size={16} />;
   }
   return null;
 }
