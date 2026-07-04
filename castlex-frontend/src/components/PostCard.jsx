@@ -59,7 +59,7 @@ function ShareIcon({ size = 18 }) {
 function SilverBadge({ size = 16 }) {
   return (
     <svg
-      viewBox="0 0 24 24"
+      viewBox="0 0 30 24"
       width={size}
       height={size}
       aria-label="Premium"
