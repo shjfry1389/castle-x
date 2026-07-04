@@ -40,6 +40,57 @@ function GoldVerifiedBadge({ size = 19 }) {
     </svg>
   );
 }
+function isPremiumActive(user) {
+  return (
+    user?.premium_plan === "silver" &&
+    user?.premium_until &&
+    new Date(user.premium_until).getTime() > Date.now()
+  );
+}
+
+function SilverBadge({ size = 19 }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      aria-label="Premium"
+      style={{
+        filter:
+          "drop-shadow(0 0 4px #ffffff) drop-shadow(0 0 8px #c0c0c0) drop-shadow(0 0 14px #9ca3af)",
+        flexShrink: 0,
+      }}
+    >
+      <defs>
+        <linearGradient
+          id="chatSilverBadgeGradient"
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="100%"
+        >
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="25%" stopColor="#e5e7eb" />
+          <stop offset="50%" stopColor="#9ca3af" />
+          <stop offset="75%" stopColor="#f8fafc" />
+          <stop offset="100%" stopColor="#6b7280" />
+        </linearGradient>
+      </defs>
+
+      <path
+        fill="url(#chatSilverBadgeGradient)"
+        stroke="#ffffff"
+        strokeWidth="0.8"
+        d="M22.5 12c0 1.1-1.1 2-1.4 3-.3 1.1.1 2.5-.5 3.4-.6.9-2 .9-2.9 1.5-.9.6-1.5 1.9-2.6 2.2-1 .3-2.2-.5-3.3-.5s-2.3.8-3.3.5c-1.1-.3-1.7-1.6-2.6-2.2-.9-.6-2.3-.6-2.9-1.5-.6-.9-.2-2.3-.5-3.4-.3-1-1.4-1.9-1.4-3s1.1-2 1.4-3c.3-1.1-.1-2.5.5-3.4.6-.9 2-.9 2.9-1.5.9-.6 1.5-1.9 2.6-2.2 1-.3 2.2.5 3.3.5s2.3-.8 3.3-.5c1.1.3 1.7 1.6 2.6 2.2.9.6 2.3.6 2.9 1.5.6.9.2 2.3.5 3.4.3 1 1.4 1.9 1.4 3z"
+      />
+
+      <path
+        fill="#111827"
+        d="M10.3 15.3 7.7 12.7l-1.1 1.1 3.7 3.7 7.1-7.1-1.1-1.1z"
+      />
+    </svg>
+  );
+}
 
 export default function Chat() {
   const { conversationId } = useParams();
@@ -366,6 +417,9 @@ export default function Chat() {
               ) : chatUser?.is_verified ? (
                 <BlueVerifiedBadge />
               ) : null}
+              {chatUser?.role !== "admin" &&
+  chatUser?.role !== "founder" &&
+  isPremiumActive(chatUser) && <SilverBadge size={19} />}
             </div>
 
             <div
