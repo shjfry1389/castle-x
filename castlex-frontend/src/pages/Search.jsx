@@ -61,15 +61,19 @@ function isPremiumActive(user) {
 
 function SilverBadge({ size = 20 }) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size}>
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      aria-label="Premium"
+      style={{
+        flexShrink: 0,
+        display: "inline-block",
+        filter: "drop-shadow(0 0 4px rgba(156,163,175,0.9))",
+      }}
+    >
       <path
-        fill="#c0c0c0"
-        stroke="#ffffff"
-        strokeWidth="0.8"
-        style={{
-          filter:
-            "drop-shadow(0 0 4px #ffffff) drop-shadow(0 0 8px #9ca3af)",
-        }}
+        fill="#bfc5cf"
         d="M22.5 12c0 1.1-1.1 2-1.4 3-.3 1.1.1 2.5-.5 3.4-.6.9-2 .9-2.9 1.5-.9.6-1.5 1.9-2.6 2.2-1 .3-2.2-.5-3.3-.5s-2.3.8-3.3.5c-1.1-.3-1.7-1.6-2.6-2.2-.9-.6-2.3-.6-2.9-1.5-.6-.9-.2-2.3-.5-3.4-.3-1-1.4-1.9-1.4-3s1.1-2 1.4-3c.3-1.1-.1-2.5.5-3.4.6-.9 2-.9 2.9-1.5.9-.6 1.5-1.9 2.6-2.2 1-.3 2.2.5 3.3.5s2.3-.8 3.3-.5c1.1.3 1.7 1.6 2.6 2.2.9.6 2.3.6 2.9 1.5.6.9.2 2.3.5 3.4.3 1 1.4 1.9 1.4 3z"
       />
       <path
