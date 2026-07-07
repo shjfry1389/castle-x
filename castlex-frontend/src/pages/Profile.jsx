@@ -91,6 +91,8 @@ export default function Profile() {
   const [followListTitle, setFollowListTitle] = useState("");
   const [followUsers, setFollowUsers] = useState([]);
   const [followListLoading, setFollowListLoading] = useState(false);
+  const [premiumAnalytics, setPremiumAnalytics] = useState(null);
+const [premiumAnalyticsLoading, setPremiumAnalyticsLoading] = useState(false);
 
   useEffect(() => {
     if (!profileUsername) return;
@@ -137,6 +139,42 @@ export default function Profile() {
       })
       .catch(console.error);
   }, [user]);
+  useEffect(() => {
+  if (!user || !currentUser) return;
+
+  const canSeeAnalytics =
+    currentUser.username === user.username || currentUser.role === "admin";
+
+  if (!canSeeAnalytics || !isPremiumActive(user)) {
+    setPremiumAnalytics(null);
+    return;
+  }
+
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  setPremiumAnalyticsLoading(true);
+
+  api
+    .get(
+      `/api/premium/profile-analytics/${encodeURIComponent(user.username)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+    .then((res) => {
+      setPremiumAnalytics(res.data);
+    })
+    .catch((err) => {
+      console.error(err);
+      setPremiumAnalytics(null);
+    })
+    .finally(() => {
+      setPremiumAnalyticsLoading(false);
+    });
+}, [user, currentUser]);
     useEffect(() => {
     if (!targetPostId) return;
 
@@ -744,7 +782,175 @@ export default function Profile() {
           </div>
         )}
       </div>
+            {currentUser &&
+        user &&
+        isPremiumActive(user) &&
+        (currentUser.username === user.username ||
+          currentUser.role === "admin") && (
+          <div
+            style={{
+              marginTop: "24px",
+              padding: "18px",
+              borderRadius: "18px",
+              border: "1px solid rgba(148,163,184,0.45)",
+              background:
+                "linear-gradient(135deg, rgba(248,250,252,0.95), rgba(226,232,240,0.9))",
+              boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
+            }}
+          >
+            <h3 style={{ margin: 0, color: "#0f172a" }}>
+              Premium Analytics
+            </h3>
 
+            {premiumAnalyticsLoading ? (
+              <p style={{ color: "#64748b" }}>در حال دریافت آمار...</p>
+            ) : premiumAnalytics ? (
+              <>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+                    gap: "10px",
+                    marginTop: "14px",
+                  }}
+                >
+                  {[
+                    ["پست‌ها", premiumAnalytics.totalPosts],
+                    ["ویوها", premiumAnalytics.totalViews],
+                    ["لایک‌ها", premiumAnalytics.totalLikes],
+                    ["کامنت‌ها", premiumAnalytics.totalComments],
+                    ["تعامل", `${premiumAnalytics.averageEngagement}%`],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      style={{
+                        padding: "12px",
+                        borderRadius: "14px",
+                        background: "#fff",
+                        border: "1px solid #e2e8f0",
+                      }}
+                    >
+                      <div style={{ color: "#64748b", fontSize: "12px" }}>
+                        {label}
+                      </div>
+                      <div
+                        style={{
+                          color: "#0f172a",
+                          fontWeight: "900",
+                          fontSize: "18px",
+                          marginTop: "6px",
+                        }}
+                      >
+                        {value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "16px",
+                    padding: "14px",
+                    borderRadius: "16px",
+                    background: "#fff",
+                    border: "1px solid #e2e8f0",
+                  }}
+                >
+                  <strong style={{ color: "#0f172a" }}>نمودار عملکرد</strong>
+
+                  {[
+                    {
+                      label: "ویوها",
+                      value: premiumAnalytics.totalViews,
+                      color: "#38bdf8",
+                    },
+                    {
+                      label: "لایک‌ها",
+                      value: premiumAnalytics.totalLikes,
+                      color: "#fb7185",
+                    },
+                    {
+                      label: "کامنت‌ها",
+                      value: premiumAnalytics.totalComments,
+                      color: "#a78bfa",
+                    },
+                  ].map((item) => {
+                    const maxValue = Math.max(
+                      premiumAnalytics.totalViews || 0,
+                      premiumAnalytics.totalLikes || 0,
+                      premiumAnalytics.totalComments || 0,
+                      1
+                    );
+
+                    const width = Math.max(
+                      (item.value / maxValue) * 100,
+                      item.value > 0 ? 8 : 0
+                    );
+
+                    return (
+                      <div key={item.label} style={{ marginTop: "12px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            fontSize: "13px",
+                            color: "#475569",
+                            fontWeight: "700",
+                            marginBottom: "6px",
+                          }}
+                        >
+                          <span>{item.label}</span>
+                          <span>{item.value}</span>
+                        </div>
+
+                        <div
+                          style={{
+                            height: "10px",
+                            borderRadius: "999px",
+                            background: "#e2e8f0",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${width}%`,
+                              height: "100%",
+                              borderRadius: "999px",
+                              background: item.color,
+                              boxShadow: `0 0 12px ${item.color}`,
+                              transition: "width 0.35s ease",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "14px",
+                    padding: "14px",
+                    borderRadius: "14px",
+                    background: "#0f172a",
+                    color: "#f8fafc",
+                  }}
+                >
+                  <div style={{ fontWeight: "900", marginBottom: "6px" }}>
+                    وضعیت: {premiumAnalytics.performance}
+                  </div>
+                  <div style={{ color: "#cbd5e1", fontSize: "14px" }}>
+                    {premiumAnalytics.suggestion}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p style={{ color: "#64748b" }}>
+                هنوز آماری برای نمایش وجود ندارد.
+              </p>
+            )}
+          </div>
+        )}
       <div
         style={{
           marginTop: "25px",

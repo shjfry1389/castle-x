@@ -2239,6 +2239,157 @@ app.delete("/api/admin/users/:id/premium", auth, admin, async (req, res) => {
     });
   }
 });
+app.get("/api/premium/profile-analytics/:username", auth, async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    const { data: profileUser, error: userError } = await supabase
+      .from("users")
+      .select("id, username, display_name, role, premium_plan, premium_until")
+      .ilike("username", username)
+      .maybeSingle();
+
+    if (userError) {
+      return res.status(500).json({
+        error: "خطا در دریافت کاربر",
+        details: userError.message,
+      });
+    }
+
+    if (!profileUser) {
+      return res.status(404).json({
+        error: "کاربر پیدا نشد",
+      });
+    }
+
+    const isOwner = Number(req.user.id) === Number(profileUser.id);
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        error: "فقط صاحب پروفایل می‌تواند آمار پیشرفته را ببیند",
+      });
+    }
+
+    const premiumActive =
+      profileUser.premium_plan === "silver" &&
+      profileUser.premium_until &&
+      new Date(profileUser.premium_until).getTime() > Date.now();
+
+    if (!premiumActive && !isAdmin) {
+      return res.status(403).json({
+        error: "این قابلیت مخصوص کاربران Premium است",
+      });
+    }
+
+    const { data: posts, error: postsError } = await supabase
+      .from("posts")
+      .select("id, content, created_at, views_count")
+      .eq("user_id", profileUser.id)
+      .order("created_at", { ascending: false });
+
+    if (postsError) {
+      return res.status(500).json({
+        error: "خطا در دریافت پست‌ها",
+        details: postsError.message,
+      });
+    }
+
+    const analyzedPosts = await Promise.all(
+      (posts || []).map(async (post) => {
+        const [{ count: likesCount }, { count: commentsCount }] =
+          await Promise.all([
+            supabase
+              .from("likes")
+              .select("*", { count: "exact", head: true })
+              .eq("post_id", post.id),
+
+            supabase
+              .from("comments")
+              .select("*", { count: "exact", head: true })
+              .eq("post_id", post.id),
+          ]);
+
+        const views = Number(post.views_count || 0);
+        const likes = Number(likesCount || 0);
+        const comments = Number(commentsCount || 0);
+
+        const engagementRate =
+          views > 0 ? Number((((likes + comments) / views) * 100).toFixed(1)) : 0;
+
+        const score = views + likes * 3 + comments * 5;
+
+        return {
+          id: post.id,
+          content: post.content,
+          created_at: post.created_at,
+          views,
+          likes,
+          comments,
+          engagementRate,
+          score,
+        };
+      })
+    );
+
+    const totalPosts = analyzedPosts.length;
+    const totalViews = analyzedPosts.reduce((sum, post) => sum + post.views, 0);
+    const totalLikes = analyzedPosts.reduce((sum, post) => sum + post.likes, 0);
+    const totalComments = analyzedPosts.reduce(
+      (sum, post) => sum + post.comments,
+      0
+    );
+
+    const averageEngagement =
+      totalViews > 0
+        ? Number((((totalLikes + totalComments) / totalViews) * 100).toFixed(1))
+        : 0;
+
+    const bestPost =
+      analyzedPosts.length > 0
+        ? [...analyzedPosts].sort((a, b) => b.score - a.score)[0]
+        : null;
+
+    let performance = "شروع مسیر";
+    let suggestion = "چند پست منظم منتشر کن تا تحلیل دقیق‌تر شود.";
+
+    if (totalPosts > 0) {
+      if (averageEngagement >= 15) {
+        performance = "عالی";
+        suggestion = "تعامل پست‌ها خیلی خوب است. همین سبک محتوا را بیشتر ادامه بده.";
+      } else if (averageEngagement >= 7) {
+        performance = "خوب";
+        suggestion = "عملکرد خوب است. برای رشد بیشتر، کپشن‌های تعاملی‌تر بنویس.";
+      } else if (totalViews > 0 && averageEngagement < 7) {
+        performance = "نیاز به بهبود";
+        suggestion = "ویو داری ولی تعامل پایین است. سوال، نظرسنجی یا دعوت به کامنت اضافه کن.";
+      }
+    }
+
+    res.json({
+      user: {
+        id: profileUser.id,
+        username: profileUser.username,
+        display_name: profileUser.display_name,
+      },
+      totalPosts,
+      totalViews,
+      totalLikes,
+      totalComments,
+      averageEngagement,
+      performance,
+      suggestion,
+      bestPost,
+    });
+  } catch (err) {
+    console.error("PROFILE PREMIUM ANALYTICS ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.get("/api/admin/stats", auth, admin, async (req, res) => {
   try {
     const { count: users } = await supabase.from("users").select("*", {
