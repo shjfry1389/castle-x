@@ -455,6 +455,11 @@ if (!canSeeAnalytics || !canUseAnalytics) {
               border: "5px solid white",
               objectFit: "cover",
               marginTop: "-70px",
+              padding: isPremiumActive(user) ? "5px" : "0",
+background: isPremiumActive(user)
+  ? "conic-gradient(#6b7280, #ffffff, #c0c0c0, #8b949e, #ffffff, #6b7280)"
+  : "transparent",
+animation: isPremiumActive(user) ? "premiumAvatarSpin 2.8s linear infinite" : "none",
             }}
           />
 
