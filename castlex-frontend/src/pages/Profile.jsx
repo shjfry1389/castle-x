@@ -857,16 +857,6 @@ export default function Profile() {
                       height: "46px",
                       borderRadius: "50%",
                       objectFit: "cover",
-                      border: isPremiumActive(user)
-  ? "3px solid #c0c0c0"
-  : "3px solid transparent",
-boxShadow: isPremiumActive(user)
-  ? "0 0 0 3px rgba(255,255,255,0.9), 0 0 18px rgba(192,192,192,0.95)"
-  : "none",
-padding: isPremiumActive(user) ? "3px" : "0",
-background: isPremiumActive(user)
-  ? "linear-gradient(135deg,#ffffff,#c0c0c0,#6b7280)"
-  : "transparent",
                     }}
                   />
 
