@@ -142,13 +142,15 @@ const [premiumAnalyticsLoading, setPremiumAnalyticsLoading] = useState(false);
   useEffect(() => {
   if (!user || !currentUser) return;
 
-  const canSeeAnalytics =
-    currentUser.username === user.username || currentUser.role === "admin";
+const canSeeAnalytics =
+  currentUser.username === user.username || currentUser.role === "admin";
 
-  if (!canSeeAnalytics || !isPremiumActive(user)) {
-    setPremiumAnalytics(null);
-    return;
-  }
+const canUseAnalytics = isPremiumActive(user) || user.role === "admin";
+
+if (!canSeeAnalytics || !canUseAnalytics) {
+  setPremiumAnalytics(null);
+  return;
+}
 
   const token = localStorage.getItem("token");
   if (!token) return;
@@ -782,11 +784,11 @@ const [premiumAnalyticsLoading, setPremiumAnalyticsLoading] = useState(false);
           </div>
         )}
       </div>
-            {currentUser &&
-        user &&
-        isPremiumActive(user) &&
-        (currentUser.username === user.username ||
-          currentUser.role === "admin") && (
+{currentUser &&
+  user &&
+  (isPremiumActive(user) || user.role === "admin") &&
+  (currentUser.username === user.username ||
+    currentUser.role === "admin") && (
           <div
             style={{
               marginTop: "24px",

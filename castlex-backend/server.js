@@ -2267,20 +2267,22 @@ app.get("/api/premium/profile-analytics/:username", auth, async (req, res) => {
 
     if (!isOwner && !isAdmin) {
       return res.status(403).json({
-        error: "فقط صاحب پروفایل می‌تواند آمار پیشرفته را ببیند",
+        error: "فقط صاحب پروفایل یا ادمین می‌تواند آمار پیشرفته را ببیند",
       });
     }
 
-    const premiumActive =
-      profileUser.premium_plan === "silver" &&
-      profileUser.premium_until &&
-      new Date(profileUser.premium_until).getTime() > Date.now();
+const premiumActive =
+  profileUser.premium_plan === "silver" &&
+  profileUser.premium_until &&
+  new Date(profileUser.premium_until).getTime() > Date.now();
 
-    if (!premiumActive && !isAdmin) {
-      return res.status(403).json({
-        error: "این قابلیت مخصوص کاربران Premium است",
-      });
-    }
+const isProfileAdmin = profileUser.role === "admin";
+
+if (!premiumActive && !isProfileAdmin && !isAdmin) {
+  return res.status(403).json({
+    error: "این قابلیت فقط برای کاربران پریمیوم، پروفایل‌های ادمین و ادمین‌ها فعال است",
+  });
+}
 
     const { data: posts, error: postsError } = await supabase
       .from("posts")
