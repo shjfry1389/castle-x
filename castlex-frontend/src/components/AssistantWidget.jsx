@@ -53,6 +53,18 @@ const questions = [
     answer:
       "در بله به پیوی @castlex1 مراجعه کنید و سوال خود را بپرسید.",
   },
+    {
+    type: "premium",
+    question: "تیک نقره ای چیست؟",
+    answer:
+      " تیک نقره ای برای کاربران دارای اشتراک پریمیوم فعال میشود",
+  },
+    {
+    type: "buy",
+    question: "چگونه پریمیوم تهیه کنیم؟",
+    answer:
+      "در بله به پیوی @castlex1 مراجعه کنید   .",
+  },
 ];
 
 function RobotIcon({ size = 42 }) {
