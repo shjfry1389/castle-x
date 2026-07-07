@@ -1479,6 +1479,72 @@ app.delete("/api/posts/:id", auth, async (req, res) => {
     });
   }
 });
+app.put("/api/users/me/theme", auth, async (req, res) => {
+  try {
+    const { profile_theme } = req.body;
+
+    const allowedThemes = ["default", "silver", "ice", "royal", "gold"];
+
+    if (!allowedThemes.includes(profile_theme)) {
+      return res.status(400).json({
+        error: "تم انتخاب شده معتبر نیست",
+      });
+    }
+
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("id, role, premium_plan, premium_until")
+      .eq("id", req.user.id)
+      .single();
+
+    if (userError || !user) {
+      return res.status(404).json({
+        error: "کاربر پیدا نشد",
+      });
+    }
+
+    const premiumActive =
+      user.premium_plan === "silver" &&
+      user.premium_until &&
+      new Date(user.premium_until).getTime() > Date.now();
+
+    const canUseProfileTheme = premiumActive || user.role === "admin";
+
+    if (profile_theme !== "default" && !canUseProfileTheme) {
+      return res.status(403).json({
+        error: "تغییر تم پروفایل فقط برای کاربران پریمیوم و ادمین‌ها فعال است",
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("users")
+      .update({ profile_theme })
+      .eq("id", req.user.id)
+      .select(
+        "id, username, display_name, avatar_url, bio, role, is_verified, premium_plan, premium_until, profile_theme"
+      )
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در ذخیره تم پروفایل",
+        details: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      user: data,
+    });
+  } catch (err) {
+    console.error("UPDATE PROFILE THEME ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.get("/api/admin/users", auth, admin, async (req, res) => {
   const { data, error } = await supabase.from("users").select("*").order("id");
 

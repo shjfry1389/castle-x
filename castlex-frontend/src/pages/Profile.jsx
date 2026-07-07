@@ -93,6 +93,7 @@ export default function Profile() {
   const [followListLoading, setFollowListLoading] = useState(false);
   const [premiumAnalytics, setPremiumAnalytics] = useState(null);
 const [premiumAnalyticsLoading, setPremiumAnalyticsLoading] = useState(false);
+const [themeSaving, setThemeSaving] = useState(false);
 
   useEffect(() => {
     if (!profileUsername) return;
@@ -351,6 +352,41 @@ if (!canSeeAnalytics || !canUseAnalytics) {
       console.error(err);
     }
   };
+  const changeProfileTheme = async (profileTheme) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("برای تغییر تم باید وارد حساب شوید");
+      return;
+    }
+
+    setThemeSaving(true);
+
+    const res = await api.put(
+      "/api/users/me/theme",
+      {
+        profile_theme: profileTheme,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setUser(res.data.user);
+    alert("تم پروفایل ذخیره شد");
+  } catch (err) {
+    console.error(err);
+    alert(
+      err.response?.data?.error ||
+        "خطا در ذخیره تم پروفایل"
+    );
+  } finally {
+    setThemeSaving(false);
+  }
+};
   const openFollowList = async (type) => {
     try {
       setFollowListLoading(true);
@@ -427,9 +463,11 @@ if (!canSeeAnalytics || !canUseAnalytics) {
       </div>
 
       <div
+        className={`profile-theme-header profile-theme-${
+          user.profile_theme || "default"
+        }`}
         style={{
           height: "230px",
-          background: "linear-gradient(135deg,#1d9bf0,#6d28d9)",
         }}
       />
 
@@ -647,7 +685,51 @@ if (!canSeeAnalytics || !canUseAnalytics) {
     ✦ Silver Member
   </div>
 )}
-
+{currentUser &&
+  user &&
+  currentUser.username === user.username &&
+  (isPremiumActive(user) || user.role === "admin") && (
+    <div
+      style={{
+        marginTop: "14px",
+        display: "flex",
+        gap: "8px",
+        flexWrap: "wrap",
+        alignItems: "center",
+      }}
+    >
+      {[
+        { key: "default", label: "Default", color: "#e5e7eb" },
+        { key: "silver", label: "Silver", color: "#c0c0c0" },
+        { key: "ice", label: "Ice", color: "#7dd3fc" },
+        { key: "royal", label: "Royal", color: "#8b5cf6" },
+        { key: "gold", label: "Gold", color: "#facc15" },
+      ].map((theme) => (
+        <button
+          key={theme.key}
+          onClick={() => changeProfileTheme(theme.key)}
+          disabled={themeSaving}
+          style={{
+            border:
+              (user.profile_theme || "default") === theme.key
+                ? "2px solid #111827"
+                : "1px solid #cfd9de",
+            background: theme.color,
+            color:
+              theme.key === "royal" ? "#fff" : "#111827",
+            padding: "7px 11px",
+            borderRadius: "999px",
+            cursor: themeSaving ? "not-allowed" : "pointer",
+            fontSize: "12px",
+            fontWeight: "800",
+            opacity: themeSaving ? 0.6 : 1,
+          }}
+        >
+          {theme.label}
+        </button>
+      ))}
+    </div>
+  )}
           {user.bio && (
             <div style={{ marginTop: "14px", fontSize: "15px" }}>
               {user.bio}
