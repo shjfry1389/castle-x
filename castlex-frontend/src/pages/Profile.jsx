@@ -442,7 +442,15 @@ if (!canSeeAnalytics || !canUseAnalytics) {
             gap: "15px",
           }}
         >
-          <div className={isPremiumActive(user) ? "premium-avatar-ring" : ""}>
+          <div
+  className={
+    user.role === "admin"
+      ? "admin-avatar-ring"
+      : isPremiumActive(user)
+        ? "premium-avatar-ring"
+        : ""
+  }
+>
             <img
               src={
                 user.avatar_url ||

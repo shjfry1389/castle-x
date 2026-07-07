@@ -388,3 +388,39 @@ body.dark [style*="color:#536471"] {
     transform: rotate(360deg);
   }
 }
+.admin-avatar-ring {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin-top: -70px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.admin-avatar-ring img {
+  position: relative;
+  z-index: 2;
+  display: block;
+  margin-top: 0 !important;
+}
+
+.admin-avatar-ring::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #8a5a00,
+    #ffd700,
+    #fff3a3,
+    #f59e0b,
+    #fff7cc,
+    #d97706,
+    #8a5a00
+  );
+  animation: premiumAvatarSpin 2.4s linear infinite;
+  box-shadow:
+    0 0 16px rgba(255, 215, 0, 0.95),
+    0 0 32px rgba(245, 158, 11, 0.75);
+  z-index: 1;
+}
