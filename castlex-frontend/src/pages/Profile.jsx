@@ -578,6 +578,25 @@ export default function Profile() {
           <div style={{ color: "#536471", marginTop: "4px" }}>
             @{user.username}
           </div>
+          {isPremiumActive(user) && (
+  <div
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "6px",
+      marginTop: "10px",
+      padding: "6px 12px",
+      borderRadius: "999px",
+      background: "linear-gradient(135deg,#f8fafc,#cbd5e1,#94a3b8)",
+      color: "#111827",
+      fontSize: "13px",
+      fontWeight: "800",
+      boxShadow: "0 0 14px rgba(148,163,184,0.55)",
+    }}
+  >
+    ✦ Silver Member
+  </div>
+)}
 
           {user.bio && (
             <div style={{ marginTop: "14px", fontSize: "15px" }}>
@@ -838,6 +857,16 @@ export default function Profile() {
                       height: "46px",
                       borderRadius: "50%",
                       objectFit: "cover",
+                      border: isPremiumActive(user)
+  ? "3px solid #c0c0c0"
+  : "3px solid transparent",
+boxShadow: isPremiumActive(user)
+  ? "0 0 0 3px rgba(255,255,255,0.9), 0 0 18px rgba(192,192,192,0.95)"
+  : "none",
+padding: isPremiumActive(user) ? "3px" : "0",
+background: isPremiumActive(user)
+  ? "linear-gradient(135deg,#ffffff,#c0c0c0,#6b7280)"
+  : "transparent",
                     }}
                   />
 
