@@ -2458,6 +2458,295 @@ if (!premiumActive && !isProfileAdmin && !isAdmin) {
     });
   }
 });
+const canUsePremiumFeature = (user) => {
+  const premiumActive =
+    user.premium_plan === "silver" &&
+    user.premium_until &&
+    new Date(user.premium_until).getTime() > Date.now();
+
+  return premiumActive || user.role === "admin";
+};
+
+app.get("/api/posts/:id/boost-preview", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: post, error: postError } = await supabase
+      .from("posts")
+      .select("id, user_id, content, views_count")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (postError) return res.status(500).json(postError);
+    if (!post) return res.status(404).json({ error: "پست پیدا نشد" });
+
+    const { data: user } = await supabase
+      .from("users")
+      .select("id, role, premium_plan, premium_until")
+      .eq("id", req.user.id)
+      .single();
+
+    if (!canUsePremiumFeature(user)) {
+      return res.status(403).json({
+        error: "این قابلیت فقط برای کاربران پریمیوم و ادمین‌ها فعال است",
+      });
+    }
+
+    const [{ count: likesCount }, { count: commentsCount }] =
+      await Promise.all([
+        supabase
+          .from("likes")
+          .select("*", { count: "exact", head: true })
+          .eq("post_id", id),
+
+        supabase
+          .from("comments")
+          .select("*", { count: "exact", head: true })
+          .eq("post_id", id),
+      ]);
+
+    const views = Number(post.views_count || 0);
+    const likes = Number(likesCount || 0);
+    const comments = Number(commentsCount || 0);
+
+    const estimatedMinViews = Math.max(
+      80,
+      Math.round(views * 0.35 + likes * 24 + comments * 35 + 120)
+    );
+
+    const estimatedMaxViews = Math.round(estimatedMinViews * 1.8);
+
+    res.json({
+      post_id: post.id,
+      current: {
+        views,
+        likes,
+        comments,
+      },
+      preview: {
+        estimated_min_views: estimatedMinViews,
+        estimated_max_views: estimatedMaxViews,
+        expected_extra_likes: Math.max(5, Math.round(likes * 0.35 + 8)),
+        expected_extra_comments: Math.max(1, Math.round(comments * 0.25 + 2)),
+      },
+      note: "این عدد تخمینی است و تضمینی نیست.",
+    });
+  } catch (err) {
+    console.error("BOOST PREVIEW ERROR:", err);
+    res.status(500).json({ error: "خطای سرور", details: err.message });
+  }
+});
+
+app.post("/api/polls/create", auth, async (req, res) => {
+  try {
+    const { question, options, duration_hours } = req.body;
+
+    if (!question?.trim()) {
+      return res.status(400).json({ error: "متن سوال نظرسنجی الزامی است" });
+    }
+
+    if (!Array.isArray(options) || options.length < 2 || options.length > 4) {
+      return res.status(400).json({
+        error: "نظرسنجی باید بین ۲ تا ۴ گزینه داشته باشد",
+      });
+    }
+
+    const cleanOptions = options
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+
+    if (cleanOptions.length < 2) {
+      return res.status(400).json({ error: "حداقل ۲ گزینه معتبر وارد کن" });
+    }
+
+    const { data: user } = await supabase
+      .from("users")
+      .select("id, role, premium_plan, premium_until")
+      .eq("id", req.user.id)
+      .single();
+
+    if (!canUsePremiumFeature(user)) {
+      return res.status(403).json({
+        error: "ساخت نظرسنجی فقط برای کاربران پریمیوم و ادمین‌ها فعال است",
+      });
+    }
+
+    const closesAt = new Date();
+    closesAt.setHours(closesAt.getHours() + (Number(duration_hours) || 24));
+
+    const { data: post, error: postError } = await supabase
+      .from("posts")
+      .insert({
+        user_id: req.user.id,
+        content: question.trim(),
+        post_type: "poll",
+      })
+      .select()
+      .single();
+
+    if (postError) {
+      return res.status(500).json({
+        error: "خطا در ساخت پست نظرسنجی",
+        details: postError.message,
+      });
+    }
+
+    const { data: poll, error: pollError } = await supabase
+      .from("polls")
+      .insert({
+        post_id: post.id,
+        user_id: req.user.id,
+        question: question.trim(),
+        closes_at: closesAt.toISOString(),
+      })
+      .select()
+      .single();
+
+    if (pollError) {
+      await supabase.from("posts").delete().eq("id", post.id);
+      return res.status(500).json(pollError);
+    }
+
+    const { data: pollOptions, error: optionsError } = await supabase
+      .from("poll_options")
+      .insert(
+        cleanOptions.map((optionText, index) => ({
+          poll_id: poll.id,
+          option_text: optionText,
+          sort_order: index,
+        }))
+      )
+      .select();
+
+    if (optionsError) {
+      await supabase.from("posts").delete().eq("id", post.id);
+      return res.status(500).json(optionsError);
+    }
+
+    res.json({
+      success: true,
+      post,
+      poll: {
+        ...poll,
+        options: pollOptions,
+      },
+    });
+  } catch (err) {
+    console.error("CREATE POLL ERROR:", err);
+    res.status(500).json({ error: "خطای سرور", details: err.message });
+  }
+});
+
+app.get("/api/polls/post/:postId", auth, async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    const { data: poll } = await supabase
+      .from("polls")
+      .select("*")
+      .eq("post_id", postId)
+      .maybeSingle();
+
+    if (!poll) {
+      return res.status(404).json({ error: "نظرسنجی پیدا نشد" });
+    }
+
+    const { data: options } = await supabase
+      .from("poll_options")
+      .select("*")
+      .eq("poll_id", poll.id)
+      .order("sort_order", { ascending: true });
+
+    const { data: myVote } = await supabase
+      .from("poll_votes")
+      .select("option_id")
+      .eq("poll_id", poll.id)
+      .eq("user_id", req.user.id)
+      .maybeSingle();
+
+    const totalVotes = (options || []).reduce(
+      (sum, item) => sum + Number(item.votes_count || 0),
+      0
+    );
+
+    res.json({
+      ...poll,
+      options: options || [],
+      total_votes: totalVotes,
+      my_vote_option_id: myVote?.option_id || null,
+    });
+  } catch (err) {
+    console.error("GET POLL ERROR:", err);
+    res.status(500).json({ error: "خطای سرور", details: err.message });
+  }
+});
+
+app.post("/api/polls/:pollId/vote", auth, async (req, res) => {
+  try {
+    const { pollId } = req.params;
+    const { option_id } = req.body;
+
+    if (!option_id) {
+      return res.status(400).json({ error: "گزینه انتخاب نشده است" });
+    }
+
+    const { data: poll } = await supabase
+      .from("polls")
+      .select("*")
+      .eq("id", pollId)
+      .maybeSingle();
+
+    if (!poll) {
+      return res.status(404).json({ error: "نظرسنجی پیدا نشد" });
+    }
+
+    if (poll.closes_at && new Date(poll.closes_at).getTime() < Date.now()) {
+      return res.status(400).json({ error: "زمان این نظرسنجی تمام شده است" });
+    }
+
+    const { data: option } = await supabase
+      .from("poll_options")
+      .select("id, votes_count")
+      .eq("id", option_id)
+      .eq("poll_id", pollId)
+      .maybeSingle();
+
+    if (!option) {
+      return res.status(404).json({ error: "گزینه معتبر نیست" });
+    }
+
+    const { error: voteError } = await supabase.from("poll_votes").insert({
+      poll_id: Number(pollId),
+      option_id: Number(option_id),
+      user_id: req.user.id,
+    });
+
+    if (voteError) {
+      if (voteError.code === "23505") {
+        return res.status(409).json({
+          error: "شما قبلاً در این نظرسنجی رای داده‌اید",
+        });
+      }
+
+      return res.status(500).json({
+        error: "خطا در ثبت رای",
+        details: voteError.message,
+      });
+    }
+
+    await supabase
+      .from("poll_options")
+      .update({
+        votes_count: Number(option.votes_count || 0) + 1,
+      })
+      .eq("id", option_id);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("VOTE POLL ERROR:", err);
+    res.status(500).json({ error: "خطای سرور", details: err.message });
+  }
+});
 app.get("/api/admin/stats", auth, admin, async (req, res) => {
   try {
     const { count: users } = await supabase.from("users").select("*", {

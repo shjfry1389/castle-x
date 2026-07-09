@@ -14,6 +14,10 @@ const [loading, setLoading] = useState(false);
 const [postsLoading, setPostsLoading] = useState(false);
 const [page, setPage] = useState(1);
 const [hasMore, setHasMore] = useState(true);
+const [postMode, setPostMode] = useState("post");
+const [pollQuestion, setPollQuestion] = useState("");
+const [pollOptions, setPollOptions] = useState(["", ""]);
+const [pollDuration, setPollDuration] = useState(24);
 
 const POSTS_LIMIT = 15;
 const token = localStorage.getItem("token");
@@ -21,6 +25,25 @@ const token = localStorage.getItem("token");
 const currentUser = token
   ? JSON.parse(atob(token.split(".")[1]))
   : null;
+  const fullCurrentUser = {
+  ...currentUser,
+  role: currentUser?.role || localStorage.getItem("role"),
+  premium_plan:
+    currentUser?.premium_plan || localStorage.getItem("premium_plan"),
+  premium_until:
+    currentUser?.premium_until || localStorage.getItem("premium_until"),
+};
+
+const isPremiumActive = (user) => {
+  return (
+    user?.premium_plan === "silver" &&
+    user?.premium_until &&
+    new Date(user.premium_until).getTime() > Date.now()
+  );
+};
+
+const canUsePremiumFeature =
+  fullCurrentUser?.role === "admin" || isPremiumActive(fullCurrentUser);
 const switchFeed = (mode) => {
   if (mode === feedMode) return;
 
@@ -170,7 +193,67 @@ if (res.data?.post) {
 
 setLoading(false);
 };
+const createPoll = async () => {
+  const token = localStorage.getItem("token");
 
+  if (!token) {
+    alert("اول وارد شوید");
+    return;
+  }
+
+  if (!canUsePremiumFeature) {
+    alert("ساخت نظرسنجی فقط برای کاربران پریمیوم و ادمین‌ها فعال است");
+    return;
+  }
+
+  const cleanOptions = pollOptions
+    .map((option) => option.trim())
+    .filter(Boolean);
+
+  if (!pollQuestion.trim()) {
+    alert("سوال نظرسنجی را وارد کنید");
+    return;
+  }
+
+  if (cleanOptions.length < 2) {
+    alert("حداقل دو گزینه برای نظرسنجی وارد کنید");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const res = await api.post(
+      "/api/polls/create",
+      {
+        question: pollQuestion,
+        options: cleanOptions,
+        duration_hours: pollDuration,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+    setPollDuration(24);
+    setPostMode("post");
+    loadPosts(feedMode);
+  } catch (err) {
+    console.error(err);
+
+    alert(
+      err.response?.data?.error ||
+        err.response?.data?.message ||
+        "خطا در ساخت نظرسنجی"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 return (
 <>
   <div
@@ -275,24 +358,158 @@ return (
           🛡️ Admin Panel
         </Link>
       )}
+{canUsePremiumFeature && (
+  <div
+    style={{
+      display: "flex",
+      gap: "8px",
+      marginBottom: "14px",
+    }}
+  >
+    <button
+      onClick={() => setPostMode("post")}
+      style={{
+        border: "none",
+        background: postMode === "post" ? "#1d9bf0" : "#eef2f7",
+        color: postMode === "post" ? "#fff" : "#111827",
+        padding: "8px 14px",
+        borderRadius: "999px",
+        cursor: "pointer",
+        fontWeight: "800",
+      }}
+    >
+      Post
+    </button>
 
-      <textarea
-        placeholder="What's happening?"
-        value={content}
-        onChange={(e) =>
-          setContent(e.target.value)
-        }
+    <button
+      onClick={() => setPostMode("poll")}
+      style={{
+        border: "none",
+        background: postMode === "poll" ? "#1d9bf0" : "#eef2f7",
+        color: postMode === "poll" ? "#fff" : "#111827",
+        padding: "8px 14px",
+        borderRadius: "999px",
+        cursor: "pointer",
+        fontWeight: "800",
+      }}
+    >
+      Poll
+    </button>
+  </div>
+)}
+{postMode === "post" ? (
+  <textarea
+    placeholder="What's happening?"
+    value={content}
+    onChange={(e) => setContent(e.target.value)}
+    style={{
+      width: "100%",
+      minHeight: "120px",
+      border: "none",
+      resize: "none",
+      outline: "none",
+      fontSize: "20px",
+    }}
+  />
+) : (
+  <div>
+    <textarea
+      placeholder="سوال نظرسنجی..."
+      value={pollQuestion}
+      onChange={(e) => setPollQuestion(e.target.value)}
+      style={{
+        width: "100%",
+        minHeight: "90px",
+        border: "1px solid #e5e7eb",
+        borderRadius: "16px",
+        padding: "14px",
+        resize: "none",
+        outline: "none",
+        fontSize: "18px",
+      }}
+    />
+
+    {pollOptions.map((option, index) => (
+      <input
+        key={index}
+        value={option}
+        onChange={(e) => {
+          const nextOptions = [...pollOptions];
+          nextOptions[index] = e.target.value;
+          setPollOptions(nextOptions);
+        }}
+        placeholder={`گزینه ${index + 1}`}
         style={{
           width: "100%",
-          minHeight: "120px",
-          border: "none",
-          resize: "none",
+          marginTop: "10px",
+          padding: "12px 14px",
+          border: "1px solid #e5e7eb",
+          borderRadius: "999px",
           outline: "none",
-          fontSize: "20px",
         }}
       />
+    ))}
 
-      {media &&
+    <div
+      style={{
+        display: "flex",
+        gap: "10px",
+        marginTop: "10px",
+        flexWrap: "wrap",
+      }}
+    >
+      {pollOptions.length < 4 && (
+        <button
+          onClick={() => setPollOptions((prev) => [...prev, ""])}
+          style={{
+            border: "1px solid #cfd9de",
+            background: "#fff",
+            borderRadius: "999px",
+            padding: "8px 12px",
+            cursor: "pointer",
+            fontWeight: "700",
+          }}
+        >
+          + گزینه
+        </button>
+      )}
+
+      {pollOptions.length > 2 && (
+        <button
+          onClick={() => setPollOptions((prev) => prev.slice(0, -1))}
+          style={{
+            border: "1px solid #fecaca",
+            background: "#fff5f5",
+            color: "#dc2626",
+            borderRadius: "999px",
+            padding: "8px 12px",
+            cursor: "pointer",
+            fontWeight: "700",
+          }}
+        >
+          حذف گزینه
+        </button>
+      )}
+
+      <select
+        value={pollDuration}
+        onChange={(e) => setPollDuration(Number(e.target.value))}
+        style={{
+          border: "1px solid #cfd9de",
+          borderRadius: "999px",
+          padding: "8px 12px",
+          outline: "none",
+        }}
+      >
+        <option value={24}>24 ساعت</option>
+        <option value={72}>3 روز</option>
+        <option value={168}>7 روز</option>
+      </select>
+    </div>
+  </div>
+)}
+{postMode === "post" &&
+  media &&
         (media.type.startsWith("video") ? (
           <video
             controls
@@ -324,16 +541,26 @@ return (
           alignItems: "center",
         }}
       >
-        <input
-          type="file"
-          accept="image/*,video/*"
-          onChange={(e) =>
-            setMedia(e.target.files[0])
-          }
-        />
+{postMode === "post" ? (
+  <input
+    type="file"
+    accept="image/*,video/*"
+    onChange={(e) => setMedia(e.target.files[0])}
+  />
+) : (
+  <span
+    style={{
+      color: "#64748b",
+      fontSize: "13px",
+      fontWeight: "700",
+    }}
+  >
+    Premium Poll
+  </span>
+)}
 
         <button
-          onClick={createPost}
+          onClick={postMode === "post" ? createPost : createPoll}
           disabled={loading}
           style={{
             background: "#1d9bf0",
@@ -346,7 +573,13 @@ return (
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading ? "Posting..." : "Post"}
+          {loading
+  ? postMode === "post"
+    ? "Posting..."
+    : "Creating..."
+  : postMode === "post"
+  ? "Post"
+  : "Create Poll"}
         </button>
       </div>
     </div>

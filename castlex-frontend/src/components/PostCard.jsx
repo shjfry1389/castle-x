@@ -138,6 +138,30 @@ const sentViewRef = useRef(false);
   const [viewsCount, setViewsCount] = useState(post.views_count || 0);
   const [liked, setLiked] = useState(post.is_liked || false);
   const [hotRequested, setHotRequested] = useState(false);
+  const [poll, setPoll] = useState(null);
+const [pollLoading, setPollLoading] = useState(false);
+const [boostPreview, setBoostPreview] = useState(null);
+const [boostLoading, setBoostLoading] = useState(false);
+
+const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+
+const currentUser = {
+  ...storedUser,
+  username: storedUser?.username || localStorage.getItem("username"),
+  role: storedUser?.role || localStorage.getItem("role"),
+  premium_plan: storedUser?.premium_plan || localStorage.getItem("premium_plan"),
+  premium_until:
+    storedUser?.premium_until || localStorage.getItem("premium_until"),
+};
+
+const canUsePremiumFeature = (user) => {
+  return isPremiumActive(user) || user?.role === "admin";
+};
+
+const canSeeBoostPreview =
+  canUsePremiumFeature(currentUser) ||
+  (username === post.author?.username &&
+    (isPremiumActive(post.author) || post.author?.role === "admin"));
 
   const postContent = post.content || "";
 
@@ -321,6 +345,77 @@ const sentViewRef = useRef(false);
       console.error(err);
     }
   };
+  const loadPoll = async () => {
+  try {
+    if (post.post_type !== "poll") return;
+
+    const token = localStorage.getItem("token");
+
+    const res = await api.get(`/api/polls/post/${post.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setPoll(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const votePoll = async (optionId) => {
+  try {
+    if (!poll || poll.my_vote_option_id) return;
+
+    const token = localStorage.getItem("token");
+
+    setPollLoading(true);
+
+    await api.post(
+      `/api/polls/${poll.id}/vote`,
+      {
+        option_id: optionId,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    await loadPoll();
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در ثبت رای");
+  } finally {
+    setPollLoading(false);
+  }
+};
+
+const loadBoostPreview = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    setBoostLoading(true);
+
+    const res = await api.get(`/api/posts/${post.id}/boost-preview`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setBoostPreview(res.data);
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در دریافت پیش‌بینی بوست");
+  } finally {
+    setBoostLoading(false);
+  }
+};
+
+useEffect(() => {
+  loadPoll();
+}, [post.id, post.post_type]);
     useEffect(() => {
     if (!post.id || !cardRef.current) return;
 
@@ -560,7 +655,76 @@ return (
   return part;
 })}
           </div>
+          {post.post_type === "poll" && poll && (
+  <div
+    style={{
+      marginTop: "14px",
+      padding: "14px",
+      border: "1px solid #e5e7eb",
+      borderRadius: "16px",
+      background: "#f8fafc",
+    }}
+  >
+    <div style={{ fontWeight: "800", marginBottom: "12px" }}>
+      📊 {poll.question}
+    </div>
 
+    {poll.options.map((option) => {
+      const percent =
+        poll.total_votes > 0
+          ? Math.round((option.votes_count / poll.total_votes) * 100)
+          : 0;
+
+      const selected = poll.my_vote_option_id === option.id;
+
+      return (
+        <button
+          key={option.id}
+          onClick={() => votePoll(option.id)}
+          disabled={pollLoading || !!poll.my_vote_option_id}
+          style={{
+            width: "100%",
+            marginBottom: "10px",
+            padding: "11px 12px",
+            borderRadius: "12px",
+            border: selected ? "2px solid #1d9bf0" : "1px solid #cfd9de",
+            background: selected ? "#e0f2fe" : "#fff",
+            cursor: poll.my_vote_option_id ? "default" : "pointer",
+            textAlign: "left",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: `${percent}%`,
+              background: "rgba(29,155,240,0.16)",
+            }}
+          />
+
+          <span
+            style={{
+              position: "relative",
+              zIndex: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              fontWeight: "700",
+            }}
+          >
+            <span>{option.option_text}</span>
+            <span>{percent}%</span>
+          </span>
+        </button>
+      );
+    })}
+
+    <div style={{ fontSize: "13px", color: "#64748b", marginTop: "4px" }}>
+      {poll.total_votes || 0} رای
+    </div>
+  </div>
+)}
           {post.image_url &&
             post.image_url !== "undefined" &&
             post.image_url !== "null" && (
@@ -670,6 +834,21 @@ transform: liked ? "scale(1.08)" : "scale(1)",
   <EyeIcon />
   {viewsCount}
 </div>
+{canSeeBoostPreview && (
+  <button
+    onClick={loadBoostPreview}
+    disabled={boostLoading}
+    style={{
+      border: "none",
+      background: "transparent",
+      cursor: boostLoading ? "not-allowed" : "pointer",
+      color: "#1d9bf0",
+      fontWeight: "800",
+    }}
+  >
+    🚀 {boostLoading ? "..." : "Boost"}
+  </button>
+)}
 {username === post.author?.username &&
   isPremiumActive(post.author) &&
   !post.is_hot && (
@@ -717,7 +896,40 @@ transform: liked ? "scale(1.08)" : "scale(1)",
             </button>
           </div>
 
-         
+         {boostPreview && (
+  <div
+    style={{
+      marginTop: "12px",
+      padding: "14px",
+      borderRadius: "16px",
+      background: "linear-gradient(135deg,#eff6ff,#f8fafc)",
+      border: "1px solid #bfdbfe",
+      color: "#0f172a",
+    }}
+  >
+    <b>پیش‌بینی بوست</b>
+
+    <div style={{ marginTop: "8px", fontSize: "14px" }}>
+      ویو احتمالی:{" "}
+      <b>
+        {boostPreview.preview.estimated_min_views} تا{" "}
+        {boostPreview.preview.estimated_max_views}
+      </b>
+    </div>
+
+    <div style={{ marginTop: "5px", fontSize: "14px" }}>
+      لایک احتمالی اضافه: <b>{boostPreview.preview.expected_extra_likes}</b>
+    </div>
+
+    <div style={{ marginTop: "5px", fontSize: "14px" }}>
+      کامنت احتمالی اضافه: <b>{boostPreview.preview.expected_extra_comments}</b>
+    </div>
+
+    <p style={{ margin: "8px 0 0", color: "#64748b", fontSize: "12px" }}>
+      {boostPreview.note}
+    </p>
+  </div>
+)}
 <div
   style={{
     marginTop: showComments ? "15px" : "0",
