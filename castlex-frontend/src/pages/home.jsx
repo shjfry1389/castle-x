@@ -90,22 +90,49 @@ const loadPosts = async (mode = feedMode, nextPage = 1, append = false) => {
 useEffect(() => {
   loadPosts(feedMode);
 
-  const channel = supabase
-    .channel("posts-feed")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "posts",
-      },
-      () => {
-        loadPosts(feedMode);
-      }
-    )
-    .subscribe();
+ const channel = supabase
+  .channel(`home-feed-${feedMode}`)
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "posts",
+    },
+    () => {
+      loadPosts(feedMode);
+    }
+  )
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "likes",
+    },
+    () => {
+      loadPosts(feedMode);
+    }
+  )
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "comments",
+    },
+    () => {
+      loadPosts(feedMode);
+    }
+  )
+  .subscribe();
+const refreshOnFocus = () => {
+  loadPosts(feedMode);
+};
 
+window.addEventListener("focus", refreshOnFocus);
   return () => {
+    window.removeEventListener("focus", refreshOnFocus);
     supabase.removeChannel(channel);
   };
 }, [feedMode]);
