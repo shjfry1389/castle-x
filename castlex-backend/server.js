@@ -382,38 +382,49 @@ const to = from + limit - 1;
 });
 app.get("/api/posts/following", auth, async (req, res) => {
   try {
+    const limit = Math.min(Number(req.query.limit) || 15, 30);
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
     const { data: follows, error: followsError } = await supabase
       .from("followers")
       .select("following_id")
       .eq("follower_id", req.user.id);
 
     if (followsError) {
-      return res.status(500).json({
-        error: "خطا در گرفتن لیست فالویینگ",
-        details: followsError.message,
-      });
+      return res.status(500).json(followsError);
     }
 
-    const followingIds = [
-      ...new Set((follows || []).map((item) => item.following_id).filter(Boolean)),
-    ];
+    const followingIds = (follows || [])
+      .map((item) => item.following_id)
+      .filter(Boolean);
 
     if (followingIds.length === 0) {
       return res.json([]);
     }
 
-    const { data: posts, error } = await supabase
+    const { data: posts, error: postsError } = await supabase
       .from("posts")
       .select("*")
       .in("user_id", followingIds)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
-    if (error) return res.status(500).json(error);
-
-    const now = new Date();
+    if (postsError) {
+      return res.status(500).json(postsError);
+    }
 
     const result = await Promise.all(
-      posts.map(async (post) => {
+      (posts || []).map(async (post) => {
+        const { data: author } = await supabase
+          .from("users")
+          .select(
+            "id, username, display_name, avatar_url, role, is_verified, premium_until, premium_plan"
+          )
+          .eq("id", post.user_id)
+          .single();
+
         const { count: likesCount } = await supabase
           .from("likes")
           .select("*", { count: "exact", head: true })
@@ -424,28 +435,11 @@ app.get("/api/posts/following", auth, async (req, res) => {
           .select("*", { count: "exact", head: true })
           .eq("post_id", post.id);
 
-        const { data: author } = await supabase
-          .from("users")
-          .select("id, username, display_name, avatar_url, is_verified, role, premium_until, premium_plan")
-          .eq("id", post.user_id)
-          .single();
-
         const { data: likeRow } = await supabase
           .from("likes")
           .select("id")
           .eq("post_id", post.id)
           .eq("user_id", req.user.id)
-          .maybeSingle();
-
-        const { data: promotion } = await supabase
-          .from("post_promotions")
-          .select("*")
-          .eq("post_id", post.id)
-          .eq("active", true)
-          .lte("starts_at", now.toISOString())
-          .gt("ends_at", now.toISOString())
-          .order("priority", { ascending: false })
-          .limit(1)
           .maybeSingle();
 
         return {
@@ -461,20 +455,9 @@ app.get("/api/posts/following", auth, async (req, res) => {
               ? (post.views_count || 0) + 200
               : post.views_count || 0,
           is_liked: !!likeRow,
-          is_hot: !!promotion,
-          hot_priority: promotion?.priority || 0,
-          hot_until: promotion?.ends_at || null,
-          feed_time: promotion?.last_bumped_at || post.created_at,
         };
       })
     );
-
-    result.sort((a, b) => {
-      const hotDiff = (b.hot_priority || 0) - (a.hot_priority || 0);
-      if (hotDiff !== 0) return hotDiff;
-
-      return new Date(b.feed_time).getTime() - new Date(a.feed_time).getTime();
-    });
 
     res.json(result);
   } catch (err) {
