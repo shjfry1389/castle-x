@@ -137,6 +137,10 @@ const sentViewRef = useRef(false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
   const [viewsCount, setViewsCount] = useState(post.views_count || 0);
   const [liked, setLiked] = useState(post.is_liked || false);
+  useEffect(() => {
+  setLiked(!!post.is_liked);
+  setLikesCount(post.likes_count || 0);
+}, [post.id, post.is_liked, post.likes_count]);
   const [hotRequested, setHotRequested] = useState(false);
   const [poll, setPoll] = useState(null);
 const [pollLoading, setPollLoading] = useState(false);

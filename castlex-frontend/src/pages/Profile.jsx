@@ -103,12 +103,17 @@ const [themeSaving, setThemeSaving] = useState(false);
       .then((res) => setUser(res.data))
       .catch(console.error);
 
-    api
-      .get(`/api/users/${profileUsername}/posts`)
-      .then((res) => setPosts(res.data))
-      .catch(console.error);
-
     const token = localStorage.getItem("token");
+
+api
+  .get(`/api/users/${profileUsername}/posts`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  .then((res) => setPosts(res.data))
+  .catch(console.error);
+
 
     if (token) {
       try {
