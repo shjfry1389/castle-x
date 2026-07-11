@@ -1280,6 +1280,75 @@ app.post("/api/messages/send", auth, async (req, res) => {
     });
   }
 });
+app.get("/api/messages/unread-count", auth, async (req, res) => {
+  try {
+    const { data: memberships, error: membershipError } = await supabase
+      .from("conversation_members")
+      .select("conversation_id")
+      .eq("user_id", req.user.id);
+
+    if (membershipError) {
+      return res.status(500).json({
+        error: "خطا در دریافت گفتگوها",
+        details: membershipError.message,
+      });
+    }
+
+    const conversationIds = (memberships || []).map((item) => item.conversation_id);
+
+    if (conversationIds.length === 0) {
+      return res.json({ count: 0 });
+    }
+
+    const { count, error } = await supabase
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .in("conversation_id", conversationIds)
+      .neq("sender_id", req.user.id)
+      .eq("is_read", false);
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در دریافت پیام‌های جدید",
+        details: error.message,
+      });
+    }
+
+    res.json({ count: count || 0 });
+  } catch (err) {
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
+
+app.put("/api/messages/conversations/:conversationId/read", auth, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    const { error } = await supabase
+      .from("messages")
+      .update({ is_read: true })
+      .eq("conversation_id", conversationId)
+      .neq("sender_id", req.user.id)
+      .eq("is_read", false);
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در خوانده کردن پیام‌ها",
+        details: error.message,
+      });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.get("/api/messages/:conversationId", auth, async (req, res) => {
   try {
     const { conversationId } = req.params;
@@ -1336,10 +1405,17 @@ app.put("/api/messages/:conversationId/seen", auth, async (req, res) => {
 
 app.get("/api/conversations", auth, async (req, res) => {
   try {
-    const { data: memberships } = await supabase
+    const { data: memberships, error: membershipError } = await supabase
       .from("conversation_members")
       .select("*")
       .eq("user_id", req.user.id);
+
+    if (membershipError) {
+      return res.status(500).json({
+        error: "خطا در دریافت گفتگوها",
+        details: membershipError.message,
+      });
+    }
 
     const result = [];
 
@@ -1349,30 +1425,72 @@ app.get("/api/conversations", auth, async (req, res) => {
         .select("*")
         .eq("conversation_id", m.conversation_id);
 
-      const other = members.find((x) => x.user_id !== req.user.id);
+      const other = members?.find((x) => String(x.user_id) !== String(req.user.id));
 
       if (!other) continue;
 
       const { data: user } = await supabase
         .from("users")
         .select(
-  "id, username, display_name, avatar_url, is_online, last_seen, is_verified, role, premium_until, premium_plan",
-)
+          "id, username, display_name, avatar_url, is_online, last_seen, is_verified, role, premium_until, premium_plan"
+        )
         .eq("id", other.user_id)
         .single();
+
+      const { data: lastMessage } = await supabase
+        .from("messages")
+        .select("content, created_at")
+        .eq("conversation_id", m.conversation_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const { count: unreadCount } = await supabase
+        .from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("conversation_id", m.conversation_id)
+        .neq("sender_id", req.user.id)
+        .eq("is_read", false);
 
       result.push({
         conversation_id: m.conversation_id,
         user,
+        last_message: lastMessage?.content || "",
+        last_message_time: lastMessage?.created_at || null,
+        unread_count: unreadCount || 0,
       });
     }
 
     res.json(result);
   } catch (err) {
-    console.error(err);
+    console.error("CONVERSATIONS ERROR:", err);
 
     res.status(500).json({
-      error: "Server Error",
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
+app.get("/api/notifications/unread-count", auth, async (req, res) => {
+  try {
+    const { count, error } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", req.user.id)
+      .eq("is_read", false);
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در دریافت تعداد نوتیفیکیشن‌ها",
+        details: error.message,
+      });
+    }
+
+    res.json({ count: count || 0 });
+  } catch (err) {
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
     });
   }
 });
@@ -1409,52 +1527,7 @@ app.get("/api/notifications", auth, async (req, res) => {
     });
   }
 });
-app.get("/api/messages/unread-count", auth, async (req, res) => {
-  try {
-    const { data: conversations, error: convError } = await supabase
-      .from("conversations")
-      .select("id")
-      .or(`user1_id.eq.${req.user.id},user2_id.eq.${req.user.id}`);
 
-    if (convError) {
-      return res.status(500).json({
-        error: "خطا در دریافت گفتگوها",
-        details: convError.message,
-      });
-    }
-
-    const conversationIds = (conversations || []).map((c) => c.id);
-
-    if (conversationIds.length === 0) {
-      return res.json({ count: 0 });
-    }
-
-    const { count, error } = await supabase
-      .from("messages")
-      .select("id", { count: "exact", head: true })
-      .in("conversation_id", conversationIds)
-      .neq("sender_id", req.user.id)
-      .eq("is_read", false);
-
-    if (error) {
-      return res.status(500).json({
-        error: "خطا در دریافت پیام‌های خوانده‌نشده",
-        details: error.message,
-      });
-    }
-
-    res.json({
-      count: count || 0,
-    });
-  } catch (err) {
-    console.error("UNREAD MESSAGES COUNT ERROR:", err);
-
-    res.status(500).json({
-      error: "خطای سرور",
-      details: err.message,
-    });
-  }
-});
 app.put("/api/notifications/read-all", auth, async (req, res) => {
   try {
     const { error } = await supabase
@@ -3263,78 +3336,6 @@ app.delete("/api/comments/:id", auth, async (req, res) => {
 
     res.status(500).json({
       error: "Server Error",
-    });
-  }
-});
-app.get("/api/messages/unread-count", auth, async (req, res) => {
-  try {
-    const { data: conversations, error: convError } = await supabase
-      .from("conversations")
-      .select("id")
-      .or(`user1_id.eq.${req.user.id},user2_id.eq.${req.user.id}`);
-
-    if (convError) {
-      return res.status(500).json({
-        error: "خطا در دریافت گفتگوها",
-        details: convError.message,
-      });
-    }
-
-    const conversationIds = (conversations || []).map((item) => item.id);
-
-    if (conversationIds.length === 0) {
-      return res.json({ count: 0 });
-    }
-
-    const { count, error } = await supabase
-      .from("messages")
-      .select("*", { count: "exact", head: true })
-      .in("conversation_id", conversationIds)
-      .neq("sender_id", req.user.id)
-      .eq("is_read", false);
-
-    if (error) {
-      return res.status(500).json({
-        error: "خطا در دریافت تعداد پیام‌های جدید",
-        details: error.message,
-      });
-    }
-
-    res.json({ count: count || 0 });
-  } catch (err) {
-    console.error("UNREAD MESSAGES COUNT ERROR:", err);
-
-    res.status(500).json({
-      error: "خطای سرور",
-      details: err.message,
-    });
-  }
-});
-app.put("/api/messages/conversations/:conversationId/read", auth, async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-
-    const { error } = await supabase
-      .from("messages")
-      .update({ is_read: true })
-      .eq("conversation_id", conversationId)
-      .neq("sender_id", req.user.id)
-      .eq("is_read", false);
-
-    if (error) {
-      return res.status(500).json({
-        error: "خطا در خوانده کردن پیام‌ها",
-        details: error.message,
-      });
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("READ CONVERSATION ERROR:", err);
-
-    res.status(500).json({
-      error: "خطای سرور",
-      details: err.message,
     });
   }
 });
