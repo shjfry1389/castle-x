@@ -1409,20 +1409,36 @@ app.get("/api/notifications", auth, async (req, res) => {
     });
   }
 });
-app.get("/api/notifications/unread-count", auth, async (req, res) => {
+app.get("/api/messages/unread-count", auth, async (req, res) => {
   try {
+    const { data: conversations, error: convError } = await supabase
+      .from("conversations")
+      .select("id")
+      .or(`user1_id.eq.${req.user.id},user2_id.eq.${req.user.id}`);
+
+    if (convError) {
+      return res.status(500).json({
+        error: "خطا در دریافت گفتگوها",
+        details: convError.message,
+      });
+    }
+
+    const conversationIds = (conversations || []).map((c) => c.id);
+
+    if (conversationIds.length === 0) {
+      return res.json({ count: 0 });
+    }
+
     const { count, error } = await supabase
-      .from("notifications")
-      .select("*", {
-        count: "exact",
-        head: true,
-      })
-      .eq("user_id", req.user.id)
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .in("conversation_id", conversationIds)
+      .neq("sender_id", req.user.id)
       .eq("is_read", false);
 
     if (error) {
       return res.status(500).json({
-        error: "خطا در دریافت تعداد نوتیفیکیشن‌های جدید",
+        error: "خطا در دریافت پیام‌های خوانده‌نشده",
         details: error.message,
       });
     }
@@ -1431,7 +1447,7 @@ app.get("/api/notifications/unread-count", auth, async (req, res) => {
       count: count || 0,
     });
   } catch (err) {
-    console.error("UNREAD NOTIFICATIONS COUNT ERROR:", err);
+    console.error("UNREAD MESSAGES COUNT ERROR:", err);
 
     res.status(500).json({
       error: "خطای سرور",
@@ -1439,7 +1455,6 @@ app.get("/api/notifications/unread-count", auth, async (req, res) => {
     });
   }
 });
-
 app.put("/api/notifications/read-all", auth, async (req, res) => {
   try {
     const { error } = await supabase
