@@ -3251,6 +3251,78 @@ app.delete("/api/comments/:id", auth, async (req, res) => {
     });
   }
 });
+app.get("/api/messages/unread-count", auth, async (req, res) => {
+  try {
+    const { data: conversations, error: convError } = await supabase
+      .from("conversations")
+      .select("id")
+      .or(`user1_id.eq.${req.user.id},user2_id.eq.${req.user.id}`);
+
+    if (convError) {
+      return res.status(500).json({
+        error: "خطا در دریافت گفتگوها",
+        details: convError.message,
+      });
+    }
+
+    const conversationIds = (conversations || []).map((item) => item.id);
+
+    if (conversationIds.length === 0) {
+      return res.json({ count: 0 });
+    }
+
+    const { count, error } = await supabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .in("conversation_id", conversationIds)
+      .neq("sender_id", req.user.id)
+      .eq("is_read", false);
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در دریافت تعداد پیام‌های جدید",
+        details: error.message,
+      });
+    }
+
+    res.json({ count: count || 0 });
+  } catch (err) {
+    console.error("UNREAD MESSAGES COUNT ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
+app.put("/api/messages/conversations/:conversationId/read", auth, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    const { error } = await supabase
+      .from("messages")
+      .update({ is_read: true })
+      .eq("conversation_id", conversationId)
+      .neq("sender_id", req.user.id)
+      .eq("is_read", false);
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در خوانده کردن پیام‌ها",
+        details: error.message,
+      });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("READ CONVERSATION ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.delete("/api/messages/:id", auth, async (req, res) => {
   try {
     const messageId = req.params.id;

@@ -123,15 +123,22 @@ export default function Chat() {
     });
   };
 
-  const markSeen = async () => {
-    if (!token) return;
+const markSeen = async () => {
+  if (!token) return;
 
-    try {
-      await api.put(`/api/messages/${conversationId}/seen`, {}, authHeader);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  try {
+    await Promise.allSettled([
+      api.put(`/api/messages/${conversationId}/seen`, {}, authHeader),
+      api.put(
+        `/api/messages/conversations/${conversationId}/read`,
+        {},
+        authHeader
+      ),
+    ]);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const loadMessages = () => {
     if (!token) return;

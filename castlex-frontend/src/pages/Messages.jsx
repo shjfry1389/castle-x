@@ -12,45 +12,63 @@ const [search, setSearch] =
 useState("");
 
 useEffect(() => {
-const token =
-localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
+  const loadConversations = () => {
+    api
+      .get("/api/conversations", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        const sorted = [...res.data].sort((a, b) => {
+          const unreadDiff = (b.unread_count || 0) - (a.unread_count || 0);
 
-const loadConversations = () => {
-  api
-    .get("/api/conversations", {
-      headers: {
-        Authorization: `Bearer ${token}`,
+          if (unreadDiff !== 0) return unreadDiff;
+
+          return (
+            new Date(b.last_message_time || 0) -
+            new Date(a.last_message_time || 0)
+          );
+        });
+
+        setConversations(sorted);
+      })
+      .catch(console.error);
+  };
+
+  loadConversations();
+
+  const channel = supabase
+    .channel("messages-page")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "users",
       },
-    })
-    .then((res) => {
-      setConversations(res.data);
-    })
-    .catch(console.error);
-};
+      () => {
+        loadConversations();
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "messages",
+      },
+      () => {
+        loadConversations();
+      }
+    )
+    .subscribe();
 
-loadConversations();
-
-const channel = supabase
-  .channel("online-users")
-  .on(
-    "postgres_changes",
-    {
-      event: "UPDATE",
-      schema: "public",
-      table: "users",
-    },
-    () => {
-      loadConversations();
-    }
-  )
-  .subscribe();
-
-return () => {
-  supabase.removeChannel(channel);
-};
-
-
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }, []);
 
 const filtered =
@@ -316,6 +334,26 @@ onMouseLeave={(e) => {
               {c.last_message_time ||
                 ""}
             </div>
+            {c.unread_count > 0 && (
+  <div
+    style={{
+      marginTop: "6px",
+      minWidth: "22px",
+      height: "22px",
+      padding: "0 7px",
+      borderRadius: "999px",
+      background: "#ef4444",
+      color: "#fff",
+      fontSize: "12px",
+      fontWeight: "900",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    {c.unread_count > 9 ? "9+" : c.unread_count}
+  </div>
+)}
 
             <div
               style={{

@@ -39,6 +39,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
 
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
@@ -62,14 +63,32 @@ export default function Navbar({ darkMode, setDarkMode }) {
     console.error(err);
   }
 };
+const loadUnreadMessages = async () => {
+  try {
+    const currentToken = localStorage.getItem("token");
+
+    if (!currentToken) return;
+
+    const res = await api.get("/api/messages/unread-count", {
+      headers: {
+        Authorization: `Bearer ${currentToken}`,
+      },
+    });
+
+    setUnreadMessages(res.data.count || 0);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
 useEffect(() => {
   if (!token) return;
 
   loadUnreadNotifications();
+  loadUnreadMessages();
 
   const channel = supabase
-    .channel("navbar-notifications")
+    .channel("navbar-unread-status")
     .on(
       "postgres_changes",
       {
@@ -92,10 +111,22 @@ useEffect(() => {
         loadUnreadNotifications();
       }
     )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "messages",
+      },
+      () => {
+        loadUnreadMessages();
+      }
+    )
     .subscribe();
 
   const refreshOnFocus = () => {
     loadUnreadNotifications();
+    loadUnreadMessages();
   };
 
   window.addEventListener("focus", refreshOnFocus);
@@ -183,6 +214,33 @@ useEffect(() => {
       }}
     >
       {unreadNotifications > 9 ? "9+" : unreadNotifications}
+    </span>
+  );
+};
+const MessageDot = () => {
+  if (unreadMessages <= 0) return null;
+
+  return (
+    <span
+      style={{
+        position: "absolute",
+        top: "2px",
+        right: "2px",
+        minWidth: "16px",
+        height: "16px",
+        padding: "0 4px",
+        borderRadius: "999px",
+        background: "#ef4444",
+        color: "#fff",
+        fontSize: "10px",
+        fontWeight: "900",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: "0 0 0 2px #fff",
+      }}
+    >
+      {unreadMessages > 9 ? "9+" : unreadMessages}
     </span>
   );
 };
@@ -287,9 +345,16 @@ useEffect(() => {
 
         {token ? (
           <>
-            <Link to="/messages" style={iconLinkStyle}>
-              <MessagesIcon />
-            </Link>
+<Link
+  to="/messages"
+  style={{
+    ...iconLinkStyle,
+    position: "relative",
+  }}
+>
+  <MessagesIcon />
+  <MessageDot />
+</Link>
             <Link
   to="/notifications"
   style={{
@@ -395,9 +460,16 @@ useEffect(() => {
 
           {token ? (
             <>
-              <Link to="/messages" style={iconLinkStyle}>
-                <MessagesIcon />
-              </Link>
+<Link
+  to="/messages"
+  style={{
+    ...iconLinkStyle,
+    position: "relative",
+  }}
+>
+  <MessagesIcon />
+  <MessageDot />
+</Link>
 
 <Link
   to="/notifications"
