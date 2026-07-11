@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import { supabase } from "../supabase";
 
 function Icon({ children, color }) {
   return (
@@ -37,13 +38,73 @@ export default function Navbar({ darkMode, setDarkMode }) {
   }
 
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
-
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+  const loadUnreadNotifications = async () => {
+  try {
+    const currentToken = localStorage.getItem("token");
+
+    if (!currentToken) return;
+
+    const res = await api.get("/api/notifications/unread-count", {
+      headers: {
+        Authorization: `Bearer ${currentToken}`,
+      },
+    });
+
+    setUnreadNotifications(res.data.count || 0);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+useEffect(() => {
+  if (!token) return;
+
+  loadUnreadNotifications();
+
+  const channel = supabase
+    .channel("navbar-notifications")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "notifications",
+      },
+      () => {
+        loadUnreadNotifications();
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "notifications",
+      },
+      () => {
+        loadUnreadNotifications();
+      }
+    )
+    .subscribe();
+
+  const refreshOnFocus = () => {
+    loadUnreadNotifications();
+  };
+
+  window.addEventListener("focus", refreshOnFocus);
+
+  return () => {
+    window.removeEventListener("focus", refreshOnFocus);
+    supabase.removeChannel(channel);
+  };
+}, [token]);
 
   const logout = async () => {
     const confirmLogout = window.confirm(
@@ -98,7 +159,33 @@ export default function Navbar({ darkMode, setDarkMode }) {
     cursor: "pointer",
     padding: 0,
   };
+  const NotificationDot = () => {
+  if (unreadNotifications <= 0) return null;
 
+  return (
+    <span
+      style={{
+        position: "absolute",
+        top: "2px",
+        right: "2px",
+        minWidth: "16px",
+        height: "16px",
+        padding: "0 4px",
+        borderRadius: "999px",
+        background: "#ef4444",
+        color: "#fff",
+        fontSize: "10px",
+        fontWeight: "900",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: "0 0 0 2px #fff",
+      }}
+    >
+      {unreadNotifications > 9 ? "9+" : unreadNotifications}
+    </span>
+  );
+};
   const HomeIcon = () => (
     <Icon color={iconColor}>
       <path d="M3 11.5L12 4l9 7.5" />
@@ -203,10 +290,16 @@ export default function Navbar({ darkMode, setDarkMode }) {
             <Link to="/messages" style={iconLinkStyle}>
               <MessagesIcon />
             </Link>
-
-            <Link to="/notifications" style={iconLinkStyle}>
-              <BellIcon />
-            </Link>
+            <Link
+  to="/notifications"
+  style={{
+    ...iconLinkStyle,
+    position: "relative",
+  }}
+>
+  <BellIcon />
+  <NotificationDot />
+</Link>
 
             <Link
               to={username ? `/profile/${encodeURIComponent(username)}` : "/login"}
@@ -306,10 +399,16 @@ export default function Navbar({ darkMode, setDarkMode }) {
                 <MessagesIcon />
               </Link>
 
-              <Link to="/notifications" style={iconLinkStyle}>
-                <BellIcon />
-              </Link>
-
+<Link
+  to="/notifications"
+  style={{
+    ...iconLinkStyle,
+    position: "relative",
+  }}
+>
+  <BellIcon />
+  <NotificationDot />
+</Link>
               <Link
                 to={username ? `/profile/${encodeURIComponent(username)}` : "/login"}
                 style={iconLinkStyle}

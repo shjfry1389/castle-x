@@ -1409,6 +1409,66 @@ app.get("/api/notifications", auth, async (req, res) => {
     });
   }
 });
+app.get("/api/notifications/unread-count", auth, async (req, res) => {
+  try {
+    const { count, error } = await supabase
+      .from("notifications")
+      .select("*", {
+        count: "exact",
+        head: true,
+      })
+      .eq("user_id", req.user.id)
+      .eq("is_read", false);
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در دریافت تعداد نوتیفیکیشن‌های جدید",
+        details: error.message,
+      });
+    }
+
+    res.json({
+      count: count || 0,
+    });
+  } catch (err) {
+    console.error("UNREAD NOTIFICATIONS COUNT ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
+
+app.put("/api/notifications/read-all", auth, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from("notifications")
+      .update({
+        is_read: true,
+      })
+      .eq("user_id", req.user.id)
+      .eq("is_read", false);
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در خوانده کردن نوتیفیکیشن‌ها",
+        details: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+    });
+  } catch (err) {
+    console.error("READ ALL NOTIFICATIONS ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.put("/api/users/online", auth, async (req, res) => {
   await supabase
     .from("users")
