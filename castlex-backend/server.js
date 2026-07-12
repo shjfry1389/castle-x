@@ -2895,6 +2895,103 @@ app.post("/api/polls/:pollId/vote", auth, async (req, res) => {
     res.status(500).json({ error: "خطای سرور", details: err.message });
   }
 });
+app.get("/api/admin/top-posts", auth, admin, async (req, res) => {
+  try {
+    const frontendUrl = process.env.FRONTEND_URL || "https://castle-x.vercel.app";
+
+    const { data: topViewed } = await supabase
+      .from("posts")
+      .select(`
+        id,
+        content,
+        views_count,
+        created_at,
+        author:users (
+          username,
+          display_name
+        )
+      `)
+      .order("views_count", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const { data: likes } = await supabase
+      .from("likes")
+      .select("post_id");
+
+    const { data: comments } = await supabase
+      .from("comments")
+      .select("post_id");
+
+    const countByPost = (items = []) => {
+      const counts = {};
+
+      items.forEach((item) => {
+        if (!item.post_id) return;
+        counts[item.post_id] = (counts[item.post_id] || 0) + 1;
+      });
+
+      const topId = Object.keys(counts).sort(
+        (a, b) => counts[b] - counts[a]
+      )[0];
+
+      return {
+        postId: topId,
+        count: topId ? counts[topId] : 0,
+      };
+    };
+
+    const topLikeInfo = countByPost(likes || []);
+    const topCommentInfo = countByPost(comments || []);
+
+    const getPost = async (postInfo) => {
+      if (!postInfo.postId) return null;
+
+      const { data } = await supabase
+        .from("posts")
+        .select(`
+          id,
+          content,
+          views_count,
+          created_at,
+          author:users (
+            username,
+            display_name
+          )
+        `)
+        .eq("id", postInfo.postId)
+        .maybeSingle();
+
+      if (!data) return null;
+
+      return {
+        ...data,
+        count: postInfo.count,
+        post_url: `${frontendUrl}/post/${data.id}`,
+      };
+    };
+
+    res.json({
+      top_viewed: topViewed
+        ? {
+            ...topViewed,
+            count: topViewed.views_count || 0,
+            post_url: `${frontendUrl}/post/${topViewed.id}`,
+          }
+        : null,
+
+      top_liked: await getPost(topLikeInfo),
+      top_commented: await getPost(topCommentInfo),
+    });
+  } catch (err) {
+    console.error("ADMIN TOP POSTS ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.get("/api/admin/stats", auth, admin, async (req, res) => {
   try {
     const { count: users } = await supabase.from("users").select("*", {

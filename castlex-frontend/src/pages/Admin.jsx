@@ -24,6 +24,7 @@ export default function Admin() {
     comments: 0,
     likes: 0,
   });
+  const [topPosts, setTopPosts] = useState(null);
 
   const token = localStorage.getItem("token");
 
@@ -33,14 +34,15 @@ export default function Admin() {
     },
   };
 
-  useEffect(() => {
-    loadUsers();
-    loadStats();
-    loadPosts();
-    loadComments();
-    loadHotRequests();
-    loadReports();
-  }, []);
+useEffect(() => {
+  loadUsers();
+  loadStats();
+  loadTopPosts();
+  loadPosts();
+  loadComments();
+  loadHotRequests();
+  loadReports();
+}, []);
 
   const matchesSearch = (...values) => {
     const q = search.trim().toLowerCase();
@@ -151,6 +153,14 @@ user.premium_until
       console.error(err);
     }
   };
+  const loadTopPosts = async () => {
+  try {
+    const res = await api.get("/api/admin/top-posts", authHeader);
+    setTopPosts(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const loadComments = async () => {
     try {
@@ -585,7 +595,104 @@ const rejectHotRequest = async (request) => {
           <p>Likes</p>
         </div>
       </div>
+      {topPosts && (
+  <div
+    style={{
+      marginBottom: "40px",
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))",
+      gap: "16px",
+    }}
+  >
+    {[
+      {
+        title: "Most Viewed Post",
+        data: topPosts.top_viewed,
+        color: "#6366f1",
+        label: "Views",
+      },
+      {
+        title: "Most Liked Post",
+        data: topPosts.top_liked,
+        color: "#ec4899",
+        label: "Likes",
+      },
+      {
+        title: "Most Commented Post",
+        data: topPosts.top_commented,
+        color: "#f59e0b",
+        label: "Comments",
+      },
+    ].map((item) => (
+      <div
+        key={item.title}
+        style={{
+          background: "#fff",
+          border: `1px solid ${item.color}`,
+          borderRadius: "16px",
+          padding: "16px",
+          boxShadow: "0 8px 22px rgba(0,0,0,0.08)",
+        }}
+      >
+        <h3 style={{ marginTop: 0, color: item.color }}>{item.title}</h3>
 
+        {item.data ? (
+          <>
+            <div
+              style={{
+                fontWeight: "800",
+                marginBottom: "8px",
+              }}
+            >
+              {item.label}: {item.data.count || 0}
+            </div>
+
+            <div
+              style={{
+                color: "#536471",
+                fontSize: "14px",
+                marginBottom: "10px",
+              }}
+            >
+              @{item.data.author?.username || "unknown"}
+            </div>
+
+            <p
+              style={{
+                fontSize: "14px",
+                lineHeight: "1.7",
+                maxHeight: "70px",
+                overflow: "hidden",
+              }}
+            >
+              {item.data.content || "No text"}
+            </p>
+
+            <a
+              href={item.data.post_url}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "inline-block",
+                marginTop: "8px",
+                color: "#fff",
+                background: item.color,
+                padding: "8px 12px",
+                borderRadius: "999px",
+                textDecoration: "none",
+                fontWeight: "800",
+              }}
+            >
+              Open Post
+            </a>
+          </>
+        ) : (
+          <p style={{ color: "#64748b" }}>No post yet</p>
+        )}
+      </div>
+    ))}
+  </div>
+)}
       <h2>Reports ({filteredReports.length})</h2>
       {filteredReports.length === 0 && <p>No Reports</p>}
 
