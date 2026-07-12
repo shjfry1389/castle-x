@@ -157,17 +157,19 @@ app.post("/api/auth/login", async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "30d",
-      },
-    );
+const token = jwt.sign(
+  {
+    id: user.id,
+    username: user.username,
+    role: user.role,
+    premium_plan: user.premium_plan,
+    premium_until: user.premium_until,
+  },
+  process.env.JWT_SECRET,
+  {
+    expiresIn: "30d",
+  },
+);
     await supabase
       .from("users")
       .update({
@@ -179,12 +181,14 @@ app.post("/api/auth/login", async (req, res) => {
     res.json({
       success: true,
       token,
-      user: {
-        id: user.id,
-        username: user.username,
-        display_name: user.display_name,
-        role: user.role,
-      },
+user: {
+  id: user.id,
+  username: user.username,
+  display_name: user.display_name,
+  role: user.role,
+  premium_plan: user.premium_plan,
+  premium_until: user.premium_until,
+},
     });
   } catch (err) {
     console.error(err);
