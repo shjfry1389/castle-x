@@ -18,6 +18,7 @@ const [postMode, setPostMode] = useState("post");
 const [pollQuestion, setPollQuestion] = useState("");
 const [pollOptions, setPollOptions] = useState(["", ""]);
 const [pollDuration, setPollDuration] = useState(24);
+const [trendingHashtags, setTrendingHashtags] = useState([]);
 
 const POSTS_LIMIT = 15;
 const token = localStorage.getItem("token");
@@ -86,10 +87,18 @@ const loadPosts = async (mode = feedMode, nextPage = 1, append = false) => {
     setPostsLoading(false);
   }
 };
+const loadTrendingHashtags = async () => {
+  try {
+    const res = await api.get("/api/hashtags/trending");
 
+    setTrendingHashtags(Array.isArray(res.data) ? res.data : []);
+  } catch (err) {
+    console.error(err);
+  }
+};
 useEffect(() => {
   loadPosts(feedMode);
-
+  loadTrendingHashtags();
  const channel = supabase
   .channel(`home-feed-${feedMode}`)
   .on(
@@ -343,7 +352,62 @@ return (
   </button>
 </div>
     </div>
+    {trendingHashtags.length > 0 && (
+      <div
+        style={{
+          padding: "14px 20px",
+          borderBottom: "1px solid #eff3f4",
+          background: "#fff",
+        }}
+      >
+        <div
+          style={{
+            fontWeight: "900",
+            marginBottom: "12px",
+            fontSize: "18px",
+            color: "#0f172a",
+          }}
+        >
+          Trending Hashtags
+        </div>
 
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "8px",
+          }}
+        >
+          {trendingHashtags.map((item) => (
+            <Link
+              key={item.tag}
+              to={`/hashtag/${encodeURIComponent(item.tag)}`}
+              style={{
+                textDecoration: "none",
+                background: "#eff6ff",
+                color: "#1d4ed8",
+                padding: "8px 13px",
+                borderRadius: "999px",
+                fontWeight: "800",
+                fontSize: "14px",
+                border: "1px solid #bfdbfe",
+              }}
+            >
+              #{item.tag}{" "}
+              <span
+                style={{
+                  color: "#64748b",
+                  fontWeight: "700",
+                  fontSize: "12px",
+                }}
+              >
+                {item.count}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    )}
     <div
       style={{
         padding: "20px",

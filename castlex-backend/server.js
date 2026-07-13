@@ -3279,6 +3279,64 @@ app.delete("/api/admin/report/:id", auth, admin, async (req, res) => {
     });
   }
 });
+app.get("/api/hashtags/trending", async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 10, 20);
+    const days = Math.min(Number(req.query.days) || 7, 30);
+
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    const { data: posts, error } = await supabase
+      .from("posts")
+      .select("content")
+      .gte("created_at", since.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if (error) {
+      return res.status(500).json(error);
+    }
+
+    const counts = {};
+    const hashtagRegex = /#([\p{L}\p{N}_]+)/gu;
+
+    for (const post of posts || []) {
+      const text = post.content || "";
+      const seenInPost = new Set();
+      let match;
+
+      while ((match = hashtagRegex.exec(text)) !== null) {
+        const tag = match[1].trim().toLowerCase();
+
+        if (tag) {
+          seenInPost.add(tag);
+        }
+      }
+
+      for (const tag of seenInPost) {
+        counts[tag] = (counts[tag] || 0) + 1;
+      }
+    }
+
+    const trending = Object.entries(counts)
+      .map(([tag, count]) => ({
+        tag,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+
+    res.json(trending);
+  } catch (err) {
+    console.error("TRENDING HASHTAGS ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.get("/api/hashtags/:tag/posts", auth, async (req, res) => {
   try {
     const tag = decodeURIComponent(req.params.tag || "").replace("#", "").trim();
