@@ -3282,23 +3282,18 @@ app.delete("/api/admin/report/:id", auth, admin, async (req, res) => {
 app.get("/api/hashtags/trending", async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 10, 20);
-    const days = Math.min(Number(req.query.days) || 7, 30);
-
-    const since = new Date();
-    since.setDate(since.getDate() - days);
 
     const { data: posts, error } = await supabase
       .from("posts")
-      .select("content")
-      .gte("created_at", since.toISOString())
-      .order("created_at", { ascending: false })
-      .limit(200);
+      .select("id, content, created_at")
+      .order("created_at", { ascending: false });
 
     if (error) {
       return res.status(500).json(error);
     }
 
     const counts = {};
+    const latestTime = {};
     const hashtagRegex = /#([\p{L}\p{N}_]+)/gu;
 
     for (const post of posts || []) {
@@ -3316,6 +3311,13 @@ app.get("/api/hashtags/trending", async (req, res) => {
 
       for (const tag of seenInPost) {
         counts[tag] = (counts[tag] || 0) + 1;
+
+        if (
+          !latestTime[tag] ||
+          new Date(post.created_at).getTime() > new Date(latestTime[tag]).getTime()
+        ) {
+          latestTime[tag] = post.created_at;
+        }
       }
     }
 
@@ -3323,8 +3325,15 @@ app.get("/api/hashtags/trending", async (req, res) => {
       .map(([tag, count]) => ({
         tag,
         count,
+        latest_at: latestTime[tag],
       }))
-      .sort((a, b) => b.count - a.count)
+      .sort((a, b) => {
+        if (b.count !== a.count) {
+          return b.count - a.count;
+        }
+
+        return new Date(b.latest_at).getTime() - new Date(a.latest_at).getTime();
+      })
       .slice(0, limit);
 
     res.json(trending);
