@@ -18,7 +18,7 @@ const [postMode, setPostMode] = useState("post");
 const [pollQuestion, setPollQuestion] = useState("");
 const [pollOptions, setPollOptions] = useState(["", ""]);
 const [pollDuration, setPollDuration] = useState(24);
-const [trendingHashtags, setTrendingHashtags] = useState([]);
+
 
 const POSTS_LIMIT = 15;
 const token = localStorage.getItem("token");
@@ -87,18 +87,8 @@ const loadPosts = async (mode = feedMode, nextPage = 1, append = false) => {
     setPostsLoading(false);
   }
 };
-const loadTrendingHashtags = async () => {
-  try {
-    const res = await api.get("/api/hashtags/trending");
-
-    setTrendingHashtags(Array.isArray(res.data) ? res.data : []);
-  } catch (err) {
-    console.error(err);
-  }
-};
 useEffect(() => {
   loadPosts(feedMode);
-  loadTrendingHashtags();
  const channel = supabase
   .channel(`home-feed-${feedMode}`)
   .on(
@@ -352,165 +342,7 @@ return (
   </button>
 </div>
     </div>
-   {trendingHashtags.length > 0 && (
-  <div
-    style={{
-      padding: "16px 20px",
-      borderBottom: "1px solid #eff3f4",
-      background:
-        "linear-gradient(135deg, rgba(29,155,240,0.08), rgba(99,102,241,0.06))",
-    }}
-  >
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: "12px",
-      }}
-    >
-      <div>
-        <div
-          style={{
-            fontSize: "18px",
-            fontWeight: "900",
-            color: "#0f172a",
-          }}
-        >
-          Trending Now
-        </div>
 
-        <div
-          style={{
-            fontSize: "13px",
-            color: "#64748b",
-            marginTop: "3px",
-            fontWeight: "600",
-          }}
-        >
-          Hashtags people are talking about
-        </div>
-      </div>
-
-      <div
-        style={{
-          width: "38px",
-          height: "38px",
-          borderRadius: "50%",
-          background: "#1d9bf0",
-          color: "#fff",
-          display: "grid",
-          placeItems: "center",
-          fontWeight: "900",
-          boxShadow: "0 8px 20px rgba(29,155,240,0.28)",
-        }}
-      >
-        #
-      </div>
-    </div>
-
-    <div
-      style={{
-        display: "grid",
-        gap: "9px",
-      }}
-    >
-      {trendingHashtags.slice(0, 5).map((item, index) => (
-        <Link
-          key={item.tag}
-          to={`/hashtag/${encodeURIComponent(item.tag)}`}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
-              padding: "11px 13px",
-              borderRadius: "16px",
-              background: "#fff",
-              border: "1px solid rgba(226,232,240,0.9)",
-              boxShadow: "0 6px 18px rgba(15,23,42,0.05)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "11px",
-                minWidth: 0,
-              }}
-            >
-              <div
-                style={{
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "999px",
-                  background: index === 0 ? "#0f172a" : "#e0f2fe",
-                  color: index === 0 ? "#fff" : "#0369a1",
-                  display: "grid",
-                  placeItems: "center",
-                  fontSize: "13px",
-                  fontWeight: "900",
-                  flexShrink: 0,
-                }}
-              >
-                {index + 1}
-              </div>
-
-              <div
-                style={{
-                  minWidth: 0,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: "900",
-                    color: "#0f172a",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  #{item.tag}
-                </div>
-
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: "#64748b",
-                    marginTop: "2px",
-                  }}
-                >
-                  Trending in Castle X
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                fontSize: "12px",
-                fontWeight: "800",
-                color: "#1d9bf0",
-                background: "#eff6ff",
-                padding: "6px 9px",
-                borderRadius: "999px",
-                flexShrink: 0,
-              }}
-            >
-              {item.count} posts
-            </div>
-          </div>
-        </Link>
-      ))}
-    </div>
-  </div>
-)}
     <div
       style={{
         padding: "20px",

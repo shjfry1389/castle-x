@@ -342,6 +342,24 @@ const MessageDot = () => {
         <Link to="/search" style={iconLinkStyle}>
           <SearchIcon />
         </Link>
+        <Link
+  to="/hashtags"
+  title="Hashtags"
+  style={{
+    textDecoration: "none",
+    color: "inherit",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "34px",
+    height: "34px",
+    fontSize: "28px",
+    fontWeight: "950",
+    lineHeight: 1,
+  }}
+>
+  #
+</Link>
 
         {token ? (
           <>
@@ -457,6 +475,24 @@ const MessageDot = () => {
           <Link to="/search" style={iconLinkStyle}>
             <SearchIcon />
           </Link>
+          <Link
+  to="/hashtags"
+  title="Hashtags"
+  style={{
+    textDecoration: "none",
+    color: "inherit",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "34px",
+    height: "34px",
+    fontSize: "28px",
+    fontWeight: "950",
+    lineHeight: 1,
+  }}
+>
+  #
+</Link>
 
           {token ? (
             <>
