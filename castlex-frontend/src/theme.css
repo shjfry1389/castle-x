@@ -453,3 +453,66 @@ body.dark [style*="color:#536471"] {
   background: linear-gradient(135deg, #78350f, #f59e0b, #fde68a);
   box-shadow: inset 0 -25px 55px rgba(245, 158, 11, 0.45);
 }
+body.dark .hashtags-page {
+  background: #000 !important;
+  color: #f8fafc !important;
+  border-color: #2f3336 !important;
+}
+
+body.dark .hashtags-header {
+  background: rgba(0, 0, 0, 0.94) !important;
+  border-color: #2f3336 !important;
+}
+
+body.dark .hashtags-title,
+body.dark .hashtags-box-title,
+body.dark .hashtags-tag-name {
+  color: #f8fafc !important;
+}
+
+body.dark .hashtags-box-subtitle,
+body.dark .hashtags-empty {
+  color: #94a3b8 !important;
+}
+
+body.dark .hashtags-search-input {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+body.dark .hashtags-search-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.dark .hashtags-trending-box {
+  background: linear-gradient(
+    135deg,
+    rgba(29, 155, 240, 0.14),
+    rgba(148, 163, 184, 0.08)
+  ) !important;
+  border-color: #334155 !important;
+}
+
+body.dark .hashtags-trending-item {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+body.dark .hashtags-trending-item:hover {
+  background: #111827 !important;
+}
+
+body.dark .hashtags-count-pill,
+body.dark .hashtags-rank {
+  background: #1e293b !important;
+  color: #93c5fd !important;
+}
+
+body.dark .hashtags-empty {
+  padding: 25px;
+  text-align: center;
+  font-weight: 700;
+}

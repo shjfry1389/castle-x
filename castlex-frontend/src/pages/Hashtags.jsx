@@ -12,9 +12,7 @@ export default function Hashtags() {
   const loadTrendingHashtags = async () => {
     try {
       setLoading(true);
-
       const res = await api.get("/api/hashtags/trending");
-
       setTrendingHashtags(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
@@ -29,14 +27,13 @@ export default function Hashtags() {
 
   const openHashtag = (tag = query) => {
     const cleanTag = tag.replace(/^#/, "").trim();
-
     if (!cleanTag) return;
-
     navigate(`/hashtag/${encodeURIComponent(cleanTag)}`);
   };
 
   return (
     <div
+      className="hashtags-page"
       style={{
         maxWidth: "700px",
         margin: "0 auto",
@@ -48,6 +45,7 @@ export default function Hashtags() {
       }}
     >
       <div
+        className="hashtags-header"
         style={{
           position: "sticky",
           top: 0,
@@ -75,6 +73,7 @@ export default function Hashtags() {
         </Link>
 
         <h1
+          className="hashtags-title"
           style={{
             margin: "0 0 14px",
             fontSize: "28px",
@@ -84,19 +83,13 @@ export default function Hashtags() {
           Hashtags
         </h1>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-          }}
-        >
+        <div style={{ display: "flex", gap: "10px" }}>
           <input
+            className="hashtags-search-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                openHashtag();
-              }
+              if (e.key === "Enter") openHashtag();
             }}
             placeholder="Search hashtag..."
             style={{
@@ -126,12 +119,9 @@ export default function Hashtags() {
         </div>
       </div>
 
-      <div
-        style={{
-          padding: "18px 20px",
-        }}
-      >
+      <div style={{ padding: "18px 20px" }}>
         <div
+          className="hashtags-trending-box"
           style={{
             background:
               "linear-gradient(135deg, rgba(29,155,240,0.1), rgba(99,102,241,0.08))",
@@ -151,6 +141,7 @@ export default function Hashtags() {
           >
             <div>
               <div
+                className="hashtags-box-title"
                 style={{
                   fontSize: "20px",
                   fontWeight: "950",
@@ -161,6 +152,7 @@ export default function Hashtags() {
               </div>
 
               <div
+                className="hashtags-box-subtitle"
                 style={{
                   fontSize: "13px",
                   color: "#64748b",
@@ -190,36 +182,14 @@ export default function Hashtags() {
           </div>
 
           {loading ? (
-            <div
-              style={{
-                padding: "25px",
-                textAlign: "center",
-                color: "#64748b",
-                fontWeight: "700",
-              }}
-            >
-              Loading hashtags...
-            </div>
+            <div className="hashtags-empty">Loading hashtags...</div>
           ) : trendingHashtags.length === 0 ? (
-            <div
-              style={{
-                padding: "25px",
-                textAlign: "center",
-                color: "#64748b",
-                fontWeight: "700",
-              }}
-            >
-              هنوز هشتگ ترندی وجود ندارد
-            </div>
+            <div className="hashtags-empty">هنوز هشتگ ترندی وجود ندارد</div>
           ) : (
-            <div
-              style={{
-                display: "grid",
-                gap: "10px",
-              }}
-            >
+            <div style={{ display: "grid", gap: "10px" }}>
               {trendingHashtags.map((item, index) => (
                 <button
+                  className="hashtags-trending-item"
                   key={item.tag}
                   onClick={() => openHashtag(item.tag)}
                   style={{
@@ -245,6 +215,7 @@ export default function Hashtags() {
                     }}
                   >
                     <span
+                      className="hashtags-rank"
                       style={{
                         width: "30px",
                         height: "30px",
@@ -262,6 +233,7 @@ export default function Hashtags() {
                     </span>
 
                     <span
+                      className="hashtags-tag-name"
                       style={{
                         fontSize: "16px",
                         fontWeight: "950",
@@ -276,6 +248,7 @@ export default function Hashtags() {
                   </div>
 
                   <span
+                    className="hashtags-count-pill"
                     style={{
                       color: "#1d9bf0",
                       background: "#eff6ff",
