@@ -235,7 +235,7 @@ app.post("/api/posts/create", auth, async (req, res) => {
 
     // پیدا کردن منشن ها
     const mentions =
-      content?.match(/@([a-zA-Z0-9_]+)/g) || [];
+      content?.match(/@([a-zA-Z0-9_.-]+)/g) || [];
 
     for (const mention of mentions) {
       const username = mention.replace("@", "");

@@ -618,10 +618,10 @@ return (
               textAlign: isPersian(postContent) ? "right" : "left",
             }}
           >
-            {postContent.split(/(\s+|@[a-zA-Z0-9_]+|#[\p{L}\p{N}_]+)/gu).map((part, i) => {
+            {postContent.split(/(\s+|@[a-zA-Z0-9_.-]+|#[\p{L}\p{N}_]+)/gu).map((part, i) => {
   if (!part) return null;
 
-  if (/^@[a-zA-Z0-9_]+$/.test(part)) {
+  if (/^@[a-zA-Z0-9_.-]+$/.test(part)) {
     const mentionedUsername = part.slice(1);
 
     return (
