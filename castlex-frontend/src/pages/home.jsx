@@ -352,62 +352,165 @@ return (
   </button>
 </div>
     </div>
-    {trendingHashtags.length > 0 && (
-      <div
-        style={{
-          padding: "14px 20px",
-          borderBottom: "1px solid #eff3f4",
-          background: "#fff",
-        }}
-      >
+   {trendingHashtags.length > 0 && (
+  <div
+    style={{
+      padding: "16px 20px",
+      borderBottom: "1px solid #eff3f4",
+      background:
+        "linear-gradient(135deg, rgba(29,155,240,0.08), rgba(99,102,241,0.06))",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: "12px",
+      }}
+    >
+      <div>
         <div
           style={{
-            fontWeight: "900",
-            marginBottom: "12px",
             fontSize: "18px",
+            fontWeight: "900",
             color: "#0f172a",
           }}
         >
-          Trending Hashtags
+          Trending Now
         </div>
 
         <div
           style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "8px",
+            fontSize: "13px",
+            color: "#64748b",
+            marginTop: "3px",
+            fontWeight: "600",
           }}
         >
-          {trendingHashtags.map((item) => (
-            <Link
-              key={item.tag}
-              to={`/hashtag/${encodeURIComponent(item.tag)}`}
-              style={{
-                textDecoration: "none",
-                background: "#eff6ff",
-                color: "#1d4ed8",
-                padding: "8px 13px",
-                borderRadius: "999px",
-                fontWeight: "800",
-                fontSize: "14px",
-                border: "1px solid #bfdbfe",
-              }}
-            >
-              #{item.tag}{" "}
-              <span
-                style={{
-                  color: "#64748b",
-                  fontWeight: "700",
-                  fontSize: "12px",
-                }}
-              >
-                {item.count}
-              </span>
-            </Link>
-          ))}
+          Hashtags people are talking about
         </div>
       </div>
-    )}
+
+      <div
+        style={{
+          width: "38px",
+          height: "38px",
+          borderRadius: "50%",
+          background: "#1d9bf0",
+          color: "#fff",
+          display: "grid",
+          placeItems: "center",
+          fontWeight: "900",
+          boxShadow: "0 8px 20px rgba(29,155,240,0.28)",
+        }}
+      >
+        #
+      </div>
+    </div>
+
+    <div
+      style={{
+        display: "grid",
+        gap: "9px",
+      }}
+    >
+      {trendingHashtags.slice(0, 5).map((item, index) => (
+        <Link
+          key={item.tag}
+          to={`/hashtag/${encodeURIComponent(item.tag)}`}
+          style={{
+            textDecoration: "none",
+            color: "inherit",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              padding: "11px 13px",
+              borderRadius: "16px",
+              background: "#fff",
+              border: "1px solid rgba(226,232,240,0.9)",
+              boxShadow: "0 6px 18px rgba(15,23,42,0.05)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "11px",
+                minWidth: 0,
+              }}
+            >
+              <div
+                style={{
+                  width: "28px",
+                  height: "28px",
+                  borderRadius: "999px",
+                  background: index === 0 ? "#0f172a" : "#e0f2fe",
+                  color: index === 0 ? "#fff" : "#0369a1",
+                  display: "grid",
+                  placeItems: "center",
+                  fontSize: "13px",
+                  fontWeight: "900",
+                  flexShrink: 0,
+                }}
+              >
+                {index + 1}
+              </div>
+
+              <div
+                style={{
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: "900",
+                    color: "#0f172a",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  #{item.tag}
+                </div>
+
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#64748b",
+                    marginTop: "2px",
+                  }}
+                >
+                  Trending in Castle X
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: "800",
+                color: "#1d9bf0",
+                background: "#eff6ff",
+                padding: "6px 9px",
+                borderRadius: "999px",
+                flexShrink: 0,
+              }}
+            >
+              {item.count} posts
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  </div>
+)}
     <div
       style={{
         padding: "20px",
