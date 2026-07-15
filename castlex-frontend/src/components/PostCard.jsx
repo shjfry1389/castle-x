@@ -56,6 +56,44 @@ function ShareIcon({ size = 18 }) {
     </svg>
   );
 }
+function RepostIcon({ size = 18 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-label="Repost"
+    >
+      <path
+        d="M7 7h9.5c1.4 0 2.5 1.1 2.5 2.5V11"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M16 4l3 3-3 3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M17 17H7.5C6.1 17 5 15.9 5 14.5V13"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8 20l-3-3 3-3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 function SilverBadge({ size = 16 }) {
   return (
     <svg
@@ -137,10 +175,20 @@ const sentViewRef = useRef(false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
   const [viewsCount, setViewsCount] = useState(post.views_count || 0);
   const [liked, setLiked] = useState(post.is_liked || false);
-  useEffect(() => {
+  const [repostsCount, setRepostsCount] = useState(post.reposts_count || 0);
+const [reposted, setReposted] = useState(post.is_reposted || false);
+useEffect(() => {
   setLiked(!!post.is_liked);
   setLikesCount(post.likes_count || 0);
-}, [post.id, post.is_liked, post.likes_count]);
+  setReposted(!!post.is_reposted);
+  setRepostsCount(post.reposts_count || 0);
+}, [
+  post.id,
+  post.is_liked,
+  post.likes_count,
+  post.is_reposted,
+  post.reposts_count,
+]);
   const [hotRequested, setHotRequested] = useState(false);
   const [poll, setPoll] = useState(null);
 const [pollLoading, setPollLoading] = useState(false);
@@ -222,6 +270,32 @@ const canSeeBoostPreview =
       console.error(err);
     }
   };
+  const repostPost = async () => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    alert("اول وارد شوید");
+    return;
+  }
+
+  try {
+    const res = await api.post(
+      `/api/posts/${post.id}/repost`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setReposted(!!res.data.reposted);
+    setRepostsCount(res.data.reposts_count || 0);
+  } catch (err) {
+    console.error(err);
+    alert("خطا در ری‌پست");
+  }
+};
   const requestHotPost = async () => {
   const token = localStorage.getItem("token");
 
@@ -825,6 +899,25 @@ transform: liked ? "scale(1.08)" : "scale(1)",
               }}
             >
               {liked ? "❤️" : "🤍"} {likesCount}
+            </button>
+                        <button
+              onClick={repostPost}
+              title="Repost"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: "600",
+                color: reposted ? "#00ba7c" : "#536471",
+                transition: "transform 0.18s ease, color 0.18s ease",
+                transform: reposted ? "scale(1.08)" : "scale(1)",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+            >
+              <RepostIcon size={18} />
+              {repostsCount}
             </button>
             <div
   style={{

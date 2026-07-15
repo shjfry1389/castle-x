@@ -275,6 +275,138 @@ app.post("/api/posts/create", auth, async (req, res) => {
     });
   }
 });
+app.post("/api/posts/:id/repost", auth, async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const userId = req.user.id;
+
+    const { data: post, error: postError } = await supabase
+      .from("posts")
+      .select("id, user_id")
+      .eq("id", postId)
+      .maybeSingle();
+
+    if (postError) {
+      return res.status(500).json({
+        error: "خطا در بررسی پست",
+        details: postError.message,
+      });
+    }
+
+    if (!post) {
+      return res.status(404).json({
+        error: "پست پیدا نشد",
+      });
+    }
+
+    const { data: existingRepost, error: existingError } = await supabase
+      .from("reposts")
+      .select("id")
+      .eq("post_id", postId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (existingError) {
+      return res.status(500).json({
+        error: "خطا در بررسی ری‌پست",
+        details: existingError.message,
+      });
+    }
+
+    if (existingRepost) {
+      const { error: deleteError } = await supabase
+        .from("reposts")
+        .delete()
+        .eq("id", existingRepost.id);
+
+      if (deleteError) {
+        return res.status(500).json({
+          error: "خطا در حذف ری‌پست",
+          details: deleteError.message,
+        });
+      }
+
+      const { count } = await supabase
+        .from("reposts")
+        .select("*", { count: "exact", head: true })
+        .eq("post_id", postId);
+
+      return res.json({
+        success: true,
+        reposted: false,
+        reposts_count: count || 0,
+      });
+    }
+
+    const { error: insertError } = await supabase.from("reposts").insert({
+      post_id: postId,
+      user_id: userId,
+    });
+
+    if (insertError) {
+      return res.status(500).json({
+        error: "خطا در ثبت ری‌پست",
+        details: insertError.message,
+      });
+    }
+
+    const { count } = await supabase
+      .from("reposts")
+      .select("*", { count: "exact", head: true })
+      .eq("post_id", postId);
+
+    res.json({
+      success: true,
+      reposted: true,
+      reposts_count: count || 0,
+    });
+  } catch (err) {
+    console.error("REPOST ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
+const getPostStats = async (post, userId) => {
+  const [{ count: likesCount }, { count: commentsCount }, { count: repostsCount }] =
+    await Promise.all([
+      supabase.from("likes").select("*", { count: "exact", head: true }).eq("post_id", post.id),
+      supabase.from("comments").select("*", { count: "exact", head: true }).eq("post_id", post.id),
+      supabase.from("reposts").select("*", { count: "exact", head: true }).eq("post_id", post.id),
+    ]);
+
+  const { data: author } = await supabase
+    .from("users")
+    .select("id, username, display_name, avatar_url, is_verified, role, premium_until, premium_plan")
+    .eq("id", post.user_id)
+    .single();
+
+  const { data: likeRow } = await supabase
+    .from("likes")
+    .select("id")
+    .eq("post_id", post.id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const { data: repostRow } = await supabase
+    .from("reposts")
+    .select("id")
+    .eq("post_id", post.id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return {
+    author,
+    likes_count: author?.role === "admin" ? (likesCount || 0) + 100 : likesCount || 0,
+    comments_count: commentsCount || 0,
+    reposts_count: repostsCount || 0,
+    views_count: author?.role === "admin" ? (post.views_count || 0) + 200 : post.views_count || 0,
+    is_liked: !!likeRow,
+    is_reposted: !!repostRow,
+  };
+};
 app.get("/api/posts", auth, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 15, 30);
@@ -315,7 +447,20 @@ const to = from + limit - 1;
           .eq("post_id", post.id)
           .eq("user_id", req.user.id)
           .maybeSingle();
+const { count: repostsCount } = await supabase
+  .from("reposts")
+  .select("*", {
+    count: "exact",
+    head: true,
+  })
+  .eq("post_id", post.id);
 
+const { data: repostRow } = await supabase
+  .from("reposts")
+  .select("id")
+  .eq("post_id", post.id)
+  .eq("user_id", req.user.id)
+  .maybeSingle();
         const { data: promotion } = await supabase
           .from("post_promotions")
           .select("*")
@@ -355,11 +500,13 @@ const to = from + limit - 1;
               ? (likesCount || 0) + 100
               : likesCount || 0,
           comments_count: commentsCount || 0,
+          reposts_count: repostsCount || 0,
           views_count:
             author?.role === "admin"
               ? (post.views_count || 0) + 200
               : post.views_count || 0,
           is_liked: !!likeRow,
+          is_reposted: !!repostRow,
           is_hot: !!promotion,
           hot_priority: promotion?.priority || 0,
           hot_until: promotion?.ends_at || null,
@@ -445,7 +592,20 @@ app.get("/api/posts/following", auth, async (req, res) => {
           .eq("post_id", post.id)
           .eq("user_id", req.user.id)
           .maybeSingle();
+const { count: repostsCount } = await supabase
+  .from("reposts")
+  .select("*", {
+    count: "exact",
+    head: true,
+  })
+  .eq("post_id", post.id);
 
+const { data: repostRow } = await supabase
+  .from("reposts")
+  .select("id")
+  .eq("post_id", post.id)
+  .eq("user_id", req.user.id)
+  .maybeSingle();
         return {
           ...post,
           author,
@@ -454,11 +614,13 @@ app.get("/api/posts/following", auth, async (req, res) => {
               ? (likesCount || 0) + 100
               : likesCount || 0,
           comments_count: commentsCount || 0,
+          reposts_count: repostsCount || 0,
           views_count:
             author?.role === "admin"
               ? (post.views_count || 0) + 200
               : post.views_count || 0,
           is_liked: !!likeRow,
+          is_reposted: !!repostRow,
         };
       })
     );
@@ -997,7 +1159,20 @@ app.get("/api/users/:username/posts", auth, async (req, res) => {
         .eq("post_id", post.id)
         .eq("user_id", req.user.id)
         .maybeSingle();
+const { count: repostsCount } = await supabase
+  .from("reposts")
+  .select("*", {
+    count: "exact",
+    head: true,
+  })
+  .eq("post_id", post.id);
 
+const { data: repostRow } = await supabase
+  .from("reposts")
+  .select("id")
+  .eq("post_id", post.id)
+  .eq("user_id", req.user.id)
+  .maybeSingle();
       result.push({
         ...post,
         author,
@@ -1006,13 +1181,14 @@ app.get("/api/users/:username/posts", auth, async (req, res) => {
           author?.role === "admin" ? (likesCount || 0) + 100 : likesCount || 0,
 
         comments_count: commentsCount || 0,
-
+        reposts_count: repostsCount || 0,
         views_count:
           author?.role === "admin"
             ? (post.views_count || 0) + 200
             : post.views_count || 0,
 
         is_liked: !!likeRow,
+        is_reposted: !!repostRow,
       });
     }
 
@@ -3394,18 +3570,33 @@ app.get("/api/hashtags/:tag/posts", auth, async (req, res) => {
           .eq("post_id", post.id)
           .eq("user_id", req.user.id)
           .maybeSingle();
+const { count: repostsCount } = await supabase
+  .from("reposts")
+  .select("*", {
+    count: "exact",
+    head: true,
+  })
+  .eq("post_id", post.id);
 
+const { data: repostRow } = await supabase
+  .from("reposts")
+  .select("id")
+  .eq("post_id", post.id)
+  .eq("user_id", req.user.id)
+  .maybeSingle();
         return {
           ...post,
           author,
           likes_count:
             author?.role === "admin" ? (likesCount || 0) + 100 : likesCount || 0,
           comments_count: commentsCount || 0,
+          reposts_count: repostsCount || 0,
           views_count:
             author?.role === "admin"
               ? (post.views_count || 0) + 200
               : post.views_count || 0,
           is_liked: !!likeRow,
+          is_reposted: !!repostRow,
         };
       })
     );
@@ -3456,8 +3647,23 @@ const { data: likeRow } = await supabase
   .eq("post_id", data.id)
   .eq("user_id", req.user.id)
   .maybeSingle();
+const { count: repostsCount } = await supabase
+  .from("reposts")
+  .select("*", {
+    count: "exact",
+    head: true,
+  })
+  .eq("post_id", data.id);
 
+const { data: repostRow } = await supabase
+  .from("reposts")
+  .select("id")
+  .eq("post_id", data.id)
+  .eq("user_id", req.user.id)
+  .maybeSingle();
 responsePost.is_liked = !!likeRow;
+responsePost.reposts_count = repostsCount || 0;
+responsePost.is_reposted = !!repostRow;
 res.json(responsePost);
 });
 app.delete("/api/comments/:id", auth, async (req, res) => {
