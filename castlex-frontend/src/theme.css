@@ -516,3 +516,74 @@ body.dark .hashtags-empty {
   text-align: center;
   font-weight: 700;
 }
+.hashtags-page {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.hashtags-header,
+.hashtags-trending-box,
+.hashtags-trending-item {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.hashtags-search-input {
+  min-width: 0 !important;
+  flex: 1 1 auto;
+}
+
+.hashtags-trending-item {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.hashtags-trending-item > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.hashtags-tag-name {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hashtags-count-pill {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .hashtags-header {
+    padding: 14px 12px !important;
+  }
+
+  .hashtags-page > div {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .hashtags-trending-box {
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .hashtags-trending-item {
+    padding: 11px 10px !important;
+    gap: 8px !important;
+  }
+
+  .hashtags-tag-name {
+    font-size: 14px !important;
+  }
+
+  .hashtags-count-pill {
+    font-size: 11px !important;
+    padding: 5px 8px !important;
+  }
+}
