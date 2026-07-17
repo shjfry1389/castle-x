@@ -65,53 +65,42 @@ function RepostIcon({ size = 18 }) {
       fill="none"
       aria-label="Repost"
     >
-      <rect
-        x="4"
-        y="5"
-        width="16"
-        height="14"
-        rx="5"
+      <path
+        d="M6.8 7.4h9.1c1.9 0 3.4 1.5 3.4 3.4v.9"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M15.7 4.6 19.3 8l-3.6 3.4"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M17.2 16.6H8.1c-1.9 0-3.4-1.5-3.4-3.4v-.9"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M8.3 19.4 4.7 16l3.6-3.4"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M9.2 11.9h5.6"
         stroke="currentColor"
         strokeWidth="2"
-        opacity="0.18"
-      />
-
-      <path
-        d="M7 8.5h8.8c1.1 0 2 .9 2 2v.7"
-        stroke="currentColor"
-        strokeWidth="2.2"
         strokeLinecap="round"
-      />
-
-      <path
-        d="M15.4 5.9 18 8.5l-2.6 2.6"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      <path
-        d="M17 15.5H8.2c-1.1 0-2-.9-2-2v-.7"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M8.6 18.1 6 15.5l2.6-2.6"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      <path
-        d="M10 12h4"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        opacity="0.55"
+        opacity="0.28"
       />
     </svg>
   );
