@@ -615,38 +615,77 @@ return (
 {post.reposted_by && (
   <div
     style={{
-      marginBottom: "10px",
-      marginLeft: "60px",
+      marginBottom: "12px",
       color: "#536471",
       fontSize: "13px",
       fontWeight: "600",
+      display: "flex",
+      gap: "10px",
+      alignItems: "flex-start",
     }}
   >
-    <div
+    <Link
+      to={`/profile/${encodeURIComponent(post.reposted_by.username || "")}`}
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "5px",
-        marginBottom: post.quote_content ? "8px" : "0",
+        flexShrink: 0,
+        textDecoration: "none",
       }}
     >
-      <RepostIcon size={14} />
-      {post.reposted_by.display_name || post.reposted_by.username} reposted
-    </div>
+      <img
+        src={
+          post.reposted_by.avatar_url ||
+          "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+        }
+        alt=""
+        style={{
+          width: "34px",
+          height: "34px",
+          borderRadius: "50%",
+          objectFit: "cover",
+        }}
+      />
+    </Link>
 
-    {post.quote_content && (
+    <div style={{ flex: 1, minWidth: 0 }}>
       <div
         style={{
-          color: "#0f172a",
-          fontSize: "15px",
-          fontWeight: "500",
-          lineHeight: "1.8",
-          whiteSpace: "pre-wrap",
+          display: "flex",
+          alignItems: "center",
+          gap: "5px",
+          marginBottom: post.quote_content ? "8px" : "0",
+          flexWrap: "wrap",
         }}
       >
-        {post.quote_content}
+        <RepostIcon size={14} />
+
+        <Link
+          to={`/profile/${encodeURIComponent(post.reposted_by.username || "")}`}
+          style={{
+            color: "inherit",
+            textDecoration: "none",
+            fontWeight: "800",
+          }}
+        >
+          {post.reposted_by.display_name || post.reposted_by.username}
+        </Link>
+
+        <span>reposted</span>
       </div>
-    )}
+
+      {post.quote_content && (
+        <div
+          style={{
+            color: "#0f172a",
+            fontSize: "15px",
+            fontWeight: "500",
+            lineHeight: "1.8",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {post.quote_content}
+        </div>
+      )}
+    </div>
   </div>
 )}
 {showRepostModal && (
