@@ -563,6 +563,23 @@ return (
         transition: "0.2s",
       }}
     >
+            {post.reposted_by && (
+        <div
+          style={{
+            marginBottom: "8px",
+            marginLeft: "60px",
+            color: "#536471",
+            fontSize: "13px",
+            fontWeight: "600",
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+          }}
+        >
+          <RepostIcon size={14} />
+          {post.reposted_by.display_name || post.reposted_by.username} reposted
+        </div>
+      )}
       <div
         style={{
           display: "flex",

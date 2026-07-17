@@ -407,6 +407,34 @@ const getPostStats = async (post, userId) => {
     is_reposted: !!repostRow,
   };
 };
+const buildRepostFeedItem = async (repost, currentUserId) => {
+  const { data: post, error: postError } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("id", repost.post_id)
+    .maybeSingle();
+
+  if (postError || !post) {
+    return null;
+  }
+
+  const { data: repostedBy } = await supabase
+    .from("users")
+    .select("id, username, display_name, avatar_url, role, is_verified, premium_until, premium_plan")
+    .eq("id", repost.user_id)
+    .maybeSingle();
+
+  const stats = await getPostStats(post, currentUserId);
+
+  return {
+    ...post,
+    ...stats,
+    reposted_by: repostedBy,
+    reposted_at: repost.created_at,
+    feed_time: repost.created_at,
+    hot_priority: 0,
+  };
+};
 app.get("/api/posts", auth, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 15, 30);
@@ -514,7 +542,25 @@ const { data: repostRow } = await supabase
         };
       })
     );
+        const { data: repostRows, error: repostError } = await supabase
+      .from("reposts")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
+    if (repostError) {
+      return res.status(500).json(repostError);
+    }
+
+    const repostItems = (
+      await Promise.all(
+        (repostRows || []).map((repost) =>
+          buildRepostFeedItem(repost, req.user.id)
+        )
+      )
+    ).filter(Boolean);
+
+    result.push(...repostItems);
     result.sort((a, b) => {
       const hotDiff = (b.hot_priority || 0) - (a.hot_priority || 0);
       if (hotDiff !== 0) return hotDiff;
@@ -522,7 +568,7 @@ const { data: repostRow } = await supabase
       return new Date(b.feed_time).getTime() - new Date(a.feed_time).getTime();
     });
 
-    res.json(result);
+   res.json(result.slice(0, limit));
   } catch (err) {
     console.error(err);
 
@@ -624,8 +670,33 @@ const { data: repostRow } = await supabase
         };
       })
     );
+    const { data: repostRows, error: repostError } = await supabase
+      .from("reposts")
+      .select("*")
+      .in("user_id", followingIds)
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
-    res.json(result);
+    if (repostError) {
+      return res.status(500).json(repostError);
+    }
+
+    const repostItems = (
+      await Promise.all(
+        (repostRows || []).map((repost) =>
+          buildRepostFeedItem(repost, req.user.id)
+        )
+      )
+    ).filter(Boolean);
+
+    result.push(...repostItems);
+
+    result.sort(
+      (a, b) =>
+        new Date(b.feed_time || b.reposted_at || b.created_at).getTime() -
+        new Date(a.feed_time || a.reposted_at || a.created_at).getTime()
+    );
+    res.json(result.slice(0, limit));
   } catch (err) {
     console.error("FOLLOWING POSTS ERROR:", err);
 
@@ -1191,7 +1262,31 @@ const { data: repostRow } = await supabase
         is_reposted: !!repostRow,
       });
     }
+    const { data: repostRows, error: repostError } = await supabase
+      .from("reposts")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
 
+    if (repostError) {
+      return res.status(500).json(repostError);
+    }
+
+    const repostItems = (
+      await Promise.all(
+        (repostRows || []).map((repost) =>
+          buildRepostFeedItem(repost, req.user.id)
+        )
+      )
+    ).filter(Boolean);
+
+    result.push(...repostItems);
+
+    result.sort(
+      (a, b) =>
+        new Date(b.feed_time || b.reposted_at || b.created_at).getTime() -
+        new Date(a.feed_time || a.reposted_at || a.created_at).getTime()
+    );
     res.json(result);
   } catch (err) {
     console.error(err);
