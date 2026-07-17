@@ -746,12 +746,22 @@ return (
     </div>
   </div>
 )}
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-        }}
-      >
+<div
+  style={{
+    display: "flex",
+    gap: "12px",
+    ...(post.reposted_by
+      ? {
+          marginTop: "10px",
+          marginLeft: "42px",
+          padding: "14px",
+          border: "1px solid #cfd9de",
+          borderRadius: "18px",
+          background: "#ffffff",
+        }
+      : {}),
+  }}
+>
         <img
           src={
             post.author?.avatar_url ||
