@@ -65,33 +65,54 @@ function RepostIcon({ size = 18 }) {
       fill="none"
       aria-label="Repost"
     >
-      <path
-        d="M7.2 6.5h8.7c1.5 0 2.7 1.2 2.7 2.7v1.1"
+      <rect
+        x="4"
+        y="5"
+        width="16"
+        height="14"
+        rx="5"
         stroke="currentColor"
-        strokeWidth="2.15"
+        strokeWidth="2"
+        opacity="0.18"
+      />
+
+      <path
+        d="M7 8.5h8.8c1.1 0 2 .9 2 2v.7"
+        stroke="currentColor"
+        strokeWidth="2.2"
         strokeLinecap="round"
       />
+
       <path
-        d="M15.9 3.8 19 6.9 15.9 10"
+        d="M15.4 5.9 18 8.5l-2.6 2.6"
         stroke="currentColor"
-        strokeWidth="2.15"
+        strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+
       <path
-        d="M16.8 17.5H8.1c-1.5 0-2.7-1.2-2.7-2.7v-1.1"
+        d="M17 15.5H8.2c-1.1 0-2-.9-2-2v-.7"
         stroke="currentColor"
-        strokeWidth="2.15"
+        strokeWidth="2.2"
         strokeLinecap="round"
       />
+
       <path
-        d="M8.1 20.2 5 17.1 8.1 14"
+        d="M8.6 18.1 6 15.5l2.6-2.6"
         stroke="currentColor"
-        strokeWidth="2.15"
+        strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="12" cy="12" r="2.15" fill="currentColor" opacity="0.22" />
+
+      <path
+        d="M10 12h4"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        opacity="0.55"
+      />
     </svg>
   );
 }
