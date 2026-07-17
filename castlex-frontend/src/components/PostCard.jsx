@@ -753,11 +753,14 @@ return (
     ...(post.reposted_by
       ? {
           marginTop: "10px",
-          marginLeft: "42px",
-          padding: "14px",
+          padding: "12px",
           border: "1px solid #cfd9de",
           borderRadius: "18px",
           background: "#ffffff",
+          boxSizing: "border-box",
+          width: "100%",
+          maxWidth: "100%",
+          overflow: "hidden",
         }
       : {}),
   }}
