@@ -66,31 +66,32 @@ function RepostIcon({ size = 18 }) {
       aria-label="Repost"
     >
       <path
-        d="M7 7h9.5c1.4 0 2.5 1.1 2.5 2.5V11"
+        d="M7.2 6.5h8.7c1.5 0 2.7 1.2 2.7 2.7v1.1"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.15"
         strokeLinecap="round"
       />
       <path
-        d="M16 4l3 3-3 3"
+        d="M15.9 3.8 19 6.9 15.9 10"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.15"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M17 17H7.5C6.1 17 5 15.9 5 14.5V13"
+        d="M16.8 17.5H8.1c-1.5 0-2.7-1.2-2.7-2.7v-1.1"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.15"
         strokeLinecap="round"
       />
       <path
-        d="M8 20l-3-3 3-3"
+        d="M8.1 20.2 5 17.1 8.1 14"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.15"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      <circle cx="12" cy="12" r="2.15" fill="currentColor" opacity="0.22" />
     </svg>
   );
 }
