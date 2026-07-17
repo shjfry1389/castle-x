@@ -66,41 +66,44 @@ function RepostIcon({ size = 18 }) {
       aria-label="Repost"
     >
       <path
-        d="M6.8 7.4h9.1c1.9 0 3.4 1.5 3.4 3.4v.9"
+        d="M8.2 6.4h7.1c1.9 0 3.4 1.5 3.4 3.4v.9"
         stroke="currentColor"
-        strokeWidth="2.25"
+        strokeWidth="2.1"
         strokeLinecap="round"
       />
-
       <path
-        d="M15.7 4.6 19.3 8l-3.6 3.4"
+        d="M15.1 3.9 18.7 7.5l-3.6 3.6"
         stroke="currentColor"
-        strokeWidth="2.25"
+        strokeWidth="2.1"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-
       <path
-        d="M17.2 16.6H8.1c-1.9 0-3.4-1.5-3.4-3.4v-.9"
+        d="M15.8 17.6H8.7c-1.9 0-3.4-1.5-3.4-3.4v-.9"
         stroke="currentColor"
-        strokeWidth="2.25"
+        strokeWidth="2.1"
         strokeLinecap="round"
       />
-
       <path
-        d="M8.3 19.4 4.7 16l3.6-3.4"
+        d="M8.9 20.1 5.3 16.5l3.6-3.6"
         stroke="currentColor"
-        strokeWidth="2.25"
+        strokeWidth="2.1"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-
-      <path
-        d="M9.2 11.9h5.6"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        opacity="0.28"
+      <circle
+        cx="12"
+        cy="12"
+        r="3.1"
+        fill="currentColor"
+        opacity="0.12"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r="1.2"
+        fill="currentColor"
+        opacity="0.38"
       />
     </svg>
   );
