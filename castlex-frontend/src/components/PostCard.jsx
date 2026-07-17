@@ -301,6 +301,9 @@ const canSeeBoostPreview =
     setRepostsCount(res.data.reposts_count || 0);
     setShowRepostModal(false);
     setQuoteContent("");
+    setTimeout(() => {
+  window.location.reload();
+}, 300);
   } catch (err) {
     console.error(err);
     alert("خطا در ری‌پست");
