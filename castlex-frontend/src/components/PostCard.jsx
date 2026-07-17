@@ -168,6 +168,7 @@ export default function PostCard({ post }) {
   const cardRef = useRef(null);
 const viewTimerRef = useRef(null);
 const sentViewRef = useRef(false);
+const repostModalRef = useRef(null);
 
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
@@ -317,6 +318,16 @@ const handleRepostClick = () => {
   setQuoteContent("");
   setShowRepostModal(true);
 };
+useEffect(() => {
+  if (!showRepostModal) return;
+
+  setTimeout(() => {
+    repostModalRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, 50);
+}, [showRepostModal]);
 const requestHotPost = async () => {
   const token = localStorage.getItem("token");
 
@@ -635,9 +646,10 @@ return (
       padding: "18px",
     }}
   >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      style={{
+<div
+  ref={repostModalRef}
+  onClick={(e) => e.stopPropagation()}
+  style={{
         width: "100%",
         maxWidth: "440px",
         background: "#fff",
