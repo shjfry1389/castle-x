@@ -279,6 +279,10 @@ app.post("/api/posts/:id/repost", auth, async (req, res) => {
   try {
     const postId = req.params.id;
     const userId = req.user.id;
+    const quoteContent =
+  typeof req.body?.quote_content === "string"
+    ? req.body.quote_content.trim()
+    : "";
 
     const { data: post, error: postError } = await supabase
       .from("posts")
@@ -338,10 +342,11 @@ app.post("/api/posts/:id/repost", auth, async (req, res) => {
       });
     }
 
-    const { error: insertError } = await supabase.from("reposts").insert({
-      post_id: postId,
-      user_id: userId,
-    });
+const { error: insertError } = await supabase.from("reposts").insert({
+  post_id: postId,
+  user_id: userId,
+  quote_content: quoteContent || null,
+});
 
     if (insertError) {
       return res.status(500).json({
@@ -426,14 +431,15 @@ const buildRepostFeedItem = async (repost, currentUserId) => {
 
   const stats = await getPostStats(post, currentUserId);
 
-  return {
-    ...post,
-    ...stats,
-    reposted_by: repostedBy,
-    reposted_at: repost.created_at,
-    feed_time: repost.created_at,
-    hot_priority: 0,
-  };
+return {
+  ...post,
+  ...stats,
+  reposted_by: repostedBy,
+  reposted_at: repost.created_at,
+  quote_content: repost.quote_content || "",
+  feed_time: repost.created_at,
+  hot_priority: 0,
+};
 };
 app.get("/api/posts", auth, async (req, res) => {
   try {

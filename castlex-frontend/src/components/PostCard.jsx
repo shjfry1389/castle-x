@@ -177,6 +177,9 @@ const sentViewRef = useRef(false);
   const [liked, setLiked] = useState(post.is_liked || false);
   const [repostsCount, setRepostsCount] = useState(post.reposts_count || 0);
 const [reposted, setReposted] = useState(post.is_reposted || false);
+const [showRepostModal, setShowRepostModal] = useState(false);
+const [quoteContent, setQuoteContent] = useState("");
+const [repostLoading, setRepostLoading] = useState(false);
 useEffect(() => {
   setLiked(!!post.is_liked);
   setLikesCount(post.likes_count || 0);
@@ -270,7 +273,7 @@ const canSeeBoostPreview =
       console.error(err);
     }
   };
-  const repostPost = async () => {
+  const submitRepost = async (text = "") => {
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -279,9 +282,13 @@ const canSeeBoostPreview =
   }
 
   try {
+    setRepostLoading(true);
+
     const res = await api.post(
       `/api/posts/${post.id}/repost`,
-      {},
+      {
+        quote_content: text.trim(),
+      },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -291,12 +298,26 @@ const canSeeBoostPreview =
 
     setReposted(!!res.data.reposted);
     setRepostsCount(res.data.reposts_count || 0);
+    setShowRepostModal(false);
+    setQuoteContent("");
   } catch (err) {
     console.error(err);
     alert("خطا در ری‌پست");
+  } finally {
+    setRepostLoading(false);
   }
 };
-  const requestHotPost = async () => {
+
+const handleRepostClick = () => {
+  if (reposted) {
+    submitRepost("");
+    return;
+  }
+
+  setQuoteContent("");
+  setShowRepostModal(true);
+};
+const requestHotPost = async () => {
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -563,23 +584,156 @@ return (
         transition: "0.2s",
       }}
     >
-            {post.reposted_by && (
-        <div
+{post.reposted_by && (
+  <div
+    style={{
+      marginBottom: "10px",
+      marginLeft: "60px",
+      color: "#536471",
+      fontSize: "13px",
+      fontWeight: "600",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "5px",
+        marginBottom: post.quote_content ? "8px" : "0",
+      }}
+    >
+      <RepostIcon size={14} />
+      {post.reposted_by.display_name || post.reposted_by.username} reposted
+    </div>
+
+    {post.quote_content && (
+      <div
+        style={{
+          color: "#0f172a",
+          fontSize: "15px",
+          fontWeight: "500",
+          lineHeight: "1.8",
+          whiteSpace: "pre-wrap",
+        }}
+      >
+        {post.quote_content}
+      </div>
+    )}
+  </div>
+)}
+{showRepostModal && (
+  <div
+    onClick={() => setShowRepostModal(false)}
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(15, 23, 42, 0.45)",
+      zIndex: 9999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "18px",
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        maxWidth: "440px",
+        background: "#fff",
+        borderRadius: "22px",
+        padding: "18px",
+        boxShadow: "0 24px 70px rgba(0,0,0,0.25)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "14px",
+        }}
+      >
+        <b style={{ fontSize: "18px" }}>Repost</b>
+
+        <button
+          onClick={() => setShowRepostModal(false)}
           style={{
-            marginBottom: "8px",
-            marginLeft: "60px",
-            color: "#536471",
-            fontSize: "13px",
-            fontWeight: "600",
-            display: "flex",
-            alignItems: "center",
-            gap: "5px",
+            border: "none",
+            background: "#f1f5f9",
+            width: "34px",
+            height: "34px",
+            borderRadius: "50%",
+            cursor: "pointer",
+            fontSize: "18px",
           }}
         >
-          <RepostIcon size={14} />
-          {post.reposted_by.display_name || post.reposted_by.username} reposted
-        </div>
-      )}
+          ×
+        </button>
+      </div>
+
+      <textarea
+        value={quoteContent}
+        onChange={(e) => setQuoteContent(e.target.value)}
+        placeholder="متنی که می‌خواهید بالای ری‌پست نوشته شود..."
+        rows={4}
+        style={{
+          width: "100%",
+          resize: "none",
+          border: "1px solid #dbe3ea",
+          borderRadius: "16px",
+          padding: "12px",
+          outline: "none",
+          fontSize: "15px",
+          lineHeight: "1.7",
+          boxSizing: "border-box",
+        }}
+      />
+
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          marginTop: "14px",
+        }}
+      >
+        <button
+          onClick={() => submitRepost("")}
+          disabled={repostLoading}
+          style={{
+            flex: 1,
+            border: "1px solid #cfd9de",
+            background: "#fff",
+            color: "#0f172a",
+            padding: "11px",
+            borderRadius: "999px",
+            cursor: repostLoading ? "not-allowed" : "pointer",
+            fontWeight: "800",
+          }}
+        >
+          بدون متن
+        </button>
+
+        <button
+          onClick={() => submitRepost(quoteContent)}
+          disabled={repostLoading}
+          style={{
+            flex: 1,
+            border: "none",
+            background: "#00ba7c",
+            color: "#fff",
+            padding: "11px",
+            borderRadius: "999px",
+            cursor: repostLoading ? "not-allowed" : "pointer",
+            fontWeight: "800",
+          }}
+        >
+          {repostLoading ? "..." : "Repost"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       <div
         style={{
           display: "flex",
@@ -918,7 +1072,8 @@ transform: liked ? "scale(1.08)" : "scale(1)",
               {liked ? "❤️" : "🤍"} {likesCount}
             </button>
                         <button
-              onClick={repostPost}
+              onClick={handleRepostClick}
+disabled={repostLoading}
               title="Repost"
               style={{
                 background: "none",
