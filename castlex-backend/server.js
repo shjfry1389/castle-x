@@ -3857,6 +3857,72 @@ app.get("/api/hashtags/trending", async (req, res) => {
     });
   }
 });
+app.get("/api/hashtags/trending", auth, async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 8, 1), 20);
+
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: posts, error } = await supabase
+      .from("posts")
+      .select("id, content, created_at")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(300);
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در دریافت هشتگ‌های ترند",
+        details: error.message,
+      });
+    }
+
+    const hashtagMap = new Map();
+
+    (posts || []).forEach((post) => {
+      const matches = String(post.content || "").match(/#[\p{L}\p{N}_]+/gu);
+
+      if (!matches) return;
+
+      matches.forEach((tag) => {
+        const cleanTag = tag.replace("#", "").toLowerCase();
+
+        if (!cleanTag) return;
+
+        const current = hashtagMap.get(cleanTag) || {
+          tag: cleanTag,
+          count: 0,
+          latest_post_at: post.created_at,
+        };
+
+        current.count += 1;
+
+        if (new Date(post.created_at) > new Date(current.latest_post_at)) {
+          current.latest_post_at = post.created_at;
+        }
+
+        hashtagMap.set(cleanTag, current);
+      });
+    });
+
+    const trending = [...hashtagMap.values()]
+      .sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+
+        return new Date(b.latest_post_at) - new Date(a.latest_post_at);
+      })
+      .slice(0, limit);
+
+    res.json(trending);
+  } catch (err) {
+    console.error("TRENDING HASHTAGS ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.get("/api/hashtags/:tag/posts", auth, async (req, res) => {
   try {
     const tag = decodeURIComponent(req.params.tag || "").replace("#", "").trim();

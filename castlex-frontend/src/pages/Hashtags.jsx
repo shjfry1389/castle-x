@@ -12,10 +12,24 @@ export default function Hashtags() {
   const loadTrendingHashtags = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/api/hashtags/trending");
+
+      const token = localStorage.getItem("token");
+
+      const res = await api.get("/api/hashtags/trending", {
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : {},
+        params: {
+          limit: 10,
+        },
+      });
+
       setTrendingHashtags(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
+      setTrendingHashtags([]);
     } finally {
       setLoading(false);
     }
@@ -26,8 +40,12 @@ export default function Hashtags() {
   }, []);
 
   const openHashtag = (tag = query) => {
-    const cleanTag = tag.replace(/^#/, "").trim();
+    const cleanTag = String(tag || "")
+      .replace(/^#/, "")
+      .trim();
+
     if (!cleanTag) return;
+
     navigate(`/hashtag/${encodeURIComponent(cleanTag)}`);
   };
 
@@ -83,7 +101,12 @@ export default function Hashtags() {
           Hashtags
         </h1>
 
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+          }}
+        >
           <input
             className="hashtags-search-input"
             value={query}
@@ -94,6 +117,7 @@ export default function Hashtags() {
             placeholder="Search hashtag..."
             style={{
               width: "100%",
+              minWidth: 0,
               padding: "13px 16px",
               borderRadius: "999px",
               border: "1px solid #dbe3ea",
@@ -112,6 +136,7 @@ export default function Hashtags() {
               borderRadius: "999px",
               fontWeight: "900",
               cursor: "pointer",
+              flexShrink: 0,
             }}
           >
             #
@@ -136,10 +161,11 @@ export default function Hashtags() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              gap: "14px",
               marginBottom: "14px",
             }}
           >
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div
                 className="hashtags-box-title"
                 style={{
@@ -175,6 +201,7 @@ export default function Hashtags() {
                 placeItems: "center",
                 fontSize: "24px",
                 fontWeight: "950",
+                flexShrink: 0,
               }}
             >
               #
@@ -184,7 +211,9 @@ export default function Hashtags() {
           {loading ? (
             <div className="hashtags-empty">Loading hashtags...</div>
           ) : trendingHashtags.length === 0 ? (
-            <div className="hashtags-empty">هنوز هشتگ ترندی وجود ندارد</div>
+            <div className="hashtags-empty">
+              هنوز هشتگ ترندی وجود ندارد
+            </div>
           ) : (
             <div style={{ display: "grid", gap: "10px" }}>
               {trendingHashtags.map((item, index) => (
@@ -204,6 +233,7 @@ export default function Hashtags() {
                     gap: "12px",
                     textAlign: "left",
                     boxShadow: "0 8px 22px rgba(15,23,42,0.06)",
+                    width: "100%",
                   }}
                 >
                   <div
