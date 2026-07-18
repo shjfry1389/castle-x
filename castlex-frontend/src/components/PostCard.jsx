@@ -492,7 +492,7 @@ const requestHotPost = async () => {
 
 const votePoll = async (optionId) => {
   try {
-    if (!poll || poll.my_vote_option_id) return;
+    if (!poll || poll.is_closed || poll.my_vote_option_id) return;
 
     const token = localStorage.getItem("token");
 
@@ -500,9 +500,7 @@ const votePoll = async (optionId) => {
 
     await api.post(
       `/api/polls/${poll.id}/vote`,
-      {
-        option_id: optionId,
-      },
+      { option_id: optionId },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -543,6 +541,32 @@ const loadBoostPreview = async () => {
 useEffect(() => {
   loadPoll();
 }, [post.id, post.post_type]);
+const getPollTimeText = () => {
+  if (!poll) return "";
+
+  if (poll.is_closed) {
+    return "نظرسنجی پایان یافته";
+  }
+
+  const ms = Number(poll.time_left_ms || 0);
+
+  if (ms <= 0) {
+    return "زمان نظرسنجی تمام شده";
+  }
+
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (hours >= 24) {
+    return `${Math.floor(hours / 24)} روز باقی مانده`;
+  }
+
+  if (hours > 0) {
+    return `${hours} ساعت و ${minutes} دقیقه باقی مانده`;
+  }
+
+  return `${minutes} دقیقه باقی مانده`;
+};
     useEffect(() => {
     if (!post.id || !cardRef.current) return;
 
@@ -985,74 +1009,130 @@ return (
   return part;
 })}
           </div>
-          {post.post_type === "poll" && poll && (
+       {post.post_type === "poll" && poll && (
   <div
     style={{
       marginTop: "14px",
-      padding: "14px",
-      border: "1px solid #e5e7eb",
-      borderRadius: "16px",
+      padding: "16px",
+      border: "1px solid #dbe3ea",
+      borderRadius: "18px",
       background: "#f8fafc",
     }}
   >
-    <div style={{ fontWeight: "800", marginBottom: "12px" }}>
-      📊 {poll.question}
+    <div
+      style={{
+        fontWeight: "900",
+        fontSize: "16px",
+        marginBottom: "12px",
+        color: "#0f172a",
+        lineHeight: "1.8",
+      }}
+    >
+      {poll.question}
     </div>
 
-    {poll.options.map((option) => {
-      const percent =
-        poll.total_votes > 0
-          ? Math.round((option.votes_count / poll.total_votes) * 100)
-          : 0;
+    <div style={{ display: "grid", gap: "10px" }}>
+      {poll.options.map((option) => {
+        const selected = option.my_vote;
+        const canVote = !poll.is_closed && !poll.my_vote_option_id;
+        const showResults = poll.results_visible;
+        const percent = Number(option.percent || 0);
 
-      const selected = poll.my_vote_option_id === option.id;
-
-      return (
-        <button
-          key={option.id}
-          onClick={() => votePoll(option.id)}
-          disabled={pollLoading || !!poll.my_vote_option_id}
-          style={{
-            width: "100%",
-            marginBottom: "10px",
-            padding: "11px 12px",
-            borderRadius: "12px",
-            border: selected ? "2px solid #1d9bf0" : "1px solid #cfd9de",
-            background: selected ? "#e0f2fe" : "#fff",
-            cursor: poll.my_vote_option_id ? "default" : "pointer",
-            textAlign: "left",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: `${percent}%`,
-              background: "rgba(29,155,240,0.16)",
-            }}
-          />
-
-          <span
+        return (
+          <button
+            key={option.id}
+            onClick={() => votePoll(option.id)}
+            disabled={pollLoading || !canVote}
             style={{
               position: "relative",
-              zIndex: 2,
-              display: "flex",
-              justifyContent: "space-between",
-              fontWeight: "700",
+              overflow: "hidden",
+              border: selected
+                ? "2px solid #1d9bf0"
+                : option.is_winner
+                  ? "2px solid #22c55e"
+                  : "1px solid #cfd9de",
+              borderRadius: "14px",
+              background: "#fff",
+              padding: "12px 14px",
+              cursor: canVote ? "pointer" : "default",
+              textAlign: "left",
+              fontWeight: "800",
+              color: "#0f172a",
             }}
           >
-            <span>{option.option_text}</span>
-            <span>{percent}%</span>
-          </span>
-        </button>
-      );
-    })}
+            {showResults && (
+              <span
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: `${percent}%`,
+                  background: selected
+                    ? "rgba(29, 155, 240, 0.18)"
+                    : option.is_winner
+                      ? "rgba(34, 197, 94, 0.16)"
+                      : "rgba(148, 163, 184, 0.16)",
+                  transition: "width 0.35s ease",
+                }}
+              />
+            )}
 
-    <div style={{ fontSize: "13px", color: "#64748b", marginTop: "4px" }}>
-      {poll.total_votes || 0} رای
+            <span
+              style={{
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+              }}
+            >
+              <span>{option.option_text}</span>
+
+              {showResults && (
+                <span
+                  style={{
+                    fontSize: "13px",
+                    color: selected ? "#1d9bf0" : "#536471",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {option.is_winner && poll.is_closed ? "برنده · " : ""}
+                  {percent}%
+                </span>
+              )}
+            </span>
+          </button>
+        );
+      })}
     </div>
+
+    <div
+      style={{
+        marginTop: "12px",
+        display: "flex",
+        justifyContent: "space-between",
+        gap: "10px",
+        color: "#536471",
+        fontSize: "13px",
+        fontWeight: "700",
+        flexWrap: "wrap",
+      }}
+    >
+      <span>{poll.total_votes || 0} رای</span>
+      <span>{getPollTimeText()}</span>
+    </div>
+
+    {!poll.results_visible && !poll.my_vote_option_id && !poll.is_closed && (
+      <div
+        style={{
+          marginTop: "8px",
+          color: "#64748b",
+          fontSize: "12px",
+          fontWeight: "700",
+        }}
+      >
+        نتیجه بعد از رأی دادن نمایش داده می‌شود
+      </div>
+    )}
   </div>
 )}
           {post.image_url &&

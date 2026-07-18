@@ -2964,15 +2964,47 @@ app.get("/api/posts/:id/boost-preview", auth, async (req, res) => {
 
 app.post("/api/polls/create", auth, async (req, res) => {
   try {
-    const { question, options, duration_hours } = req.body;
+    const {
+      question,
+      options,
+      duration_hours,
+      allow_multiple,
+      show_results_after_vote,
+    } = req.body;
 
-    if (!question?.trim()) {
-      return res.status(400).json({ error: "متن سوال نظرسنجی الزامی است" });
+    const { data: currentUser, error: currentUserError } = await supabase
+      .from("users")
+      .select("role, premium_plan, premium_until")
+      .eq("id", req.user.id)
+      .maybeSingle();
+
+    if (currentUserError) {
+      return res.status(500).json({
+        error: "خطا در بررسی کاربر",
+        details: currentUserError.message,
+      });
     }
 
-    if (!Array.isArray(options) || options.length < 2 || options.length > 4) {
+    const premiumActive =
+      currentUser?.premium_plan === "silver" &&
+      currentUser?.premium_until &&
+      new Date(currentUser.premium_until).getTime() > Date.now();
+
+    if (currentUser?.role !== "admin" && !premiumActive) {
+      return res.status(403).json({
+        error: "ساخت نظرسنجی فقط برای ادمین‌ها و کاربران پریمیوم فعال است",
+      });
+    }
+
+    if (!question?.trim()) {
       return res.status(400).json({
-        error: "نظرسنجی باید بین ۲ تا ۴ گزینه داشته باشد",
+        error: "متن سوال نظرسنجی الزامی است",
+      });
+    }
+
+    if (!Array.isArray(options) || options.length < 2 || options.length > 6) {
+      return res.status(400).json({
+        error: "نظرسنجی باید بین ۲ تا ۶ گزینه داشته باشد",
       });
     }
 
@@ -2981,23 +3013,17 @@ app.post("/api/polls/create", auth, async (req, res) => {
       .filter(Boolean);
 
     if (cleanOptions.length < 2) {
-      return res.status(400).json({ error: "حداقل ۲ گزینه معتبر وارد کن" });
-    }
-
-    const { data: user } = await supabase
-      .from("users")
-      .select("id, role, premium_plan, premium_until")
-      .eq("id", req.user.id)
-      .single();
-
-    if (!canUsePremiumFeature(user)) {
-      return res.status(403).json({
-        error: "ساخت نظرسنجی فقط برای کاربران پریمیوم و ادمین‌ها فعال است",
+      return res.status(400).json({
+        error: "حداقل ۲ گزینه معتبر وارد کنید",
       });
     }
 
-    const closesAt = new Date();
-    closesAt.setHours(closesAt.getHours() + (Number(duration_hours) || 24));
+    const durationHours = Math.min(
+      Math.max(Number(duration_hours) || 24, 1),
+      24 * 7
+    );
+
+    const closesAt = new Date(Date.now() + durationHours * 60 * 60 * 1000);
 
     const { data: post, error: postError } = await supabase
       .from("posts")
@@ -3023,6 +3049,9 @@ app.post("/api/polls/create", auth, async (req, res) => {
         user_id: req.user.id,
         question: question.trim(),
         closes_at: closesAt.toISOString(),
+        closed_at: null,
+        allow_multiple: !!allow_multiple,
+        show_results_after_vote: show_results_after_vote !== false,
       })
       .select()
       .single();
@@ -3058,7 +3087,11 @@ app.post("/api/polls/create", auth, async (req, res) => {
     });
   } catch (err) {
     console.error("CREATE POLL ERROR:", err);
-    res.status(500).json({ error: "خطای سرور", details: err.message });
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
   }
 });
 
@@ -3066,78 +3099,198 @@ app.get("/api/polls/post/:postId", auth, async (req, res) => {
   try {
     const { postId } = req.params;
 
-    const { data: poll } = await supabase
+    const { data: poll, error: pollError } = await supabase
       .from("polls")
       .select("*")
       .eq("post_id", postId)
       .maybeSingle();
 
-    if (!poll) {
-      return res.status(404).json({ error: "نظرسنجی پیدا نشد" });
+    if (pollError) {
+      return res.status(500).json({
+        error: "خطا در دریافت نظرسنجی",
+        details: pollError.message,
+      });
     }
 
-    const { data: options } = await supabase
+    if (!poll) {
+      return res.status(404).json({
+        error: "نظرسنجی پیدا نشد",
+      });
+    }
+
+    const { data: options, error: optionsError } = await supabase
       .from("poll_options")
       .select("*")
       .eq("poll_id", poll.id)
       .order("sort_order", { ascending: true });
 
-    const { data: myVote } = await supabase
+    if (optionsError) {
+      return res.status(500).json({
+        error: "خطا در دریافت گزینه‌ها",
+        details: optionsError.message,
+      });
+    }
+
+    const { data: myVotes, error: myVotesError } = await supabase
       .from("poll_votes")
       .select("option_id")
       .eq("poll_id", poll.id)
-      .eq("user_id", req.user.id)
-      .maybeSingle();
+      .eq("user_id", req.user.id);
+
+    if (myVotesError) {
+      return res.status(500).json({
+        error: "خطا در بررسی رای شما",
+        details: myVotesError.message,
+      });
+    }
+
+    const myVoteIds = (myVotes || []).map((item) => item.option_id);
 
     const totalVotes = (options || []).reduce(
-      (sum, item) => sum + Number(item.votes_count || 0),
+      (sum, option) => sum + Number(option.votes_count || 0),
       0
     );
 
+    const now = Date.now();
+    const closesAtTime = poll.closes_at
+      ? new Date(poll.closes_at).getTime()
+      : null;
+
+    const isClosed =
+      !!poll.closed_at || (closesAtTime ? closesAtTime <= now : false);
+
+    const resultsVisible =
+      isClosed ||
+      (poll.show_results_after_vote !== false && myVoteIds.length > 0);
+
+    const maxVotes = Math.max(
+      0,
+      ...(options || []).map((option) => Number(option.votes_count || 0))
+    );
+
+    const finalOptions = (options || []).map((option) => {
+      const votesCount = Number(option.votes_count || 0);
+
+      const percent =
+        totalVotes > 0 ? Math.round((votesCount / totalVotes) * 100) : 0;
+
+      return {
+        ...option,
+        votes_count: resultsVisible ? votesCount : 0,
+        percent: resultsVisible ? percent : 0,
+        my_vote: myVoteIds.includes(option.id),
+        is_winner:
+          resultsVisible && totalVotes > 0 && votesCount === maxVotes,
+      };
+    });
+
     res.json({
       ...poll,
-      options: options || [],
-      total_votes: totalVotes,
-      my_vote_option_id: myVote?.option_id || null,
+      options: finalOptions,
+      total_votes: resultsVisible ? totalVotes : 0,
+      real_total_votes: totalVotes,
+      my_vote_option_id: myVoteIds[0] || null,
+      my_vote_option_ids: myVoteIds,
+      is_closed: isClosed,
+      results_visible: resultsVisible,
+      time_left_ms:
+        !isClosed && closesAtTime ? Math.max(closesAtTime - now, 0) : 0,
     });
   } catch (err) {
     console.error("GET POLL ERROR:", err);
-    res.status(500).json({ error: "خطای سرور", details: err.message });
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
   }
 });
-
 app.post("/api/polls/:pollId/vote", auth, async (req, res) => {
   try {
     const { pollId } = req.params;
     const { option_id } = req.body;
 
     if (!option_id) {
-      return res.status(400).json({ error: "گزینه انتخاب نشده است" });
+      return res.status(400).json({
+        error: "گزینه انتخاب نشده است",
+      });
     }
 
-    const { data: poll } = await supabase
+    const { data: poll, error: pollError } = await supabase
       .from("polls")
       .select("*")
       .eq("id", pollId)
       .maybeSingle();
 
+    if (pollError) {
+      return res.status(500).json({
+        error: "خطا در دریافت نظرسنجی",
+        details: pollError.message,
+      });
+    }
+
     if (!poll) {
-      return res.status(404).json({ error: "نظرسنجی پیدا نشد" });
+      return res.status(404).json({
+        error: "نظرسنجی پیدا نشد",
+      });
     }
 
-    if (poll.closes_at && new Date(poll.closes_at).getTime() < Date.now()) {
-      return res.status(400).json({ error: "زمان این نظرسنجی تمام شده است" });
+    const now = Date.now();
+    const closesAtTime = poll.closes_at
+      ? new Date(poll.closes_at).getTime()
+      : null;
+
+    if (poll.closed_at || (closesAtTime && closesAtTime <= now)) {
+      if (!poll.closed_at) {
+        await supabase
+          .from("polls")
+          .update({ closed_at: new Date().toISOString() })
+          .eq("id", pollId);
+      }
+
+      return res.status(400).json({
+        error: "زمان این نظرسنجی تمام شده است",
+      });
     }
 
-    const { data: option } = await supabase
+    const { data: option, error: optionError } = await supabase
       .from("poll_options")
       .select("id, votes_count")
       .eq("id", option_id)
       .eq("poll_id", pollId)
       .maybeSingle();
 
+    if (optionError) {
+      return res.status(500).json({
+        error: "خطا در بررسی گزینه",
+        details: optionError.message,
+      });
+    }
+
     if (!option) {
-      return res.status(404).json({ error: "گزینه معتبر نیست" });
+      return res.status(404).json({
+        error: "گزینه معتبر نیست",
+      });
+    }
+
+    const { data: existingVote, error: existingVoteError } = await supabase
+      .from("poll_votes")
+      .select("id")
+      .eq("poll_id", pollId)
+      .eq("user_id", req.user.id)
+      .maybeSingle();
+
+    if (existingVoteError) {
+      return res.status(500).json({
+        error: "خطا در بررسی رای قبلی",
+        details: existingVoteError.message,
+      });
+    }
+
+    if (existingVote) {
+      return res.status(409).json({
+        error: "شما قبلاً در این نظرسنجی رای داده‌اید",
+      });
     }
 
     const { error: voteError } = await supabase.from("poll_votes").insert({
@@ -3147,29 +3300,36 @@ app.post("/api/polls/:pollId/vote", auth, async (req, res) => {
     });
 
     if (voteError) {
-      if (voteError.code === "23505") {
-        return res.status(409).json({
-          error: "شما قبلاً در این نظرسنجی رای داده‌اید",
-        });
-      }
-
       return res.status(500).json({
         error: "خطا در ثبت رای",
         details: voteError.message,
       });
     }
 
-    await supabase
+    const { error: updateOptionError } = await supabase
       .from("poll_options")
       .update({
         votes_count: Number(option.votes_count || 0) + 1,
       })
       .eq("id", option_id);
 
-    res.json({ success: true });
+    if (updateOptionError) {
+      return res.status(500).json({
+        error: "رای ثبت شد اما شمارنده گزینه آپدیت نشد",
+        details: updateOptionError.message,
+      });
+    }
+
+    res.json({
+      success: true,
+    });
   } catch (err) {
     console.error("VOTE POLL ERROR:", err);
-    res.status(500).json({ error: "خطای سرور", details: err.message });
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
   }
 });
 app.get("/api/admin/top-posts", auth, admin, async (req, res) => {
