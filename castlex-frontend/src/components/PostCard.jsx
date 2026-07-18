@@ -516,6 +516,30 @@ const votePoll = async (optionId) => {
     setPollLoading(false);
   }
 };
+const closePoll = async () => {
+  try {
+    if (!poll || poll.is_closed) return;
+
+    if (!window.confirm("رأی‌گیری این نظرسنجی پایان یابد؟")) return;
+
+    const token = localStorage.getItem("token");
+
+    await api.post(
+      `/api/polls/${poll.id}/close`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    await loadPoll();
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در پایان رأی‌گیری");
+  }
+};
 
 const loadBoostPreview = async () => {
   try {
@@ -1009,26 +1033,51 @@ return (
   return part;
 })}
           </div>
-       {post.post_type === "poll" && poll && (
+{post.post_type === "poll" && poll && (
   <div
     style={{
       marginTop: "14px",
       padding: "16px",
-      border: "1px solid #dbe3ea",
-      borderRadius: "18px",
-      background: "#f8fafc",
+      border: "1px solid #cfd9de",
+      borderRadius: "20px",
+      background:
+        "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+      boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
     }}
   >
     <div
       style={{
-        fontWeight: "900",
-        fontSize: "16px",
-        marginBottom: "12px",
-        color: "#0f172a",
-        lineHeight: "1.8",
+        display: "flex",
+        justifyContent: "space-between",
+        gap: "10px",
+        alignItems: "flex-start",
+        marginBottom: "14px",
       }}
     >
-      {poll.question}
+      <div
+        style={{
+          fontWeight: "900",
+          fontSize: "16px",
+          color: "#0f172a",
+          lineHeight: "1.8",
+        }}
+      >
+        {poll.question}
+      </div>
+
+      <span
+        style={{
+          flexShrink: 0,
+          padding: "5px 10px",
+          borderRadius: "999px",
+          background: poll.is_closed ? "#fee2e2" : "#dcfce7",
+          color: poll.is_closed ? "#b91c1c" : "#15803d",
+          fontSize: "12px",
+          fontWeight: "900",
+        }}
+      >
+        {poll.is_closed ? "پایان یافته" : "فعال"}
+      </span>
     </div>
 
     <div style={{ display: "grid", gap: "10px" }}>
@@ -1050,14 +1099,13 @@ return (
                 ? "2px solid #1d9bf0"
                 : option.is_winner
                   ? "2px solid #22c55e"
-                  : "1px solid #cfd9de",
-              borderRadius: "14px",
+                  : "1px solid #dbe3ea",
+              borderRadius: "16px",
               background: "#fff",
-              padding: "12px 14px",
+              padding: "13px 14px",
               cursor: canVote ? "pointer" : "default",
-              textAlign: "left",
-              fontWeight: "800",
               color: "#0f172a",
+              textAlign: "left",
             }}
           >
             {showResults && (
@@ -1069,8 +1117,8 @@ return (
                   background: selected
                     ? "rgba(29, 155, 240, 0.18)"
                     : option.is_winner
-                      ? "rgba(34, 197, 94, 0.16)"
-                      : "rgba(148, 163, 184, 0.16)",
+                      ? "rgba(34, 197, 94, 0.18)"
+                      : "rgba(148, 163, 184, 0.14)",
                   transition: "width 0.35s ease",
                 }}
               />
@@ -1080,9 +1128,10 @@ return (
               style={{
                 position: "relative",
                 display: "flex",
-                alignItems: "center",
                 justifyContent: "space-between",
-                gap: "10px",
+                gap: "12px",
+                alignItems: "center",
+                fontWeight: "850",
               }}
             >
               <span>{option.option_text}</span>
@@ -1093,6 +1142,7 @@ return (
                     fontSize: "13px",
                     color: selected ? "#1d9bf0" : "#536471",
                     whiteSpace: "nowrap",
+                    fontWeight: "900",
                   }}
                 >
                   {option.is_winner && poll.is_closed ? "برنده · " : ""}
@@ -1100,6 +1150,20 @@ return (
                 </span>
               )}
             </span>
+
+            {selected && (
+              <div
+                style={{
+                  position: "relative",
+                  marginTop: "5px",
+                  color: "#1d9bf0",
+                  fontSize: "12px",
+                  fontWeight: "800",
+                }}
+              >
+                رأی شما
+              </div>
+            )}
           </button>
         );
       })}
@@ -1107,32 +1171,55 @@ return (
 
     <div
       style={{
-        marginTop: "12px",
+        marginTop: "13px",
         display: "flex",
         justifyContent: "space-between",
         gap: "10px",
         color: "#536471",
         fontSize: "13px",
-        fontWeight: "700",
+        fontWeight: "800",
         flexWrap: "wrap",
       }}
     >
-      <span>{poll.total_votes || 0} رای</span>
+      <span>{poll.real_total_votes || poll.total_votes || 0} رأی</span>
       <span>{getPollTimeText()}</span>
     </div>
 
     {!poll.results_visible && !poll.my_vote_option_id && !poll.is_closed && (
       <div
         style={{
-          marginTop: "8px",
-          color: "#64748b",
+          marginTop: "9px",
+          padding: "9px 11px",
+          borderRadius: "12px",
+          background: "#eef6ff",
+          color: "#1d4ed8",
           fontSize: "12px",
-          fontWeight: "700",
+          fontWeight: "800",
         }}
       >
         نتیجه بعد از رأی دادن نمایش داده می‌شود
       </div>
     )}
+
+    {!poll.is_closed &&
+      (currentUser?.role === "admin" || username === post.author?.username) && (
+        <button
+          onClick={closePoll}
+          style={{
+            marginTop: "13px",
+            width: "100%",
+            border: "1px solid #fecaca",
+            background: "#fff1f2",
+            color: "#e11d48",
+            padding: "10px",
+            borderRadius: "999px",
+            cursor: "pointer",
+            fontWeight: "900",
+          }}
+        >
+          پایان رأی‌گیری
+        </button>
+      )}
   </div>
 )}
           {post.image_url &&

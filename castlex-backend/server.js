@@ -3332,6 +3332,80 @@ app.post("/api/polls/:pollId/vote", auth, async (req, res) => {
     });
   }
 });
+app.post("/api/polls/:pollId/close", auth, async (req, res) => {
+  try {
+    const { pollId } = req.params;
+
+    const { data: poll, error: pollError } = await supabase
+      .from("polls")
+      .select("id, user_id, closed_at")
+      .eq("id", pollId)
+      .maybeSingle();
+
+    if (pollError) {
+      return res.status(500).json({
+        error: "خطا در دریافت نظرسنجی",
+        details: pollError.message,
+      });
+    }
+
+    if (!poll) {
+      return res.status(404).json({
+        error: "نظرسنجی پیدا نشد",
+      });
+    }
+
+    const { data: currentUser } = await supabase
+      .from("users")
+      .select("id, role")
+      .eq("id", req.user.id)
+      .maybeSingle();
+
+    const isOwner = String(poll.user_id) === String(req.user.id);
+    const isAdmin = currentUser?.role === "admin" || req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        error: "اجازه پایان دادن به این نظرسنجی را ندارید",
+      });
+    }
+
+    if (poll.closed_at) {
+      return res.json({
+        success: true,
+        already_closed: true,
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("polls")
+      .update({
+        closed_at: new Date().toISOString(),
+      })
+      .eq("id", pollId)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        error: "خطا در پایان رأی‌گیری",
+        details: error.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      poll: data,
+    });
+  } catch (err) {
+    console.error("CLOSE POLL ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.get("/api/admin/top-posts", auth, admin, async (req, res) => {
   try {
     const frontendUrl = process.env.FRONTEND_URL || "https://castle-x.vercel.app";
