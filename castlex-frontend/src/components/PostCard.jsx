@@ -255,8 +255,12 @@ const canSeeBoostPreview =
 
   const postContent = postText || "";
 
+const isMyPost =
+  String(currentUser?.id || "") === String(post.author?.id || post.user_id || "") ||
+  username === post.author?.username;
+
 const canEditPost =
-  username === post.author?.username &&
+  isMyPost &&
   post.post_type !== "poll" &&
   nowTime - new Date(post.created_at).getTime() <= 10 * 60 * 1000;
 
