@@ -195,11 +195,6 @@ const [reposted, setReposted] = useState(post.is_reposted || false);
 const [showRepostModal, setShowRepostModal] = useState(false);
 const [quoteContent, setQuoteContent] = useState("");
 const [repostLoading, setRepostLoading] = useState(false);
-const [postText, setPostText] = useState(post.content || "");
-const [editingPost, setEditingPost] = useState(false);
-const [editPostText, setEditPostText] = useState(post.content || "");
-const [postEditedAt, setPostEditedAt] = useState(post.edited_at || null);
-const [nowTime, setNowTime] = useState(Date.now());
 useEffect(() => {
   setLiked(!!post.is_liked);
   setLikesCount(post.likes_count || 0);
@@ -212,21 +207,6 @@ useEffect(() => {
   post.is_reposted,
   post.reposts_count,
 ]);
-useEffect(() => {
-  setPostText(post.content || "");
-  setEditPostText(post.content || "");
-  setPostEditedAt(post.edited_at || null);
-}, [post.id, post.content, post.edited_at]);
-
-useEffect(() => {
-  if (username !== post.author?.username) return;
-
-  const timer = setInterval(() => {
-    setNowTime(Date.now());
-  }, 1000);
-
-  return () => clearInterval(timer);
-}, [username, post.author?.username]);
   const [hotRequested, setHotRequested] = useState(false);
   const [poll, setPoll] = useState(null);
 const [pollLoading, setPollLoading] = useState(false);
@@ -253,16 +233,7 @@ const canSeeBoostPreview =
   (username === post.author?.username &&
     (isPremiumActive(post.author) || post.author?.role === "admin"));
 
-  const postContent = postText || "";
-
-const isMyPost =
-  String(currentUser?.id || "") === String(post.author?.id || post.user_id || "") ||
-  username === post.author?.username;
-
-const canEditPost =
-  isMyPost &&
-  post.post_type !== "poll" &&
-  nowTime - new Date(post.created_at).getTime() <= 10 * 60 * 1000;
+  const postContent = post.content || "";
 
   const isPersian = (text) => {
     return /[\u0600-\u06FF]/.test(text || "");
@@ -286,35 +257,7 @@ const canEditPost =
       alert("خطا در حذف پست");
     }
   };
-const savePostEdit = async () => {
-  try {
-    if (!editPostText.trim()) {
-      alert("متن پست نمی‌تواند خالی باشد");
-      return;
-    }
 
-    const token = localStorage.getItem("token");
-
-    const res = await api.put(
-      `/api/posts/${post.id}`,
-      {
-        content: editPostText,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    setPostText(res.data.post.content || "");
-    setPostEditedAt(res.data.post.edited_at || null);
-    setEditingPost(false);
-  } catch (err) {
-    console.error(err);
-    alert(err.response?.data?.error || "خطا در ویرایش پست");
-  }
-};
   const likePost = async () => {
     const token = localStorage.getItem("token");
 
@@ -1007,45 +950,20 @@ return (
               </span>
             </Link>
 
-{username === post.author?.username && (
-  <div
-    style={{
-      marginLeft: "auto",
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-    }}
-  >
-    {canEditPost && !editingPost && (
-      <button
-        onClick={() => setEditingPost(true)}
-        style={{
-          border: "none",
-          background: "#eff6ff",
-          color: "#1d9bf0",
-          cursor: "pointer",
-          borderRadius: "999px",
-          padding: "5px 10px",
-          fontWeight: "800",
-        }}
-      >
-        Edit
-      </button>
-    )}
-
-    <button
-      onClick={deletePost}
-      style={{
-        border: "none",
-        background: "none",
-        cursor: "pointer",
-        color: "#f4212e",
-      }}
-    >
-      🗑
-    </button>
-  </div>
-)}
+            {username === post.author?.username && (
+              <button
+                onClick={deletePost}
+                style={{
+                  marginLeft: "auto",
+                  border: "none",
+                  background: "none",
+                  cursor: "pointer",
+                  color: "#f4212e",
+                }}
+              >
+                🗑️
+              </button>
+            )}
           </div>
                     {post.is_hot && (
             <div
@@ -1064,138 +982,57 @@ return (
               پست داغ
             </div>
           )}
-{editingPost ? (
-  <div style={{ marginTop: "10px" }}>
-    <textarea
-      value={editPostText}
-      onChange={(e) => setEditPostText(e.target.value)}
-      rows={4}
-      style={{
-        width: "100%",
-        padding: "12px",
-        borderRadius: "14px",
-        border: "1px solid #dbe3ea",
-        outline: "none",
-        resize: "vertical",
-        fontSize: "15px",
-        lineHeight: "1.7",
-        boxSizing: "border-box",
-      }}
-    />
+          <div
+            style={{
+              marginTop: "6px",
+              fontSize: "15px",
+              lineHeight: "1.6",
+              whiteSpace: "pre-wrap",
+              direction: isPersian(postContent) ? "rtl" : "ltr",
+              textAlign: isPersian(postContent) ? "right" : "left",
+            }}
+          >
+            {postContent.split(/(\s+|@[a-zA-Z0-9_.-]+|#[\p{L}\p{N}_]+)/gu).map((part, i) => {
+  if (!part) return null;
 
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "flex-end",
-        gap: "10px",
-        marginTop: "10px",
-      }}
-    >
-      <button
-        onClick={() => {
-          setEditingPost(false);
-          setEditPostText(postText);
-        }}
+  if (/^@[a-zA-Z0-9_.-]+$/.test(part)) {
+    const mentionedUsername = part.slice(1);
+
+    return (
+      <Link
+        key={i}
+        to={`/profile/${encodeURIComponent(mentionedUsername)}`}
         style={{
-          border: "1px solid #cfd9de",
-          background: "#fff",
-          color: "#0f172a",
-          borderRadius: "999px",
-          padding: "8px 14px",
-          cursor: "pointer",
-          fontWeight: "800",
+          color: "#1d9bf0",
+          fontWeight: "bold",
+          textDecoration: "none",
         }}
       >
-        Cancel
-      </button>
+        {part}
+      </Link>
+    );
+  }
+    if (/^#[\p{L}\p{N}_]+$/u.test(part)) {
+    const hashtag = part.slice(1);
 
-      <button
-        onClick={savePostEdit}
+    return (
+      <Link
+        key={i}
+        to={`/hashtag/${encodeURIComponent(hashtag)}`}
         style={{
-          border: "none",
-          background: "#1d9bf0",
-          color: "#fff",
-          borderRadius: "999px",
-          padding: "8px 16px",
-          cursor: "pointer",
-          fontWeight: "900",
+          color: "#1d9bf0",
+          fontWeight: "bold",
+          textDecoration: "none",
         }}
       >
-        Save
-      </button>
-    </div>
-  </div>
-) : (
-  <>
-    <div
-      style={{
-        marginTop: "6px",
-        fontSize: "15px",
-        lineHeight: "1.6",
-        whiteSpace: "pre-wrap",
-        direction: isPersian(postContent) ? "rtl" : "ltr",
-        textAlign: isPersian(postContent) ? "right" : "left",
-      }}
-    >
-      {postContent
-        .split(/(\s+|@[a-zA-Z0-9_.-]+|#[\p{L}\p{N}_]+)/gu)
-        .map((part, i) => {
-          if (!part) return null;
+        {part}
+      </Link>
+    );
+  }
 
-          if (/^@[a-zA-Z0-9_.-]+$/.test(part)) {
-            const mentionedUsername = part.slice(1);
-
-            return (
-              <Link
-                key={i}
-                to={`/profile/${encodeURIComponent(mentionedUsername)}`}
-                style={{
-                  color: "#1d9bf0",
-                  fontWeight: "bold",
-                  textDecoration: "none",
-                }}
-              >
-                {part}
-              </Link>
-            );
-          }
-
-          if (/^#[\p{L}\p{N}_]+$/u.test(part)) {
-            const hashtag = part.slice(1);
-
-            return (
-              <Link
-                key={i}
-                to={`/hashtag/${encodeURIComponent(hashtag)}`}
-                style={{
-                  color: "#1d9bf0",
-                  fontWeight: "bold",
-                  textDecoration: "none",
-                }}
-              >
-                {part}
-              </Link>
-            );
-          }
-
-          return part;
-        })}
-    </div>
-
-    {postEditedAt && (
-      <div
-        style={{
-          marginTop: "5px",
-          color: "#64748b",
-          fontSize: "12px",
-          fontWeight: "700",
-        }}
-      >
-        Edited
-      </div>
-    )}
-  </>
-)}
+  return part;
+})}
+          </div>
 {post.post_type === "poll" && poll && (
   <div
     style={{
