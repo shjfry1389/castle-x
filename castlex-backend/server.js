@@ -443,7 +443,9 @@ return {
 };
 app.get("/api/rankings/weekly", auth, async (req, res) => {
   try {
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const weekAgo = new Date(
+      Date.now() - 7 * 24 * 60 * 60 * 1000
+    ).toISOString();
 
     const { data: posts, error: postsError } = await supabase
       .from("posts")
@@ -463,27 +465,32 @@ app.get("/api/rankings/weekly", auth, async (req, res) => {
     const rankedPosts = [];
 
     for (const post of posts || []) {
-      const [{ count: likesCount }, { count: commentsCount }, { count: repostsCount }] =
-        await Promise.all([
-          supabase
-            .from("likes")
-            .select("*", { count: "exact", head: true })
-            .eq("post_id", post.id),
+      const [
+        { count: likesCount },
+        { count: commentsCount },
+        { count: repostsCount },
+      ] = await Promise.all([
+        supabase
+          .from("likes")
+          .select("*", { count: "exact", head: true })
+          .eq("post_id", post.id),
 
-          supabase
-            .from("comments")
-            .select("*", { count: "exact", head: true })
-            .eq("post_id", post.id),
+        supabase
+          .from("comments")
+          .select("*", { count: "exact", head: true })
+          .eq("post_id", post.id),
 
-          supabase
-            .from("reposts")
-            .select("*", { count: "exact", head: true })
-            .eq("post_id", post.id),
-        ]);
+        supabase
+          .from("reposts")
+          .select("*", { count: "exact", head: true })
+          .eq("post_id", post.id),
+      ]);
 
       const { data: author } = await supabase
         .from("users")
-        .select("id, username, display_name, avatar_url, role, is_verified, premium_plan, premium_until")
+        .select(
+          "id, username, display_name, avatar_url, role, is_verified, premium_plan, premium_until"
+        )
         .eq("id", post.user_id)
         .maybeSingle();
 
@@ -545,6 +552,49 @@ app.get("/api/rankings/weekly", auth, async (req, res) => {
     const topRepostedPosts = [...rankedPosts]
       .sort((a, b) => b.reposts_count - a.reposts_count)
       .slice(0, 5);
+
+    const weekKey = new Date().toISOString().slice(0, 10);
+    const winners = topCreators.slice(0, 3);
+
+    await Promise.all(
+      winners.map(async (item, index) => {
+        const rank = index + 1;
+
+        const message = `تبریک! شما رتبه ${rank} رتبه‌بندی هفتگی Castle X را به دست آوردید. | ${weekKey}`;
+
+        const { data: existingNotification, error: existingError } =
+          await supabase
+            .from("notifications")
+            .select("id")
+            .eq("user_id", item.user.id)
+            .eq("type", "weekly_top_creator")
+            .ilike("message", `%${weekKey}%`)
+            .maybeSingle();
+
+        if (existingError) {
+          console.error("CHECK RANKING NOTIFICATION ERROR:", existingError);
+          return;
+        }
+
+        if (existingNotification) return;
+
+        const { error: insertNotificationError } = await supabase
+          .from("notifications")
+          .insert({
+            user_id: item.user.id,
+            sender_id: req.user.id,
+            type: "weekly_top_creator",
+            message,
+          });
+
+        if (insertNotificationError) {
+          console.error(
+            "INSERT RANKING NOTIFICATION ERROR:",
+            insertNotificationError
+          );
+        }
+      })
+    );
 
     res.json({
       topCreators,

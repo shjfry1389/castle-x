@@ -61,6 +61,27 @@ function Badge({ user }) {
   return null;
 }
 
+function TrophyIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="#fff"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M8 21h8" />
+      <path d="M12 17v4" />
+      <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" />
+      <path d="M5 5H3v2a4 4 0 0 0 4 4" />
+      <path d="M19 5h2v2a4 4 0 0 1-4 4" />
+    </svg>
+  );
+}
+
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -134,7 +155,20 @@ export default function Notifications() {
     };
   }, []);
 
-  const getText = (type) => {
+  const isRankingNotification = (type) => {
+    return [
+      "ranking",
+      "weekly_ranking",
+      "weekly_top_creator",
+      "top_creator",
+      "top_post",
+      "weekly_winner",
+    ].includes(type);
+  };
+
+  const getText = (notification) => {
+    const type = notification.type;
+
     switch (type) {
       case "follow":
         return "شما را فالو کرد";
@@ -148,6 +182,9 @@ export default function Notifications() {
       case "mention":
         return "شما را در یک پست تگ کرد";
 
+      case "repost":
+        return "پست شما را ری‌پست کرد";
+
       case "broadcast":
         return "پیام جدید از Castle X";
 
@@ -160,12 +197,26 @@ export default function Notifications() {
       case "hot_request_rejected":
         return "درخواست پست داغ شما رد شد";
 
+      case "ranking":
+      case "weekly_ranking":
+      case "weekly_top_creator":
+      case "top_creator":
+      case "weekly_winner":
+        return "تبریک! شما در رتبه‌بندی هفتگی Castle X برتر شدید";
+
+      case "top_post":
+        return "پست شما وارد رتبه‌بندی برترین‌های هفته شد";
+
       default:
         return "فعالیت جدید";
     }
   };
 
   const getIcon = (type) => {
+    if (isRankingNotification(type)) {
+      return <TrophyIcon />;
+    }
+
     switch (type) {
       case "follow":
         return "👤";
@@ -178,6 +229,9 @@ export default function Notifications() {
 
       case "mention":
         return "@";
+
+      case "repost":
+        return "↻";
 
       case "broadcast":
         return "📣";
@@ -208,18 +262,46 @@ export default function Notifications() {
     });
   };
 
+  const getPostOwnerUsername = (notification) => {
+    return (
+      notification.post?.author?.username ||
+      notification.post?.user?.username ||
+      notification.post?.username ||
+      notification.post?.author_username ||
+      notification.post_author_username ||
+      notification.author?.username ||
+      notification.postOwner?.username ||
+      ""
+    );
+  };
+
   const getLink = (notification) => {
     if (
       (notification.type === "like" ||
         notification.type === "comment" ||
-        notification.type === "mention") &&
+        notification.type === "mention" ||
+        notification.type === "repost" ||
+        notification.type === "top_post" ||
+        notification.type === "hot_request_approved") &&
       notification.post_id
     ) {
+      const postOwnerUsername = getPostOwnerUsername(notification);
+
+      if (postOwnerUsername) {
+        return `/profile/${encodeURIComponent(postOwnerUsername)}?post=${
+          notification.post_id
+        }`;
+      }
+
       return `/post/${notification.post_id}`;
     }
 
     if (notification.type === "follow" && notification.sender?.username) {
       return `/profile/${encodeURIComponent(notification.sender.username)}`;
+    }
+
+    if (isRankingNotification(notification.type)) {
+      return "/rankings";
     }
 
     return null;
@@ -321,6 +403,7 @@ export default function Notifications() {
             notification.read === false || notification.is_read === false;
 
           const link = getLink(notification);
+          const rankingStyle = isRankingNotification(notification.type);
 
           const card = (
             <div
@@ -328,29 +411,44 @@ export default function Notifications() {
                 display: "flex",
                 alignItems: "flex-start",
                 gap: "12px",
-                background: unread ? "#eff6ff" : "#fff",
-                border: unread ? "1px solid #bfdbfe" : "1px solid #eff3f4",
+                background: rankingStyle
+                  ? "linear-gradient(135deg,#fff7ed,#fef3c7)"
+                  : unread
+                    ? "#eff6ff"
+                    : "#fff",
+                border: rankingStyle
+                  ? "1px solid #facc15"
+                  : unread
+                    ? "1px solid #bfdbfe"
+                    : "1px solid #eff3f4",
                 borderRadius: "16px",
                 padding: "14px",
                 marginBottom: "12px",
-                boxShadow: unread
-                  ? "0 10px 25px rgba(29,155,240,0.12)"
-                  : "0 2px 10px rgba(15,23,42,0.05)",
+                boxShadow: rankingStyle
+                  ? "0 14px 35px rgba(250, 204, 21, 0.25)"
+                  : unread
+                    ? "0 10px 25px rgba(29,155,240,0.12)"
+                    : "0 2px 10px rgba(15,23,42,0.05)",
                 transition: "transform 0.18s ease, box-shadow 0.18s ease",
               }}
             >
               <div
                 style={{
-                  width: "34px",
-                  height: "34px",
+                  width: "38px",
+                  height: "38px",
                   borderRadius: "50%",
-                  background: "#eef6ff",
-                  color: "#1d9bf0",
+                  background: rankingStyle
+                    ? "linear-gradient(135deg,#facc15,#f97316)"
+                    : "#eef6ff",
+                  color: rankingStyle ? "#fff" : "#1d9bf0",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   flexShrink: 0,
                   fontWeight: "900",
+                  boxShadow: rankingStyle
+                    ? "0 0 18px rgba(250,204,21,0.65)"
+                    : "none",
                 }}
               >
                 {getIcon(notification.type)}
@@ -381,14 +479,16 @@ export default function Notifications() {
                   }}
                 >
                   <b>
-                    {notification.sender?.display_name ||
-                      notification.sender?.username ||
-                      "Castle X"}
+                    {rankingStyle
+                      ? "Castle X Rankings"
+                      : notification.sender?.display_name ||
+                        notification.sender?.username ||
+                        "Castle X"}
                   </b>
 
-                  <Badge user={notification.sender} />
+                  {!rankingStyle && <Badge user={notification.sender} />}
 
-                  {notification.sender?.username && (
+                  {!rankingStyle && notification.sender?.username && (
                     <span
                       style={{
                         color: "#64748b",
@@ -415,23 +515,44 @@ export default function Notifications() {
                 <div
                   style={{
                     marginTop: "5px",
-                    color: "#334155",
+                    color: rankingStyle ? "#92400e" : "#334155",
                     fontSize: "14px",
                     lineHeight: "1.6",
+                    fontWeight: rankingStyle ? "800" : "500",
                   }}
                 >
-                  {getText(notification.type)}
+                  {getText(notification)}
                 </div>
 
                 {notification.message && (
                   <div
                     style={{
                       marginTop: "6px",
-                      color: "#64748b",
+                      color: rankingStyle ? "#78350f" : "#64748b",
                       fontSize: "13px",
+                      lineHeight: "1.6",
                     }}
                   >
-                    {notification.message}
+                    {String(notification.message).split("|")[0].trim()}
+                  </div>
+                )}
+
+                {rankingStyle && (
+                  <div
+                    style={{
+                      marginTop: "8px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      background: "#111827",
+                      color: "#fff",
+                      borderRadius: "999px",
+                      padding: "6px 10px",
+                      fontSize: "12px",
+                      fontWeight: "900",
+                    }}
+                  >
+                    مشاهده رتبه‌بندی
                   </div>
                 )}
 

@@ -188,7 +188,7 @@ function UserRow({ item, index }) {
 function PostRankCard({ post, index, label, color }) {
   return (
     <Link
-      to={`/post/${post.id}`}
+      to={`/profile/${encodeURIComponent(post.author?.username || "")}?post=${post.id}`}
       style={{
         textDecoration: "none",
         color: "inherit",
@@ -338,8 +338,34 @@ export default function Rankings() {
             color: "#536471",
           }}
         >
-          رتبه‌بندی هفتگی کاربران و پست‌های Castle X
+         Castle X رتبه‌بندی هفتگی کاربران و پست‌های 
         </p>
+        <div
+  style={{
+    marginTop: "14px",
+    padding: "12px 14px",
+    borderRadius: "16px",
+    background: "linear-gradient(135deg,#eff6ff,#f8fafc)",
+    border: "1px solid #dbeafe",
+    color: "#334155",
+    fontSize: "13px",
+    lineHeight: "1.8",
+  }}
+>
+  <b
+    style={{
+      display: "block",
+      color: "#0f172a",
+      marginBottom: "4px",
+    }}
+  >
+    نحوه محاسبه امتیاز
+  </b>
+
+  <span>
+    هر ویو = ۱ امتیاز، هر لایک = ۴ امتیاز، هر کامنت = ۶ امتیاز و هر ری‌پست = ۸ امتیاز.
+  </span>
+</div>
       </div>
 
       {loading ? (
