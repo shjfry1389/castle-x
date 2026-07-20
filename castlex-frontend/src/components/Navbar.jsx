@@ -257,7 +257,15 @@ const MessageDot = () => {
       <path d="M20 20l-4.5-4.5" />
     </Icon>
   );
-
+const RankingsIcon = () => (
+  <Icon color={iconColor}>
+    <path d="M8 21h8" />
+    <path d="M12 17v4" />
+    <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" />
+    <path d="M5 5H3v2a4 4 0 0 0 4 4" />
+    <path d="M19 5h2v2a4 4 0 0 1-4 4" />
+  </Icon>
+);
   const MessagesIcon = () => (
     <Icon color={iconColor}>
       <path d="M4 6.5A3.5 3.5 0 0 1 7.5 3h9A3.5 3.5 0 0 1 20 6.5v6A3.5 3.5 0 0 1 16.5 16H10l-5 4v-4.5A3.5 3.5 0 0 1 4 12.5z" />
@@ -359,6 +367,9 @@ const MessageDot = () => {
   }}
 >
   #
+</Link>
+<Link to="/rankings" title="Rankings" style={iconLinkStyle}>
+  <RankingsIcon />
 </Link>
 
         {token ? (
@@ -492,6 +503,9 @@ const MessageDot = () => {
   }}
 >
   #
+</Link>
+<Link to="/rankings" title="Rankings" style={iconLinkStyle}>
+  <RankingsIcon />
 </Link>
 
           {token ? (

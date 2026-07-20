@@ -15,6 +15,7 @@ import Notifications from "./pages/Notifications";
 import Chat from "./pages/Chat";
 import Post from "./pages/Post";
 import Hashtags from "./pages/Hashtags";
+import Rankings from "./pages/Rankings";
 
 function Layout({ darkMode, setDarkMode }) {
   const location = useLocation();
@@ -53,6 +54,7 @@ function Layout({ darkMode, setDarkMode }) {
         <Route path="/chat/:conversationId" element={<Chat />} />
 
         <Route path="/post/:postId" element={<Post />} />
+        <Route path="/rankings" element={<Rankings />} />
         <Route path="/hashtag/:tag" element={<Hashtag />} />
         <Route path="/hashtags" element={<Hashtags />} />
       </Routes>

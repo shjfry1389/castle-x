@@ -441,6 +441,127 @@ return {
   hot_priority: 0,
 };
 };
+app.get("/api/rankings/weekly", auth, async (req, res) => {
+  try {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: posts, error: postsError } = await supabase
+      .from("posts")
+      .select("id, user_id, content, image_url, video_url, views_count, created_at")
+      .gte("created_at", weekAgo)
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if (postsError) {
+      return res.status(500).json({
+        error: "خطا در دریافت پست‌های هفته",
+        details: postsError.message,
+      });
+    }
+
+    const userScores = {};
+    const rankedPosts = [];
+
+    for (const post of posts || []) {
+      const [{ count: likesCount }, { count: commentsCount }, { count: repostsCount }] =
+        await Promise.all([
+          supabase
+            .from("likes")
+            .select("*", { count: "exact", head: true })
+            .eq("post_id", post.id),
+
+          supabase
+            .from("comments")
+            .select("*", { count: "exact", head: true })
+            .eq("post_id", post.id),
+
+          supabase
+            .from("reposts")
+            .select("*", { count: "exact", head: true })
+            .eq("post_id", post.id),
+        ]);
+
+      const { data: author } = await supabase
+        .from("users")
+        .select("id, username, display_name, avatar_url, role, is_verified, premium_plan, premium_until")
+        .eq("id", post.user_id)
+        .maybeSingle();
+
+      if (!author) continue;
+
+      const likes = likesCount || 0;
+      const comments = commentsCount || 0;
+      const reposts = repostsCount || 0;
+      const views = post.views_count || 0;
+
+      const score = views + likes * 4 + comments * 6 + reposts * 8;
+
+      if (!userScores[author.id]) {
+        userScores[author.id] = {
+          user: author,
+          posts_count: 0,
+          views: 0,
+          likes: 0,
+          comments: 0,
+          reposts: 0,
+          score: 0,
+        };
+      }
+
+      userScores[author.id].posts_count += 1;
+      userScores[author.id].views += views;
+      userScores[author.id].likes += likes;
+      userScores[author.id].comments += comments;
+      userScores[author.id].reposts += reposts;
+      userScores[author.id].score += score;
+
+      rankedPosts.push({
+        ...post,
+        author,
+        likes_count: likes,
+        comments_count: comments,
+        reposts_count: reposts,
+        views_count: views,
+        score,
+      });
+    }
+
+    const topCreators = Object.values(userScores)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+
+    const topLikedPosts = [...rankedPosts]
+      .sort((a, b) => b.likes_count - a.likes_count)
+      .slice(0, 5);
+
+    const topCommentedPosts = [...rankedPosts]
+      .sort((a, b) => b.comments_count - a.comments_count)
+      .slice(0, 5);
+
+    const topViewedPosts = [...rankedPosts]
+      .sort((a, b) => b.views_count - a.views_count)
+      .slice(0, 5);
+
+    const topRepostedPosts = [...rankedPosts]
+      .sort((a, b) => b.reposts_count - a.reposts_count)
+      .slice(0, 5);
+
+    res.json({
+      topCreators,
+      topLikedPosts,
+      topCommentedPosts,
+      topViewedPosts,
+      topRepostedPosts,
+    });
+  } catch (err) {
+    console.error("WEEKLY RANKINGS ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.get("/api/posts", auth, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 15, 30);
