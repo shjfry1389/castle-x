@@ -442,36 +442,109 @@ const requestHotPost = async () => {
       alert("خطا در حذف کامنت");
     }
   };
-    const sharePost = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+   const sharePost = async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-    const postUsername = post.author?.username;
+  const postLink = `${window.location.origin}/post/${post.id}`;
 
-    if (!postUsername) {
-      alert("اطلاعات نویسنده پست آماده نیست");
+  const authorName =
+    post.author?.display_name || post.author?.username || "کاربر";
+
+  const tweetType =
+    post.author?.role === "admin" || post.author?.is_verified
+      ? "رسمی"
+      : "غیررسمی";
+
+  const validImageUrl =
+    post.image_url &&
+    post.image_url !== "undefined" &&
+    post.image_url !== "null"
+      ? post.image_url
+      : "";
+
+  const validVideoUrl =
+    post.video_url &&
+    post.video_url !== "undefined" &&
+    post.video_url !== "null"
+      ? post.video_url
+      : "";
+
+  const mediaText = validVideoUrl
+    ? `
+
+ویدیوی پست:
+${validVideoUrl}`
+    : "";
+
+  const shareText = `توییت ${tweetType} ${authorName} در Castle X
+
+${postContent || ""}${mediaText}
+
+لینک پست:
+${postLink}`;
+
+  try {
+    if (validImageUrl && navigator.share && navigator.canShare) {
+      const imageResponse = await fetch(validImageUrl);
+      const imageBlob = await imageResponse.blob();
+
+      const imageFile = new File([imageBlob], "castle-x-post.jpg", {
+        type: imageBlob.type || "image/jpeg",
+      });
+
+      const shareDataWithImage = {
+        title: `توییت ${tweetType} ${authorName} در Castle X`,
+        text: shareText,
+        url: postLink,
+        files: [imageFile],
+      };
+
+      if (navigator.canShare(shareDataWithImage)) {
+        await navigator.share(shareDataWithImage);
+        return;
+      }
+    }
+
+    if (navigator.share) {
+      await navigator.share({
+        title: `توییت ${tweetType} ${authorName} در Castle X`,
+        text: validImageUrl
+          ? `${shareText}
+
+عکس پست:
+${validImageUrl}`
+          : shareText,
+        url: postLink,
+      });
       return;
     }
 
-    const postLink = `${window.location.origin}/profile/${encodeURIComponent(
-      postUsername
-    )}?post=${post.id}`;
+    await navigator.clipboard.writeText(
+      validImageUrl
+        ? `${shareText}
 
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "Castle X",
-          text: "این پست رو ببین",
-          url: postLink,
-        });
-      } else {
-        await navigator.clipboard.writeText(postLink);
-        alert("لینک پست کپی شد");
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+عکس پست:
+${validImageUrl}`
+        : shareText
+    );
+
+    alert("متن اشتراک‌گذاری کپی شد");
+  } catch (err) {
+    console.error(err);
+
+    await navigator.clipboard.writeText(
+      validImageUrl
+        ? `${shareText}
+
+عکس پست:
+${validImageUrl}`
+        : shareText
+    );
+
+    alert("متن اشتراک‌گذاری کپی شد");
+  }
+};
   const loadPoll = async () => {
   try {
     if (post.post_type !== "poll") return;
