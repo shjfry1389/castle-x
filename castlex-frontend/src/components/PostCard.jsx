@@ -442,7 +442,7 @@ const requestHotPost = async () => {
       alert("خطا در حذف کامنت");
     }
   };
-   const sharePost = async (e) => {
+    const sharePost = async (e) => {
   e.preventDefault();
   e.stopPropagation();
 
@@ -475,7 +475,12 @@ const requestHotPost = async () => {
 
 ویدیوی پست:
 ${validVideoUrl}`
-    : "";
+    : validImageUrl
+      ? `
+
+عکس پست:
+${validImageUrl}`
+      : "";
 
   const shareText = `توییت ${tweetType} ${authorName} در Castle X
 
@@ -485,6 +490,8 @@ ${postContent || ""}${mediaText}
 ${postLink}`;
 
   try {
+    await navigator.clipboard.writeText(shareText);
+
     if (validImageUrl && navigator.share && navigator.canShare) {
       const imageResponse = await fetch(validImageUrl);
       const imageBlob = await imageResponse.blob();
@@ -496,7 +503,6 @@ ${postLink}`;
       const shareDataWithImage = {
         title: `توییت ${tweetType} ${authorName} در Castle X`,
         text: shareText,
-        url: postLink,
         files: [imageFile],
       };
 
@@ -509,40 +515,21 @@ ${postLink}`;
     if (navigator.share) {
       await navigator.share({
         title: `توییت ${tweetType} ${authorName} در Castle X`,
-        text: validImageUrl
-          ? `${shareText}
-
-عکس پست:
-${validImageUrl}`
-          : shareText,
-        url: postLink,
+        text: shareText,
       });
       return;
     }
-
-    await navigator.clipboard.writeText(
-      validImageUrl
-        ? `${shareText}
-
-عکس پست:
-${validImageUrl}`
-        : shareText
-    );
 
     alert("متن اشتراک‌گذاری کپی شد");
   } catch (err) {
     console.error(err);
 
-    await navigator.clipboard.writeText(
-      validImageUrl
-        ? `${shareText}
-
-عکس پست:
-${validImageUrl}`
-        : shareText
-    );
-
-    alert("متن اشتراک‌گذاری کپی شد");
+    try {
+      await navigator.clipboard.writeText(shareText);
+      alert("متن اشتراک‌گذاری کپی شد");
+    } catch {
+      alert("خطا در اشتراک‌گذاری");
+    }
   }
 };
   const loadPoll = async () => {
