@@ -1060,48 +1060,92 @@ app.post("/api/posts/:id/like", auth, async (req, res) => {
 });
 
 app.post("/api/comments/create", auth, async (req, res) => {
-  const { post_id, content } = req.body;
+  try {
+    const { post_id, content } = req.body;
 
-  if (!content) {
-    return res.status(400).json({
-      error: "متن کامنت خالی است",
-    });
-  }
+    if (!post_id || !content?.trim()) {
+      return res.status(400).json({
+        error: "متن کامنت خالی است",
+      });
+    }
 
-  const { data, error } = await supabase
-    .from("comments")
-    .insert([
-      {
+    const cleanContent = content.trim();
+
+    const { data, error } = await supabase
+      .from("comments")
+      .insert([
+        {
+          post_id,
+          user_id: req.user.id,
+          content: cleanContent,
+        },
+      ])
+      .select();
+
+    if (error) {
+      return res.status(500).json(error);
+    }
+
+    const { data: post } = await supabase
+      .from("posts")
+      .select("user_id")
+      .eq("id", post_id)
+      .single();
+
+    if (post && String(post.user_id) !== String(req.user.id)) {
+      await supabase.from("notifications").insert({
+        user_id: post.user_id,
+        sender_id: req.user.id,
+        type: "comment",
         post_id,
-        user_id: req.user.id,
-        content,
-      },
-    ])
-    .select();
+        title: "کامنت جدید",
+        message: "برای پست شما کامنت گذاشت",
+      });
+    }
 
-  if (error) {
-    return res.status(500).json(error);
-  }
+    const mentionedUsernames = [
+      ...new Set(
+        cleanContent
+          .match(/@[a-zA-Z0-9_.-]+/g)
+          ?.map((item) => item.slice(1).trim())
+          .filter(Boolean) || []
+      ),
+    ];
 
-  const { data: post } = await supabase
-    .from("posts")
-    .select("user_id")
-    .eq("id", post_id)
-    .single();
+    if (mentionedUsernames.length > 0) {
+      const { data: mentionedUsers } = await supabase
+        .from("users")
+        .select("id, username")
+        .in("username", mentionedUsernames);
 
-  if (post && post.user_id !== req.user.id) {
-    await supabase.from("notifications").insert({
-      user_id: post.user_id,
-      sender_id: req.user.id,
-      type: "comment",
-      post_id,
+      const mentionNotifications = (mentionedUsers || [])
+        .filter((user) => String(user.id) !== String(req.user.id))
+        .map((user) => ({
+          user_id: user.id,
+          sender_id: req.user.id,
+          type: "mention",
+          post_id,
+          title: "منشن جدید",
+          message: "شما را در یک کامنت منشن کرد",
+        }));
+
+      if (mentionNotifications.length > 0) {
+        await supabase.from("notifications").insert(mentionNotifications);
+      }
+    }
+
+    res.json({
+      success: true,
+      comment: data[0],
+    });
+  } catch (err) {
+    console.error("CREATE COMMENT ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
     });
   }
-
-  res.json({
-    success: true,
-    comment: data[0],
-  });
 });
 app.get("/api/comments/:postId", async (req, res) => {
   const { data: comments, error } = await supabase

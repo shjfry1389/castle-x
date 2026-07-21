@@ -249,7 +249,51 @@ const canSeeBoostPreview =
   const isPersian = (text) => {
     return /[\u0600-\u06FF]/.test(text || "");
   };
+const renderMentionHashtagText = (text = "") => {
+  return String(text || "")
+    .split(/(\s+|@[a-zA-Z0-9_.-]+|#[\p{L}\p{N}_]+)/gu)
+    .map((part, i) => {
+      if (!part) return null;
 
+      if (/^@[a-zA-Z0-9_.-]+$/.test(part)) {
+        const mentionedUsername = part.slice(1);
+
+        return (
+          <Link
+            key={i}
+            to={`/profile/${encodeURIComponent(mentionedUsername)}`}
+            style={{
+              color: "#1d9bf0",
+              fontWeight: "bold",
+              textDecoration: "none",
+            }}
+          >
+            {part}
+          </Link>
+        );
+      }
+
+      if (/^#[\p{L}\p{N}_]+$/u.test(part)) {
+        const hashtag = part.slice(1);
+
+        return (
+          <Link
+            key={i}
+            to={`/hashtag/${encodeURIComponent(hashtag)}`}
+            style={{
+              color: "#1d9bf0",
+              fontWeight: "bold",
+              textDecoration: "none",
+            }}
+          >
+            {part}
+          </Link>
+        );
+      }
+
+      return part;
+    });
+};
   const deletePost = async () => {
     const token = localStorage.getItem("token");
 
@@ -1482,8 +1526,9 @@ disabled={repostLoading}
                   marginBottom: "15px",
                 }}
               >
-                <input
-                  value={commentText}
+<input
+  dir="auto"
+  value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="Write a reply..."
                   style={{
@@ -1599,16 +1644,20 @@ disabled={repostLoading}
         )}
       </div>
 
-      <div
-        style={{
-          marginTop: "6px",
-          fontSize: "14px",
-          lineHeight: "1.6",
-          whiteSpace: "pre-wrap",
-        }}
-      >
-        {comment.content}
-      </div>
+<div
+  dir={isPersian(comment.content) ? "rtl" : "ltr"}
+  style={{
+    marginTop: "6px",
+    fontSize: "14px",
+    lineHeight: "1.6",
+    whiteSpace: "pre-wrap",
+    direction: isPersian(comment.content) ? "rtl" : "ltr",
+    textAlign: isPersian(comment.content) ? "right" : "left",
+    unicodeBidi: "plaintext",
+  }}
+>
+  {renderMentionHashtagText(comment.content)}
+</div>
     </div>
   </div>
 ))}
