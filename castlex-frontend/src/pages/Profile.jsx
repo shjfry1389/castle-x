@@ -782,100 +782,171 @@ if (!canSeeAnalytics || !canUseAnalytics) {
               <b>{user.followers_count}</b> Followers
             </button>
           </div>
-                    {rankingAwards && rankingAwards.total > 0 && (
-            <div
-              style={{
-                marginTop: "20px",
-                padding: "16px",
-                borderRadius: "18px",
-                background: "linear-gradient(135deg,#111827,#1f2937)",
-                color: "#fff",
-                border: "1px solid rgba(250,204,21,0.45)",
-                boxShadow: "0 16px 40px rgba(15,23,42,0.18)",
-              }}
-            >
-              <h3 style={{ margin: "0 0 12px" }}>
-                Castle X افتخارات رنکینگ 
-              </h3>
+                  {rankingAwards && rankingAwards.total > 0 && (
+  <div
+    style={{
+      marginTop: "22px",
+      padding: "18px",
+      borderRadius: "22px",
+      background:
+        "radial-gradient(circle at top left, rgba(250,204,21,0.24), transparent 34%), linear-gradient(135deg,#0f172a,#111827 55%,#020617)",
+      color: "#fff",
+      border: "1px solid rgba(250,204,21,0.35)",
+      boxShadow: "0 22px 60px rgba(15,23,42,0.28)",
+      position: "relative",
+      overflow: "hidden",
+    }}
+  >
+    <div
+      style={{
+        position: "absolute",
+        top: "-45px",
+        right: "-45px",
+        width: "130px",
+        height: "130px",
+        borderRadius: "50%",
+        background: "rgba(250,204,21,0.12)",
+        filter: "blur(4px)",
+      }}
+    />
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
-                  gap: "10px",
-                }}
-              >
-                <div
-                  style={{
-                    background: "rgba(250,204,21,0.14)",
-                    border: "1px solid rgba(250,204,21,0.45)",
-                    borderRadius: "14px",
-                    padding: "12px",
-                  }}
-                >
-                  <div
-  className={`ranking-award-emoji ${
-    latestAwardRank === 1
-      ? "ranking-award-emoji-active ranking-award-gold"
-      : ""
-  }`}
->
-  🏆
-</div>
-                  <b>{rankingAwards.gold || 0}</b>
-                  <div style={{ fontSize: "13px", color: "#fde68a" }}>
-                    مقام اول
-                  </div>
-                </div>
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "12px",
+        marginBottom: "16px",
+        flexWrap: "wrap",
+      }}
+    >
+      <div>
+        <h3 style={{ margin: 0, fontSize: "20px" }}>
+          افتخارات رنکینگ Castle X
+        </h3>
+        <p
+          style={{
+            margin: "6px 0 0",
+            color: "#cbd5e1",
+            fontSize: "13px",
+          }}
+        >
+          مدال‌هایی که این کاربر در رقابت‌های هفتگی گرفته
+        </p>
+      </div>
 
-                <div
-                  style={{
-                    background: "rgba(226,232,240,0.14)",
-                    border: "1px solid rgba(226,232,240,0.45)",
-                    borderRadius: "14px",
-                    padding: "12px",
-                  }}
-                >
-                  <div
-  className={`ranking-award-emoji ${
-    latestAwardRank === 2
-      ? "ranking-award-emoji-active ranking-award-silver"
-      : ""
-  }`}
->
-  🥈
-</div>
-                  <b>{rankingAwards.silver || 0}</b>
-                  <div style={{ fontSize: "13px", color: "#e5e7eb" }}>
-                    مقام دوم
-                  </div>
-                </div>
+      <div
+        style={{
+          padding: "8px 12px",
+          borderRadius: "999px",
+          background: "rgba(255,255,255,0.09)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          fontSize: "13px",
+          fontWeight: "800",
+        }}
+      >
+        مجموع: {rankingAwards.total}
+      </div>
+    </div>
 
-                <div
-                  style={{
-                    background: "rgba(251,146,60,0.14)",
-                    border: "1px solid rgba(251,146,60,0.45)",
-                    borderRadius: "14px",
-                    padding: "12px",
-                  }}
-                >
-                  <div
-  className={`ranking-award-emoji ${
-    latestAwardRank === 3
-      ? "ranking-award-emoji-active ranking-award-bronze"
-      : ""
-  }`}
->
-  🥉
-</div>
-                  <b>{rankingAwards.bronze || 0}</b>
-                  <div style={{ fontSize: "13px", color: "#fed7aa" }}>
-                    مقام سوم
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+    <div
+      style={{
+        position: "relative",
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(145px,1fr))",
+        gap: "12px",
+      }}
+    >
+      <div
+        style={{
+          background:
+            "linear-gradient(135deg,rgba(250,204,21,0.22),rgba(250,204,21,0.06))",
+          border: "1px solid rgba(250,204,21,0.42)",
+          borderRadius: "18px",
+          padding: "14px",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12)",
+        }}
+      >
+        <div
+          className={`ranking-award-emoji ${
+            latestAwardRank === 1
+              ? "ranking-award-emoji-active ranking-award-gold"
+              : ""
+          }`}
+        >
+          🏆
+        </div>
+
+        <div style={{ marginTop: "10px", fontSize: "24px", fontWeight: "900" }}>
+          {rankingAwards.gold || 0}
+        </div>
+
+        <div style={{ fontSize: "13px", color: "#fde68a", fontWeight: "700" }}>
+          مقام اول
+        </div>
+      </div>
+
+      <div
+        style={{
+          background:
+            "linear-gradient(135deg,rgba(226,232,240,0.22),rgba(226,232,240,0.06))",
+          border: "1px solid rgba(226,232,240,0.42)",
+          borderRadius: "18px",
+          padding: "14px",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12)",
+        }}
+      >
+        <div
+          className={`ranking-award-emoji ${
+            latestAwardRank === 2
+              ? "ranking-award-emoji-active ranking-award-silver"
+              : ""
+          }`}
+        >
+          🥈
+        </div>
+
+        <div style={{ marginTop: "10px", fontSize: "24px", fontWeight: "900" }}>
+          {rankingAwards.silver || 0}
+        </div>
+
+        <div style={{ fontSize: "13px", color: "#e5e7eb", fontWeight: "700" }}>
+          مقام دوم
+        </div>
+      </div>
+
+      <div
+        style={{
+          background:
+            "linear-gradient(135deg,rgba(251,146,60,0.22),rgba(251,146,60,0.06))",
+          border: "1px solid rgba(251,146,60,0.42)",
+          borderRadius: "18px",
+          padding: "14px",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12)",
+        }}
+      >
+        <div
+          className={`ranking-award-emoji ${
+            latestAwardRank === 3
+              ? "ranking-award-emoji-active ranking-award-bronze"
+              : ""
+          }`}
+        >
+          🥉
+        </div>
+
+        <div style={{ marginTop: "10px", fontSize: "24px", fontWeight: "900" }}>
+          {rankingAwards.bronze || 0}
+        </div>
+
+        <div style={{ fontSize: "13px", color: "#fed7aa", fontWeight: "700" }}>
+          مقام سوم
+        </div>
+      </div>
+    </div>
+  </div>
+)}
           {currentUser?.username === user.username && (
             <div
               style={{
