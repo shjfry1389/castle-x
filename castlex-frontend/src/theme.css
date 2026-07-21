@@ -593,3 +593,6 @@ body.dark [style*="white-space: pre-wrap"] a[href^="/profile/"],
 body.dark [style*="white-space: pre-wrap"] a[href^="/hashtag/"] {
   color: #38bdf8 !important;
 }
+body.dark .repost-quote-text {
+  color: #f8fafc !important;
+}

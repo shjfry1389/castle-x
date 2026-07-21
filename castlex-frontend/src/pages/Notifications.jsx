@@ -263,17 +263,18 @@ export default function Notifications() {
   };
 
   const getPostOwnerUsername = (notification) => {
-    return (
-      notification.post?.author?.username ||
-      notification.post?.user?.username ||
-      notification.post?.username ||
-      notification.post?.author_username ||
-      notification.post_author_username ||
-      notification.author?.username ||
-      notification.postOwner?.username ||
-      ""
-    );
-  };
+  return (
+    notification.post_author?.username ||
+    notification.post?.author?.username ||
+    notification.post?.user?.username ||
+    notification.post?.username ||
+    notification.post?.author_username ||
+    notification.post_author_username ||
+    notification.author?.username ||
+    notification.postOwner?.username ||
+    ""
+  );
+};
 
   const getLink = (notification) => {
     if (

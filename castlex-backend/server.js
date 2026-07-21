@@ -1992,18 +1992,22 @@ app.get("/api/notifications/unread-count", auth, async (req, res) => {
 });
 app.get("/api/notifications", auth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data: notifications, error } = await supabase
       .from("notifications")
       .select(
         `
-      *,
-      sender:users!notifications_sender_id_fkey(
-        id,
-        username,
-        display_name,
-        avatar_url
-      )
-    `,
+        *,
+        sender:users!notifications_sender_id_fkey(
+          id,
+          username,
+          display_name,
+          avatar_url,
+          role,
+          is_verified,
+          premium_plan,
+          premium_until
+        )
+      `,
       )
       .eq("user_id", req.user.id)
       .order("created_at", {
@@ -2014,12 +2018,44 @@ app.get("/api/notifications", auth, async (req, res) => {
       return res.status(500).json(error);
     }
 
-    res.json(data);
+    const result = await Promise.all(
+      (notifications || []).map(async (notification) => {
+        let postAuthor = null;
+
+        if (notification.post_id) {
+          const { data: post } = await supabase
+            .from("posts")
+            .select("id, user_id")
+            .eq("id", notification.post_id)
+            .maybeSingle();
+
+          if (post?.user_id) {
+            const { data: author } = await supabase
+              .from("users")
+              .select(
+                "id, username, display_name, avatar_url, role, is_verified, premium_plan, premium_until",
+              )
+              .eq("id", post.user_id)
+              .maybeSingle();
+
+            postAuthor = author;
+          }
+        }
+
+        return {
+          ...notification,
+          post_author: postAuthor,
+        };
+      }),
+    );
+
+    res.json(result);
   } catch (err) {
-    console.error(err);
+    console.error("NOTIFICATIONS ERROR:", err);
 
     res.status(500).json({
       error: "Server Error",
+      details: err.message,
     });
   }
 });

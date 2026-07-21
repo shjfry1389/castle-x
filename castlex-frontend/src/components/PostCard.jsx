@@ -777,6 +777,7 @@ return (
 
 {post.quote_content && (
   <div
+  className="repost-quote-text"
     dir={getTextDirection(post.quote_content)}
     style={{
       color: "#0f172a",
