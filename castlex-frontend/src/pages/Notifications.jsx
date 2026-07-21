@@ -204,7 +204,7 @@ export default function Notifications() {
       case "top_creator":
       case "weekly_winner":
       case "weekly_ranking_result":
-        return notification.title || "برندگان هفته Castle X مشخص شدند";
+        return notification.title || "Castle X برندگان هفته  مشخص شدند";
 
       case "top_post":
         return "پست شما وارد رتبه‌بندی برترین‌های هفته شد";
