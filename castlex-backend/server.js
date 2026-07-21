@@ -3871,6 +3871,165 @@ app.post("/api/admin/notifications/custom", auth, admin, async (req, res) => {
     });
   }
 });
+app.post("/api/admin/rankings/announce-weekly", auth, admin, async (req, res) => {
+  try {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const now = new Date();
+    const weekEnd = new Date(now.getTime());
+    const weekStart = new Date(now.getTime() - 7 * dayMs);
+    const weekKey = `${weekStart.toISOString().slice(0, 10)}_${weekEnd
+      .toISOString()
+      .slice(0, 10)}`;
+
+    const { data: alreadySent } = await supabase
+      .from("notifications")
+      .select("id")
+      .eq("type", "weekly_ranking_result")
+      .contains("meta", { week_key: weekKey })
+      .limit(1)
+      .maybeSingle();
+
+    if (alreadySent) {
+      return res.status(409).json({
+        error: "نتایج این هفته قبلاً برای کاربران ارسال شده است",
+      });
+    }
+
+    const { data: posts, error: postsError } = await supabase
+      .from("posts")
+      .select("id, user_id, content, views_count, created_at")
+      .gte("created_at", weekStart.toISOString())
+      .lte("created_at", weekEnd.toISOString())
+      .limit(500);
+
+    if (postsError) {
+      return res.status(500).json({
+        error: "خطا در دریافت پست‌ها",
+        details: postsError.message,
+      });
+    }
+
+    const usersScore = {};
+
+    for (const post of posts || []) {
+      const [{ count: likes }, { count: comments }, { count: reposts }] =
+        await Promise.all([
+          supabase.from("likes").select("*", { count: "exact", head: true }).eq("post_id", post.id),
+          supabase.from("comments").select("*", { count: "exact", head: true }).eq("post_id", post.id),
+          supabase.from("reposts").select("*", { count: "exact", head: true }).eq("post_id", post.id),
+        ]);
+
+      const { data: author } = await supabase
+        .from("users")
+        .select("id, username, display_name, avatar_url, role, is_verified, premium_plan, premium_until")
+        .eq("id", post.user_id)
+        .maybeSingle();
+
+      if (!author) continue;
+
+      const score =
+        Number(post.views_count || 0) +
+        Number(likes || 0) * 4 +
+        Number(comments || 0) * 6 +
+        Number(reposts || 0) * 8;
+
+      if (!usersScore[author.id]) {
+        usersScore[author.id] = {
+          user: author,
+          score: 0,
+        };
+      }
+
+      usersScore[author.id].score += score;
+    }
+
+    const winners = Object.values(usersScore)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map((item, index) => ({
+        rank: index + 1,
+        score: item.score,
+        user: item.user,
+      }));
+
+    if (winners.length === 0) {
+      return res.status(404).json({
+        error: "برای این هفته رتبه‌ای پیدا نشد",
+      });
+    }
+
+    const { data: users, error: usersError } = await supabase
+      .from("users")
+      .select("id, banned");
+
+    if (usersError) {
+      return res.status(500).json({
+        error: "خطا در دریافت کاربران",
+        details: usersError.message,
+      });
+    }
+
+    const recipients = (users || []).filter((user) => user.banned !== true);
+
+const notifications = recipients.map((user) => ({
+  user_id: user.id,
+  sender_id: req.user.id,
+  type: "weekly_ranking_result",
+  title: "برندگان هفته Castle X",
+  message: "نتایج رتبه‌بندی این هفته اعلام شد",
+  meta: {
+    week_key: weekKey,
+    winners,
+  },
+}));
+
+const rankLabels = {
+  1: "اول",
+  2: "دوم",
+  3: "سوم",
+};
+
+const winnerNotifications = winners.map((winner) => ({
+  user_id: winner.user.id,
+  sender_id: req.user.id,
+  type: "weekly_winner",
+  title: `تبریک ${winner.user.display_name || winner.user.username}`,
+  message: `شما نفر ${rankLabels[winner.rank] || winner.rank} هفته Castle X شدید`,
+  meta: {
+    week_key: weekKey,
+    rank: winner.rank,
+    score: winner.score,
+    winners,
+  },
+}));
+
+const allNotifications = [...notifications, ...winnerNotifications];
+
+const { error: insertError } = await supabase
+  .from("notifications")
+  .insert(allNotifications);
+
+    if (insertError) {
+      return res.status(500).json({
+        error: "خطا در ارسال نوتیفیکیشن",
+        details: insertError.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      sent_count: allNotifications.length,
+      winners,
+    });
+  } catch (err) {
+    console.error("ANNOUNCE WEEKLY RANKING ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.get("/api/admin/stats", auth, admin, async (req, res) => {
   try {
     const { count: users } = await supabase.from("users").select("*", {

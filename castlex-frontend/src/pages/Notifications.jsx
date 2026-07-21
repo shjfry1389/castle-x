@@ -163,6 +163,7 @@ export default function Notifications() {
       "top_creator",
       "top_post",
       "weekly_winner",
+            "weekly_ranking_result",
     ].includes(type);
   };
 
@@ -202,7 +203,8 @@ export default function Notifications() {
       case "weekly_top_creator":
       case "top_creator":
       case "weekly_winner":
-        return "تبریک! شما در رتبه‌بندی هفتگی Castle X برتر شدید";
+      case "weekly_ranking_result":
+        return notification.title || "برندگان هفته Castle X مشخص شدند";
 
       case "top_post":
         return "پست شما وارد رتبه‌بندی برترین‌های هفته شد";
@@ -537,7 +539,57 @@ export default function Notifications() {
                     {String(notification.message).split("|")[0].trim()}
                   </div>
                 )}
+{notification.type === "weekly_ranking_result" &&
+  Array.isArray(notification.meta?.winners) && (
+    <div
+      style={{
+        marginTop: "12px",
+        background: "#111827",
+        color: "#fff",
+        borderRadius: "14px",
+        padding: "12px",
+      }}
+    >
+      {notification.meta.winners.map((winner) => (
+        <div
+          key={winner.rank}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "8px 0",
+            borderBottom:
+              winner.rank === 3 ? "none" : "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <b style={{ fontSize: "18px" }}>#{winner.rank}</b>
 
+          <img
+            src={
+              winner.user?.avatar_url ||
+              "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+            }
+            alt=""
+            style={{
+              width: "34px",
+              height: "34px",
+              borderRadius: "50%",
+              objectFit: "cover",
+            }}
+          />
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <b>{winner.user?.display_name || winner.user?.username}</b>
+            <div style={{ fontSize: "12px", color: "#cbd5e1" }}>
+              @{winner.user?.username}
+            </div>
+          </div>
+
+          <b>{winner.score}</b>
+        </div>
+      ))}
+    </div>
+  )}
                 {rankingStyle && (
                   <div
                     style={{
