@@ -441,16 +441,38 @@ return {
   hot_priority: 0,
 };
 };
+const getRankingStartDate = async () => {
+  const { data } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "ranking_last_reset_at")
+    .maybeSingle();
+
+  if (data?.value) {
+    return new Date(data.value);
+  }
+
+  return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+};
+
+const resetRankingStartDate = async () => {
+  const now = new Date().toISOString();
+
+  await supabase.from("app_settings").upsert({
+    key: "ranking_last_reset_at",
+    value: now,
+    updated_at: now,
+  });
+
+  return now;
+};
 app.get("/api/rankings/weekly", auth, async (req, res) => {
   try {
-    const weekAgo = new Date(
-      Date.now() - 7 * 24 * 60 * 60 * 1000
-    ).toISOString();
-
+    const rankingStart = await getRankingStartDate();
     const { data: posts, error: postsError } = await supabase
       .from("posts")
       .select("id, user_id, content, image_url, video_url, views_count, created_at")
-      .gte("created_at", weekAgo)
+      .gte("created_at", rankingStart.toISOString())
       .order("created_at", { ascending: false })
       .limit(200);
 
@@ -597,6 +619,7 @@ app.get("/api/rankings/weekly", auth, async (req, res) => {
     );
 
     res.json({
+        ranking_started_at: rankingStart.toISOString(),
       topCreators,
       topLikedPosts,
       topCommentedPosts,
@@ -3873,10 +3896,9 @@ app.post("/api/admin/notifications/custom", auth, admin, async (req, res) => {
 });
 app.post("/api/admin/rankings/announce-weekly", auth, admin, async (req, res) => {
   try {
-    const dayMs = 24 * 60 * 60 * 1000;
-    const now = new Date();
-    const weekEnd = new Date(now.getTime());
-    const weekStart = new Date(now.getTime() - 7 * dayMs);
+   const now = new Date();
+const weekEnd = new Date(now.getTime());
+const weekStart = await getRankingStartDate();
     const weekKey = `${weekStart.toISOString().slice(0, 10)}_${weekEnd
       .toISOString()
       .slice(0, 10)}`;
@@ -4015,11 +4037,13 @@ const { error: insertError } = await supabase
         details: insertError.message,
       });
     }
+    const nextRankingStartedAt = await resetRankingStartDate();
 
     res.json({
       success: true,
       sent_count: allNotifications.length,
       winners,
+       next_ranking_started_at: nextRankingStartedAt,
     });
   } catch (err) {
     console.error("ANNOUNCE WEEKLY RANKING ERROR:", err);
