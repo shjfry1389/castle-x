@@ -1625,6 +1625,63 @@ res.json({
     });
   }
 });
+app.get("/api/users/:username/ranking-awards", async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("id, username, display_name")
+      .ilike("username", username)
+      .maybeSingle();
+
+    if (userError) {
+      return res.status(500).json({
+        error: "خطا در دریافت کاربر",
+        details: userError.message,
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        error: "کاربر پیدا نشد",
+      });
+    }
+
+    const { data: awards, error: awardsError } = await supabase
+      .from("ranking_awards")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (awardsError) {
+      return res.status(500).json({
+        error: "خطا در دریافت افتخارات",
+        details: awardsError.message,
+      });
+    }
+
+    const gold = (awards || []).filter((item) => item.rank === 1).length;
+    const silver = (awards || []).filter((item) => item.rank === 2).length;
+    const bronze = (awards || []).filter((item) => item.rank === 3).length;
+
+    res.json({
+      user,
+      total: awards?.length || 0,
+      gold,
+      silver,
+      bronze,
+      awards: awards || [],
+    });
+  } catch (err) {
+    console.error("GET RANKING AWARDS ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 
 app.put("/api/users/me", auth, async (req, res) => {
   try {
@@ -4024,7 +4081,25 @@ const winnerNotifications = winners.map((winner) => ({
     winners,
   },
 }));
+const awardRows = winners.map((winner) => ({
+  user_id: winner.user.id,
+  rank: winner.rank,
+  score: winner.score,
+  week_key: weekKey,
+}));
 
+const { error: awardError } = await supabase
+  .from("ranking_awards")
+  .upsert(awardRows, {
+    onConflict: "user_id,week_key",
+  });
+
+if (awardError) {
+  return res.status(500).json({
+    error: "خطا در ثبت افتخارات رتبه‌بندی",
+    details: awardError.message,
+  });
+}
 const allNotifications = [...notifications, ...winnerNotifications];
 
 const { error: insertError } = await supabase

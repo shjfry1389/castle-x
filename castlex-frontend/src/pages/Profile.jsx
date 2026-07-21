@@ -82,6 +82,7 @@ export default function Profile() {
   const [currentUser, setCurrentUser] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const [user, setUser] = useState(null);
+  const [rankingAwards, setRankingAwards] = useState(null);
   const [posts, setPosts] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -113,6 +114,10 @@ api
   })
   .then((res) => setPosts(res.data))
   .catch(console.error);
+  api
+ .get(`/api/users/${encodeURIComponent(profileUsername)}/ranking-awards`)
+  .then((res) => setRankingAwards(res.data))
+  .catch(() => setRankingAwards(null));
 
 
     if (token) {
@@ -777,7 +782,76 @@ if (!canSeeAnalytics || !canUseAnalytics) {
               <b>{user.followers_count}</b> Followers
             </button>
           </div>
+                    {rankingAwards && rankingAwards.total > 0 && (
+            <div
+              style={{
+                marginTop: "20px",
+                padding: "16px",
+                borderRadius: "18px",
+                background: "linear-gradient(135deg,#111827,#1f2937)",
+                color: "#fff",
+                border: "1px solid rgba(250,204,21,0.45)",
+                boxShadow: "0 16px 40px rgba(15,23,42,0.18)",
+              }}
+            >
+              <h3 style={{ margin: "0 0 12px" }}>
+                افتخارات رنکینگ Castle X
+              </h3>
 
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
+                  gap: "10px",
+                }}
+              >
+                <div
+                  style={{
+                    background: "rgba(250,204,21,0.14)",
+                    border: "1px solid rgba(250,204,21,0.45)",
+                    borderRadius: "14px",
+                    padding: "12px",
+                  }}
+                >
+                  <div style={{ fontSize: "28px" }}>🏆</div>
+                  <b>{rankingAwards.gold || 0}</b>
+                  <div style={{ fontSize: "13px", color: "#fde68a" }}>
+                    مقام اول
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: "rgba(226,232,240,0.14)",
+                    border: "1px solid rgba(226,232,240,0.45)",
+                    borderRadius: "14px",
+                    padding: "12px",
+                  }}
+                >
+                  <div style={{ fontSize: "28px" }}>🥈</div>
+                  <b>{rankingAwards.silver || 0}</b>
+                  <div style={{ fontSize: "13px", color: "#e5e7eb" }}>
+                    مقام دوم
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: "rgba(251,146,60,0.14)",
+                    border: "1px solid rgba(251,146,60,0.45)",
+                    borderRadius: "14px",
+                    padding: "12px",
+                  }}
+                >
+                  <div style={{ fontSize: "28px" }}>🥉</div>
+                  <b>{rankingAwards.bronze || 0}</b>
+                  <div style={{ fontSize: "13px", color: "#fed7aa" }}>
+                    مقام سوم
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           {currentUser?.username === user.username && (
             <div
               style={{
