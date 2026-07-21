@@ -823,7 +823,7 @@ if (!canSeeAnalytics || !canUseAnalytics) {
     >
       <div>
         <h3 style={{ margin: 0, fontSize: "20px" }}>
-          افتخارات رنکینگ Castle X
+         Castle X افتخارات رنکینگ 
         </h3>
         <p
           style={{
