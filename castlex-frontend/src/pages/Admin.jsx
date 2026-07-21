@@ -567,7 +567,24 @@ const rejectHotRequest = async (request) => {
       setCustomNotifSending(false);
     }
   };
+const announceWeeklyWinners = async () => {
+  try {
+    if (!window.confirm("نتایج رتبه‌بندی هفته برای همه کاربران ارسال شود؟")) {
+      return;
+    }
 
+    const res = await api.post(
+      "/api/admin/rankings/announce-weekly",
+      {},
+      authHeader
+    );
+
+    alert(`نوتیف رتبه‌بندی برای ${res.data.sent_count || 0} کاربر ارسال شد`);
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "خطا در ارسال نتایج هفته");
+  }
+};
   return (
     <div
       style={{
@@ -730,7 +747,47 @@ const rejectHotRequest = async (request) => {
     </button>
   </div>
 </div>
+<div
+  style={{
+    marginTop: "18px",
+    marginBottom: "24px",
+    background: "#fff7ed",
+    border: "1px solid #fed7aa",
+    borderRadius: "18px",
+    padding: "18px",
+  }}
+>
+  <h2 style={{ marginTop: 0, marginBottom: "8px" }}>
+    اعلام برندگان هفته
+  </h2>
 
+  <p
+    style={{
+      marginTop: 0,
+      color: "#9a3412",
+      fontSize: "14px",
+      lineHeight: "1.7",
+    }}
+  >
+    با زدن این دکمه، نفرات اول تا سوم هفته برای همه کاربران ارسال می‌شود و
+    خود برنده‌ها هم نوتیف تبریک جداگانه می‌گیرند.
+  </p>
+
+  <button
+    onClick={announceWeeklyWinners}
+    style={{
+      border: "none",
+      background: "linear-gradient(135deg,#facc15,#f97316)",
+      color: "#111827",
+      padding: "12px 18px",
+      borderRadius: "999px",
+      cursor: "pointer",
+      fontWeight: "900",
+    }}
+  >
+    ارسال نتایج برندگان هفته
+  </button>
+</div>
       <div
         style={{
           display: "grid",
