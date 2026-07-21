@@ -25,6 +25,12 @@ export default function Admin() {
     likes: 0,
   });
   const [topPosts, setTopPosts] = useState(null);
+  const [customNotifTitle, setCustomNotifTitle] = useState("Castle X");
+const [customNotifMessage, setCustomNotifMessage] = useState("");
+const [customNotifTarget, setCustomNotifTarget] = useState("all");
+const [customNotifUsernames, setCustomNotifUsernames] = useState("");
+const [customNotifType, setCustomNotifType] = useState("admin_custom");
+const [customNotifSending, setCustomNotifSending] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -525,6 +531,42 @@ const rejectHotRequest = async (request) => {
     borderRadius: "8px",
     cursor: "pointer",
   };
+    const sendCustomNotification = async () => {
+    try {
+      if (!customNotifMessage.trim()) {
+        alert("متن نوتیفیکیشن را وارد کن");
+        return;
+      }
+
+      if (customNotifTarget === "specific" && !customNotifUsernames.trim()) {
+        alert("برای ارسال به افراد مشخص، یوزرنیم‌ها را وارد کن");
+        return;
+      }
+
+      setCustomNotifSending(true);
+
+      const res = await api.post(
+        "/api/admin/notifications/custom",
+        {
+          title: customNotifTitle.trim() || "Castle X",
+          message: customNotifMessage.trim(),
+          target_type: customNotifTarget,
+          usernames: customNotifUsernames,
+          notification_type: customNotifType || "admin_custom",
+        },
+        authHeader
+      );
+
+      alert(`نوتیفیکیشن برای ${res.data.sent_count || 0} کاربر ارسال شد`);
+      setCustomNotifMessage("");
+      setCustomNotifUsernames("");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.error || "خطا در ارسال نوتیفیکیشن");
+    } finally {
+      setCustomNotifSending(false);
+    }
+  };
 
   return (
     <div
@@ -565,6 +607,129 @@ const rejectHotRequest = async (request) => {
           outline: "none",
         }}
       />
+      <div
+  style={{
+    marginTop: "22px",
+    background: "#fff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "18px",
+    boxShadow: "0 8px 24px rgba(15,23,42,0.06)",
+  }}
+>
+  <h2 style={{ marginTop: 0, marginBottom: "12px" }}>
+    ارسال نوتیفیکیشن اختصاصی
+  </h2>
+
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+      gap: "12px",
+      marginBottom: "12px",
+    }}
+  >
+    <input
+      value={customNotifTitle}
+      onChange={(e) => setCustomNotifTitle(e.target.value)}
+      placeholder="عنوان نوتیفیکیشن"
+      style={{
+        padding: "12px",
+        borderRadius: "12px",
+        border: "1px solid #cbd5e1",
+      }}
+    />
+
+    <select
+      value={customNotifTarget}
+      onChange={(e) => setCustomNotifTarget(e.target.value)}
+      style={{
+        padding: "12px",
+        borderRadius: "12px",
+        border: "1px solid #cbd5e1",
+      }}
+    >
+      <option value="all">همه کاربران</option>
+      <option value="admins">فقط ادمین‌ها</option>
+      <option value="verified">فقط تیک آبی‌ها</option>
+      <option value="premium">فقط پریمیوم‌ها</option>
+      <option value="normal">کاربران معمولی</option>
+      <option value="specific">یوزرنیم‌های مشخص</option>
+    </select>
+  </div>
+
+  {customNotifTarget === "specific" && (
+    <textarea
+      value={customNotifUsernames}
+      onChange={(e) => setCustomNotifUsernames(e.target.value)}
+      placeholder="یوزرنیم‌ها را با کاما جدا کن: sharmin, Donald_Amin"
+      rows={2}
+      style={{
+        width: "100%",
+        padding: "12px",
+        borderRadius: "12px",
+        border: "1px solid #cbd5e1",
+        marginBottom: "12px",
+        resize: "none",
+      }}
+    />
+  )}
+
+  <textarea
+    value={customNotifMessage}
+    onChange={(e) => setCustomNotifMessage(e.target.value)}
+    placeholder="متن نوتیفیکیشن..."
+    rows={4}
+    style={{
+      width: "100%",
+      padding: "12px",
+      borderRadius: "12px",
+      border: "1px solid #cbd5e1",
+      marginBottom: "12px",
+      resize: "none",
+    }}
+  />
+
+  <div
+    style={{
+      display: "flex",
+      gap: "12px",
+      flexDirection: isMobile ? "column" : "row",
+    }}
+  >
+    <select
+      value={customNotifType}
+      onChange={(e) => setCustomNotifType(e.target.value)}
+      style={{
+        flex: 1,
+        padding: "12px",
+        borderRadius: "12px",
+        border: "1px solid #cbd5e1",
+      }}
+    >
+      <option value="admin_custom">پیام عمومی Castle X</option>
+      <option value="broadcast">اطلاعیه رسمی</option>
+      <option value="premium">پیام پریمیوم</option>
+      <option value="weekly_ranking">پیام رتبه‌بندی</option>
+    </select>
+
+    <button
+      onClick={sendCustomNotification}
+      disabled={customNotifSending}
+      style={{
+        border: "none",
+        background: customNotifSending ? "#94a3b8" : "#1d9bf0",
+        color: "#fff",
+        padding: "12px 20px",
+        borderRadius: "999px",
+        cursor: customNotifSending ? "not-allowed" : "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      {customNotifSending ? "در حال ارسال..." : "ارسال نوتیفیکیشن"}
+    </button>
+  </div>
+</div>
 
       <div
         style={{

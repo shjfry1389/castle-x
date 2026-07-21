@@ -3675,6 +3675,122 @@ app.get("/api/admin/top-posts", auth, admin, async (req, res) => {
     });
   }
 });
+app.post("/api/admin/notifications/custom", auth, admin, async (req, res) => {
+  try {
+    const {
+      title,
+      message,
+      target_type,
+      usernames,
+      notification_type,
+    } = req.body;
+
+    if (!message?.trim()) {
+      return res.status(400).json({
+        error: "متن نوتیفیکیشن الزامی است",
+      });
+    }
+
+    const type = notification_type?.trim() || "admin_custom";
+    const targetType = target_type || "all";
+
+    let query = supabase
+      .from("users")
+      .select("id, username, role, is_verified, premium_plan, premium_until, banned");
+
+    if (targetType === "admins") {
+      query = query.eq("role", "admin");
+    }
+
+    if (targetType === "verified") {
+      query = query.eq("is_verified", true);
+    }
+
+    if (targetType === "premium") {
+      query = query
+        .eq("premium_plan", "silver")
+        .gt("premium_until", new Date().toISOString());
+    }
+
+    if (targetType === "normal") {
+      query = query
+        .neq("role", "admin")
+        .eq("is_verified", false)
+        .or(`premium_plan.is.null,premium_until.lt.${new Date().toISOString()}`);
+    }
+
+    if (targetType === "specific") {
+      const cleanUsernames = Array.isArray(usernames)
+        ? usernames
+            .map((item) => String(item || "").trim())
+            .filter(Boolean)
+        : String(usernames || "")
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean);
+
+      if (cleanUsernames.length === 0) {
+        return res.status(400).json({
+          error: "برای ارسال به افراد مشخص، حداقل یک نام کاربری وارد کنید",
+        });
+      }
+
+      query = query.in("username", cleanUsernames);
+    }
+
+    query = query.neq("banned", true);
+
+    const { data: users, error: usersError } = await query;
+
+    if (usersError) {
+      return res.status(500).json({
+        error: "خطا در دریافت کاربران",
+        details: usersError.message,
+      });
+    }
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({
+        error: "هیچ کاربری برای ارسال پیدا نشد",
+      });
+    }
+
+    const notifications = users.map((user) => ({
+      user_id: user.id,
+      sender_id: req.user.id,
+      type,
+      title: title?.trim() || "Castle X",
+      message: message.trim(),
+      meta: {
+        target_type: targetType,
+        sent_by_admin_id: req.user.id,
+      },
+    }));
+
+    const { error: insertError } = await supabase
+      .from("notifications")
+      .insert(notifications);
+
+    if (insertError) {
+      return res.status(500).json({
+        error: "خطا در ارسال نوتیفیکیشن",
+        details: insertError.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      sent_count: notifications.length,
+    });
+  } catch (err) {
+    console.error("ADMIN CUSTOM NOTIFICATION ERROR:", err);
+
+    res.status(500).json({
+      error: "خطای سرور",
+      details: err.message,
+    });
+  }
+});
 app.get("/api/admin/stats", auth, admin, async (req, res) => {
   try {
     const { count: users } = await supabase.from("users").select("*", {
