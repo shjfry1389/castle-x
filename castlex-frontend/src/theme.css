@@ -596,3 +596,68 @@ body.dark [style*="white-space: pre-wrap"] a[href^="/hashtag/"] {
 body.dark .repost-quote-text {
   color: #f8fafc !important;
 }
+.ranking-award-emoji {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  font-size: 28px;
+  border-radius: 999px;
+}
+
+.ranking-award-emoji-active::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  padding: 1.5px;
+  animation: rankingAwardSpin 2.4s linear infinite;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+      mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.ranking-award-gold::before {
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    #facc15,
+    #fff7ad,
+    #f59e0b,
+    transparent
+  );
+}
+
+.ranking-award-silver::before {
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    #cbd5e1,
+    #ffffff,
+    #94a3b8,
+    transparent
+  );
+}
+
+.ranking-award-bronze::before {
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    #fb923c,
+    #fed7aa,
+    #c2410c,
+    transparent
+  );
+}
+
+@keyframes rankingAwardSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

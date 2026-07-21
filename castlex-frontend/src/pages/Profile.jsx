@@ -433,7 +433,7 @@ if (!canSeeAnalytics || !canUseAnalytics) {
       </div>
     );
   }
-
+  const latestAwardRank = rankingAwards?.awards?.[0]?.rank;
   return (
     <div
       style={{
@@ -795,7 +795,7 @@ if (!canSeeAnalytics || !canUseAnalytics) {
               }}
             >
               <h3 style={{ margin: "0 0 12px" }}>
-                افتخارات رنکینگ Castle X
+                Castle X افتخارات رنکینگ 
               </h3>
 
               <div
@@ -813,7 +813,15 @@ if (!canSeeAnalytics || !canUseAnalytics) {
                     padding: "12px",
                   }}
                 >
-                  <div style={{ fontSize: "28px" }}>🏆</div>
+                  <div
+  className={`ranking-award-emoji ${
+    latestAwardRank === 1
+      ? "ranking-award-emoji-active ranking-award-gold"
+      : ""
+  }`}
+>
+  🏆
+</div>
                   <b>{rankingAwards.gold || 0}</b>
                   <div style={{ fontSize: "13px", color: "#fde68a" }}>
                     مقام اول
@@ -828,7 +836,15 @@ if (!canSeeAnalytics || !canUseAnalytics) {
                     padding: "12px",
                   }}
                 >
-                  <div style={{ fontSize: "28px" }}>🥈</div>
+                  <div
+  className={`ranking-award-emoji ${
+    latestAwardRank === 2
+      ? "ranking-award-emoji-active ranking-award-silver"
+      : ""
+  }`}
+>
+  🥈
+</div>
                   <b>{rankingAwards.silver || 0}</b>
                   <div style={{ fontSize: "13px", color: "#e5e7eb" }}>
                     مقام دوم
@@ -843,7 +859,15 @@ if (!canSeeAnalytics || !canUseAnalytics) {
                     padding: "12px",
                   }}
                 >
-                  <div style={{ fontSize: "28px" }}>🥉</div>
+                  <div
+  className={`ranking-award-emoji ${
+    latestAwardRank === 3
+      ? "ranking-award-emoji-active ranking-award-bronze"
+      : ""
+  }`}
+>
+  🥉
+</div>
                   <b>{rankingAwards.bronze || 0}</b>
                   <div style={{ fontSize: "13px", color: "#fed7aa" }}>
                     مقام سوم
