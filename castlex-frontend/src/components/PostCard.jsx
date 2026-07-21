@@ -22,6 +22,17 @@ function isPremiumActive(user) {
     new Date(user.premium_until).getTime() > Date.now()
   );
 }
+const isRtlText = (text = "") => {
+  return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(text);
+};
+
+const getTextDirection = (text = "") => {
+  return isRtlText(text) ? "rtl" : "ltr";
+};
+
+const getTextAlign = (text = "") => {
+  return isRtlText(text) ? "right" : "left";
+};
 
 function EyeIcon() {
   
@@ -720,19 +731,23 @@ return (
         <span>reposted</span>
       </div>
 
-      {post.quote_content && (
-        <div
-          style={{
-            color: "#0f172a",
-            fontSize: "15px",
-            fontWeight: "500",
-            lineHeight: "1.8",
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {post.quote_content}
-        </div>
-      )}
+{post.quote_content && (
+  <div
+    dir={getTextDirection(post.quote_content)}
+    style={{
+      color: "#0f172a",
+      fontSize: "15px",
+      fontWeight: "500",
+      lineHeight: "1.8",
+      whiteSpace: "pre-wrap",
+      direction: getTextDirection(post.quote_content),
+      textAlign: getTextAlign(post.quote_content),
+      unicodeBidi: "plaintext",
+    }}
+  >
+    {post.quote_content}
+  </div>
+)}
     </div>
   </div>
 )}
@@ -788,8 +803,9 @@ return (
         </button>
       </div>
 
-      <textarea
-        value={quoteContent}
+<textarea
+  dir="auto"
+  value={quoteContent}
         onChange={(e) => setQuoteContent(e.target.value)}
         placeholder="متنی که می‌خواهید بالای ری‌پست نوشته شود..."
         rows={4}
